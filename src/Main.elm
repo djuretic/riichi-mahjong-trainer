@@ -11,6 +11,11 @@ main = Browser.sandbox { init = init, update = update, view = view}
 
 type alias Model = { hand: String }
 
+type Suit = Sou | Man | Pin | Invalid
+type alias Tile =
+    { number: Int
+    , suit: Suit }
+
 init : Model
 init = Model ""
 
@@ -26,58 +31,91 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
+    let
+        tiles = showParseResult model.hand
+    in 
     div []
         [ input [ type_ "text", placeholder "Hand", value model.hand, onInput Hand] []
-        , p [] [ text (String.join ", " (showParseResult model.hand)) ]
-        , p [] (List.map drawTiles (showParseResult model.hand))
+        , p [] [ Debug.toString tiles |> text ]
+        , p [] [ renderTiles tiles ]
         ]
 
 
-drawTile: String -> String -> Html Msg
-drawTile n suit =
-    case suit of
-        "s" ->
-            img [src ("/img/bamboo/bamboo" ++ n ++ ".png")] []
-        "p" ->
-            img [src ("/img/pin/pin" ++ n ++ ".png")] []
-        "m" ->
-            img [src ("/img/man/man" ++ n ++ ".png")] []
-        _ -> text ""
-
-
-drawTiles: String -> Html Msg
-drawTiles parsedHand =
+drawTile: Tile -> Html Msg
+drawTile tile =
     let
-        suit = String.right 1 parsedHand
-        tiles = List.map String.fromChar (String.toList (String.dropRight 1 parsedHand))
+        n = String.fromInt tile.number
     in
-        span [] (List.map (\t -> drawTile t suit) tiles)
+    if tile.number == 0 then
+        case tile.suit of
+            Sou ->
+                img [src ("/img/red-doras/red-dora-bamboo5.png")] []
+            Pin ->
+                img [src ("/img/red-doras/red-dora-pin5.png")] []
+            Man ->
+                img [src ("/img/red-doras/red-dora-man5.png")] []
+            _ -> text ""
+    else
+        case tile.suit of
+            Sou ->
+                img [src ("/img/bamboo/bamboo" ++ n ++ ".png")] []
+            Pin ->
+                img [src ("/img/pin/pin" ++ n ++ ".png")] []
+            Man ->
+                img [src ("/img/man/man" ++ n ++ ".png")] []
+            _ -> text ""
 
 
-handSuit : Parser String
+renderTiles: List Tile -> Html Msg
+renderTiles tiles =
+    span [] (List.map drawTile tiles)
+
+toSuit : String -> Suit
+toSuit s =
+    case s of
+        "p" -> Pin
+        "s" -> Sou
+        "m" -> Man
+        _ -> Invalid
+
+tilesFromSuitString : String -> List Tile
+tilesFromSuitString parsedSuit =
+    let
+        suit = String.right 1 parsedSuit |> toSuit
+        tiles = String.dropRight 1 parsedSuit
+            |> String.toList
+            |> List.map String.fromChar
+            |> List.filterMap String.toInt
+        
+    in
+    List.map (\n ->  Tile n suit) tiles
+
+
+handSuit : Parser (List Tile)
 handSuit =
-    getChompedString <|
-        succeed ()
-            |. chompWhile (\c -> Char.isDigit c)
-            |. chompIf (\c -> c == 's' || c == 'm' || c == 'p')
+    Parser.map tilesFromSuitString  <|
+        getChompedString <|
+            succeed ()
+                |. chompWhile (\c -> Char.isDigit c)
+                |. chompIf (\c -> c == 's' || c == 'm' || c == 'p')
 
-parseHandHelper : List String -> Parser (Parser.Step (List String) (List String))
+parseHandHelper : List Tile -> Parser (Parser.Step (List Tile) (List Tile))
 parseHandHelper parsedSuits =
     oneOf
-        [ succeed (\hand -> Parser.Loop (hand :: parsedSuits))
+        [ succeed (\hand -> Parser.Loop (List.append parsedSuits hand))
             |= handSuit
         , succeed ()
-            |> Parser.map (\_ -> Parser.Done (List.reverse parsedSuits))
+            |> Parser.map (\_ -> Parser.Done parsedSuits)
         ]
 
-handSuits : Parser (List String)
+handSuits : Parser (List Tile)
 handSuits =
     loop [] parseHandHelper
 
-showParseResult: String -> List String
+showParseResult: String -> List Tile
 showParseResult input =
     case Parser.run handSuits input of
         Ok value -> value
-        Err _ -> ["Error"]
+        Err _ -> []
 
 
