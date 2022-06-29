@@ -11,7 +11,7 @@ main = Browser.sandbox { init = init, update = update, view = view}
 
 type alias Model = { hand: String }
 
-type Suit = Sou | Man | Pin | Invalid
+type Suit = Sou | Man | Pin | Honor | Invalid
 type alias Tile =
     { number: Int
     , suit: Suit }
@@ -54,7 +54,8 @@ drawTile tile =
                 img [src ("/img/red-doras/red-dora-pin5.png")] []
             Man ->
                 img [src ("/img/red-doras/red-dora-man5.png")] []
-            _ -> text ""
+            Honor -> text ""
+            Invalid -> text ""
     else
         case tile.suit of
             Sou ->
@@ -63,7 +64,27 @@ drawTile tile =
                 img [src ("/img/pin/pin" ++ n ++ ".png")] []
             Man ->
                 img [src ("/img/man/man" ++ n ++ ".png")] []
-            _ -> text ""
+            Honor -> drawHonorTile tile.number
+            Invalid -> text ""
+
+
+drawHonorTile: Int -> Html Msg
+drawHonorTile n = 
+    let
+        path = case n of
+            1 -> "/img/winds/wind-east.png"
+            2 -> "/img/winds/wind-south.png"
+            3 -> "/img/winds/wind-west.png"
+            4 -> "/img/winds/wind-north.png"
+            5 -> "/img/dragons/dragon-haku.png"
+            6 -> "/img/dragons/dragon-green.png"
+            7 -> "/img/dragons/dragon-chun.png"
+            _ -> ""
+    in
+    if String.isEmpty path then
+        text ""
+    else
+        img [src path] []
 
 
 renderTiles: List Tile -> Html Msg
@@ -76,6 +97,7 @@ toSuit s =
         "p" -> Pin
         "s" -> Sou
         "m" -> Man
+        "z" -> Honor
         _ -> Invalid
 
 tilesFromSuitString : String -> List Tile
@@ -97,7 +119,7 @@ handSuit =
         getChompedString <|
             succeed ()
                 |. chompWhile (\c -> Char.isDigit c)
-                |. chompIf (\c -> c == 's' || c == 'm' || c == 'p')
+                |. chompIf (\c -> c == 's' || c == 'm' || c == 'p' || c == 'z')
 
 parseHandHelper : List Tile -> Parser (Parser.Step (List Tile) (List Tile))
 parseHandHelper parsedSuits =
