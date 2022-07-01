@@ -38,6 +38,9 @@ view model =
         [ input [ type_ "text", placeholder "Hand", value model.hand, onInput Hand] []
         , p [] [ Debug.toString tiles |> text ]
         , p [] [ renderTiles tiles ]
+        , p [] [ text "Run",  Debug.toString (isRun tiles) |> text]
+        , p [] [ text "Triplet",  Debug.toString (isTriplet tiles) |> text]
+        , p [] [ Debug.toString (partitionBySuit tiles) |> text]
         ]
 
 
@@ -141,3 +144,36 @@ showParseResult input =
         Err _ -> []
 
 
+isHonor : Tile -> Bool
+isHonor tile =
+    tile.suit == Honor
+
+
+isTriplet : List Tile -> Bool
+isTriplet tiles =
+    case tiles of
+        x :: y :: [z] -> x == y  && y == z
+        _ -> False
+
+
+-- TODO: red dora
+isRun : List Tile -> Bool
+isRun tiles =
+    case tiles of
+        x :: y :: [z] ->
+            not (isHonor x) &&
+            x.suit == y.suit &&
+            y.suit == z.suit &&
+            x.number + 1 == y.number &&
+            y.number + 1 == z.number
+        _ -> False
+
+
+partitionBySuit : List Tile -> List (List Tile)
+partitionBySuit tiles =
+    let
+        (pin, rest) = List.partition (\t -> t.suit == Pin) tiles
+        (sou, rest2) = List.partition (\t -> t.suit == Sou) rest
+        (man, rest3) = List.partition (\t -> t.suit == Man) rest2
+    in
+        [pin, sou, man, rest3]
