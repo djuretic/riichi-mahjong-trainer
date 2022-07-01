@@ -15,6 +15,10 @@ type Suit = Sou | Man | Pin | Honor | Invalid
 type alias Tile =
     { number: Int
     , suit: Suit }
+type GroupType = Triplet | Run | Kan
+type alias Group =
+    { type_: GroupType
+    , tiles: List Tile }
 
 init : Model
 init = Model ""
@@ -41,6 +45,7 @@ view model =
         , p [] [ text "Run",  Debug.toString (isRun tiles) |> text]
         , p [] [ text "Triplet",  Debug.toString (isTriplet tiles) |> text]
         , p [] [ Debug.toString (partitionBySuit tiles) |> text]
+        , p [] [ Debug.toString (findGroups tiles) |> text]
         ]
 
 
@@ -177,3 +182,27 @@ partitionBySuit tiles =
         (man, rest3) = List.partition (\t -> t.suit == Man) rest2
     in
         [pin, sou, man, rest3]
+
+
+findGroupsInSuit : List Tile -> List Group
+findGroupsInSuit tiles =
+    case tiles of
+        x :: y :: z :: xs ->
+            let
+                candidate = [x, y, z]
+            in
+            if isRun candidate then
+               Group Run candidate :: findGroupsInSuit xs
+            else if isTriplet candidate then
+                Group Triplet candidate :: findGroupsInSuit xs
+            else
+                findGroupsInSuit xs
+        _ -> []
+
+findGroups : List Tile -> List Group
+findGroups tiles =
+    let
+        part = partitionBySuit tiles
+        groupsPerSuit = List.map findGroupsInSuit part
+    in
+    List.concat groupsPerSuit
