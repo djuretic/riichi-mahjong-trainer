@@ -2,7 +2,7 @@ module Main exposing (main)
 import Browser
 import Html exposing (Html, div, text, input, img, p, span)
 import Html.Events exposing (onInput)
-import Html.Attributes exposing (type_, placeholder, value, src)
+import Html.Attributes exposing (type_, placeholder, value, src, style)
 import Parser exposing (Parser, (|.), (|=), succeed, oneOf, loop, getChompedString, chompIf, chompWhile)
 import List.Extra exposing (permutations)
 
@@ -43,8 +43,6 @@ view model =
         [ input [ type_ "text", placeholder "Hand", value model.hand, onInput Hand] []
         , p [] [ Debug.toString tiles |> text ]
         , p [] [ renderTiles tiles ]
-        , p [] [ text "Run",  Debug.toString (isRun tiles) |> text]
-        , p [] [ text "Triplet",  Debug.toString (isTriplet tiles) |> text]
         , p [] [ Debug.toString (partitionBySuit tiles) |> text]
         , p [] [ Debug.toString (findGroups tiles) |> text]
         ]
@@ -54,51 +52,51 @@ drawTile: Tile -> Html Msg
 drawTile tile =
     let
         n = String.fromInt tile.number
-    in
-    if tile.number == 0 then
-        case tile.suit of
-            Sou ->
-                img [src ("/img/red-doras/red-dora-bamboo5.png")] []
-            Pin ->
-                img [src ("/img/red-doras/red-dora-pin5.png")] []
-            Man ->
-                img [src ("/img/red-doras/red-dora-man5.png")] []
-            Honor -> text ""
-            Invalid -> text ""
-    else
-        case tile.suit of
-            Sou ->
-                img [src ("/img/bamboo/bamboo" ++ n ++ ".png")] []
-            Pin ->
-                img [src ("/img/pin/pin" ++ n ++ ".png")] []
-            Man ->
-                img [src ("/img/man/man" ++ n ++ ".png")] []
-            Honor -> drawHonorTile tile.number
-            Invalid -> text ""
-
-
-drawHonorTile: Int -> Html Msg
-drawHonorTile n = 
-    let
-        path = case n of
-            1 -> "/img/winds/wind-east.png"
-            2 -> "/img/winds/wind-south.png"
-            3 -> "/img/winds/wind-west.png"
-            4 -> "/img/winds/wind-north.png"
-            5 -> "/img/dragons/dragon-haku.png"
-            6 -> "/img/dragons/dragon-green.png"
-            7 -> "/img/dragons/dragon-chun.png"
-            _ -> ""
+        isRedDora = tile.number == 0
+        path = case isRedDora of
+            True ->
+                case tile.suit of
+                    Sou -> "/img/red-doras/red-dora-bamboo5.png"
+                    Pin -> "/img/red-doras/red-dora-pin5.png"
+                    Man ->  "/img/red-doras/red-dora-man5.png"
+                    Honor -> ""
+                    Invalid -> ""
+            False ->
+                case tile.suit of
+                    Sou -> "/img/bamboo/bamboo" ++ n ++ ".png"
+                    Pin -> "/img/pin/pin" ++ n ++ ".png"
+                    Man -> "/img/man/man" ++ n ++ ".png"
+                    Honor -> pathHonorTile tile.number
+                    Invalid -> ""
     in
     if String.isEmpty path then
         text ""
-    else
-        img [src path] []
+    else 
+        div [ style "background-image" ("url(" ++ path ++ ")")
+            , style "background-position-x" "-10px"
+            , style "float" "left"
+            , style "height" "64px"
+            , style "width" "45px"] []
 
+
+pathHonorTile: Int -> String
+pathHonorTile n = 
+    case n of
+        1 -> "/img/winds/wind-east.png"
+        2 -> "/img/winds/wind-south.png"
+        3 -> "/img/winds/wind-west.png"
+        4 -> "/img/winds/wind-north.png"
+        5 -> "/img/dragons/dragon-haku.png"
+        6 -> "/img/dragons/dragon-green.png"
+        7 -> "/img/dragons/dragon-chun.png"
+        _ -> ""
+
+
+clearFixDiv = div [style "clear" "both"] []
 
 renderTiles: List Tile -> Html Msg
 renderTiles tiles =
-    span [] (List.map drawTile tiles)
+    div [] (List.append (List.map drawTile tiles) [clearFixDiv])
 
 toSuit : String -> Suit
 toSuit s =
