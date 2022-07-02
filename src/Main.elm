@@ -4,6 +4,7 @@ import Html exposing (Html, div, text, input, img, p, span)
 import Html.Events exposing (onInput)
 import Html.Attributes exposing (type_, placeholder, value, src)
 import Parser exposing (Parser, (|.), (|=), succeed, oneOf, loop, getChompedString, chompIf, chompWhile)
+import List.Extra exposing (permutations)
 
 main : Program () Model Msg
 main = Browser.sandbox { init = init, update = update, view = view}
@@ -199,10 +200,11 @@ findGroupsInSuit tiles =
                 findGroupsInSuit xs
         _ -> []
 
-findGroups : List Tile -> List Group
+findGroups : List Tile -> List (List Group)
 findGroups tiles =
     let
         part = partitionBySuit tiles
-        groupsPerSuit = List.map findGroupsInSuit part
+        permutationsPerSuit = List.map permutations part
+        groupsPerSuit = List.map (\p -> List.map findGroupsInSuit p) permutationsPerSuit
     in
     List.concat groupsPerSuit
