@@ -16,6 +16,16 @@ type Suit = Sou | Man | Pin | Honor | Invalid
 type alias Tile =
     { number: Int
     , suit: Suit }
+type alias TilesPerSuit =
+    { sou: List Tile
+    , man: List Tile
+    , pin: List Tile
+    , honor: List Tile}
+type alias GroupsPerSuit =
+    { sou: List (List Group)
+    , man: List (List Group)
+    , pin: List (List Group)
+    , honor: List (List Group)}
 type GroupType = Triplet | Run | Kan
 type alias Group =
     { type_: GroupType
@@ -173,14 +183,14 @@ isRun tiles =
         _ -> False
 
 
-partitionBySuit : List Tile -> List (List Tile)
+partitionBySuit : List Tile -> TilesPerSuit
 partitionBySuit tiles =
     let
         (pin, rest) = List.partition (\t -> t.suit == Pin) tiles
         (sou, rest2) = List.partition (\t -> t.suit == Sou) rest
         (man, rest3) = List.partition (\t -> t.suit == Man) rest2
     in
-        [pin, sou, man, rest3]
+    { sou = sou, man = man, pin = pin, honor = rest3}
 
 
 findGroupsInSuit : List Tile -> List Group
@@ -198,11 +208,15 @@ findGroupsInSuit tiles =
                 findGroupsInSuit xs
         _ -> []
 
-findGroups : List Tile -> List (List Group)
+findGroups : List Tile -> GroupsPerSuit
 findGroups tiles =
     let
         part = partitionBySuit tiles
-        permutationsPerSuit = List.map permutations part
-        groupsPerSuit = List.map (\p -> List.map findGroupsInSuit p) permutationsPerSuit
+        findAllGroups = \t -> List.map findGroupsInSuit (permutations t)
+        groupsPerSuit = {
+            sou = findAllGroups part.sou
+            , man = findAllGroups part.man
+            , pin = findAllGroups part.pin
+            , honor = findAllGroups part.honor }
     in
-    List.concat groupsPerSuit
+    groupsPerSuit
