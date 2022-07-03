@@ -210,6 +210,7 @@ findGroupsInSuit tiles =
         _ -> []
 
 
+-- only works on sorted input
 deduplicate : List a -> List a
 deduplicate list =
     let
@@ -229,16 +230,28 @@ deduplicate list =
         x :: xs ->
             x :: helper [] x xs
 
+
+permutationsAndDedup : List Tile -> List (List Tile)
+permutationsAndDedup tiles = 
+    let
+        perms = permutations tiles
+        sortedPerms = List.sortBy (\t -> List.map .number t) perms
+    in
+    deduplicate sortedPerms
+
+
 findGroups : List Tile -> GroupsPerSuit
 findGroups tiles =
     let
         part = partitionBySuit tiles
-        findAllGroups = \t -> List.map findGroupsInSuit (deduplicate (permutations t))
+        findAllGroups = \t -> List.map findGroupsInSuit (permutationsAndDedup t)
         groupsPerSuit = {
             sou = findAllGroups part.sou
             , man = findAllGroups part.man
             , pin = findAllGroups part.pin
             , honor = findAllGroups part.honor }
+        _ = Debug.log "perm" (Debug.toString (permutations part.man))
+        _ = Debug.log "permDedup" (Debug.toString (permutationsAndDedup part.man))
     in
     groupsPerSuit
 
