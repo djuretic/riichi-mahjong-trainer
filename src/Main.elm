@@ -240,18 +240,33 @@ permutationsAndDedup tiles =
     deduplicate sortedPerms
 
 
+groupToTuple : Group -> List (Char, Int)
+groupToTuple group =
+    let
+        suitToChar s = case s of
+            Man -> 'm'
+            Pin -> 'p'
+            Sou -> 's'
+            Honor -> 'z'
+            Invalid -> ' '
+    in
+    List.map (\t -> (suitToChar t.suit, t.number)) group.tiles 
+
+
 findGroups : List Tile -> GroupsPerSuit
 findGroups tiles =
     let
         part = partitionBySuit tiles
-        findAllGroups = \t -> List.map findGroupsInSuit (permutationsAndDedup t)
+        findAllGroups = \t ->
+            permutationsAndDedup t
+                |> List.map findGroupsInSuit
+                |> List.sortBy (\g -> List.map groupToTuple g )
+                |> deduplicate
         groupsPerSuit = {
             sou = findAllGroups part.sou
             , man = findAllGroups part.man
             , pin = findAllGroups part.pin
             , honor = findAllGroups part.honor }
-        _ = Debug.log "perm" (Debug.toString (permutations part.man))
-        _ = Debug.log "permDedup" (Debug.toString (permutationsAndDedup part.man))
     in
     groupsPerSuit
 
