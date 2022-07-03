@@ -1,6 +1,6 @@
 module Main exposing (main)
 import Browser
-import Html exposing (Html, div, text, input, img, p, span)
+import Html exposing (Html, div, text, input, p, table, tr, td, ul, li)
 import Html.Events exposing (onInput)
 import Html.Attributes exposing (type_, placeholder, value, src, style)
 import Parser exposing (Parser, (|.), (|=), succeed, oneOf, loop, getChompedString, chompIf, chompWhile)
@@ -32,7 +32,7 @@ type alias Group =
     , tiles: List Tile }
 
 init : Model
-init = Model ""
+init = Model "2555m"
 
 
 type Msg = Hand String
@@ -54,7 +54,8 @@ view model =
         , p [] [ Debug.toString tiles |> text ]
         , p [] [ renderTiles tiles ]
         , p [] [ Debug.toString (partitionBySuit tiles) |> text]
-        , p [] [ Debug.toString (findGroups tiles) |> text]
+        -- , p [] [ Debug.toString (findGroups tiles) |> text]
+        , debugGroups (findGroups tiles)
         ]
 
 
@@ -63,15 +64,14 @@ drawTile tile =
     let
         n = String.fromInt tile.number
         isRedDora = tile.number == 0
-        path = case isRedDora of
-            True ->
+        path = if isRedDora then
                 case tile.suit of
                     Sou -> "/img/red-doras/red-dora-bamboo5.png"
                     Pin -> "/img/red-doras/red-dora-pin5.png"
                     Man ->  "/img/red-doras/red-dora-man5.png"
                     Honor -> ""
                     Invalid -> ""
-            False ->
+            else
                 case tile.suit of
                     Sou -> "/img/bamboo/bamboo" ++ n ++ ".png"
                     Pin -> "/img/pin/pin" ++ n ++ ".png"
@@ -102,6 +102,7 @@ pathHonorTile n =
         _ -> ""
 
 
+clearFixDiv : Html msg
 clearFixDiv = div [style "clear" "both"] []
 
 renderTiles: List Tile -> Html Msg
@@ -205,14 +206,34 @@ findGroupsInSuit tiles =
             else if isTriplet candidate then
                 Group Triplet candidate :: findGroupsInSuit xs
             else
-                findGroupsInSuit xs
+                []
         _ -> []
+
+
+deduplicate : List a -> List a
+deduplicate list =
+    let
+        helper accum previousElement remaining =
+            case remaining of
+                [] ->
+                    accum
+                first :: rest ->
+                    if first == previousElement then
+                        helper accum previousElement rest
+                    else
+                        helper (first :: accum) first rest
+    in
+    case list of
+        [] ->
+            []
+        x :: xs ->
+            x :: helper [] x xs
 
 findGroups : List Tile -> GroupsPerSuit
 findGroups tiles =
     let
         part = partitionBySuit tiles
-        findAllGroups = \t -> List.map findGroupsInSuit (permutations t)
+        findAllGroups = \t -> List.map findGroupsInSuit (deduplicate (permutations t))
         groupsPerSuit = {
             sou = findAllGroups part.sou
             , man = findAllGroups part.man
@@ -220,3 +241,23 @@ findGroups tiles =
             , honor = findAllGroups part.honor }
     in
     groupsPerSuit
+
+
+debugGroup: List Group -> Html Msg
+debugGroup listGroup =
+    ul [] (List.map (\g -> li [] [text (Debug.toString g)]) listGroup)
+
+debugGroups : GroupsPerSuit -> Html Msg
+debugGroups groups =
+    let
+        cellStyle = style "border" "1px solid black"
+
+    in
+    table []
+        [ tr [] 
+            [ td [cellStyle] (List.map debugGroup groups.man)
+            ]
+        , tr [] 
+            [ td [cellStyle] (List.map debugGroup groups.sou)
+            ]
+        ]
