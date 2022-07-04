@@ -27,7 +27,7 @@ type alias GroupsPerSuit =
     , man: List (List Group)
     , pin: List (List Group)
     , honor: List (List Group)}
-type GroupType = Triplet | Run
+type GroupType = Triplet | Run | Pair
 type alias Group =
     { type_: GroupType
     , tileNumbers: List TileNumber }
@@ -191,11 +191,30 @@ findGroupsInSuit tiles considerRuns =
         x :: y :: z :: xs ->
             let
                 candidate = [x, y, z]
+                emptyRemaining = List.isEmpty xs
             in
             if considerRuns && isRun candidate then
-               Group Run candidate :: findGroupsInSuit xs considerRuns
+                let
+                    rest = findGroupsInSuit xs considerRuns
+                in
+                if List.isEmpty rest && not emptyRemaining then
+                    []
+                else
+                    Group Run candidate :: rest
             else if isTriplet candidate then
-                Group Triplet candidate :: findGroupsInSuit xs considerRuns
+                let
+                    rest = findGroupsInSuit xs considerRuns
+                in
+                if List.isEmpty rest && not emptyRemaining then
+                    []
+                else
+                    Group Triplet candidate :: rest
+            else
+                []
+        -- we only search for pairs at the end of the list
+        x :: [y] ->
+            if x == y then
+                [ Group Pair [x, x] ]
             else
                 []
         _ -> []
@@ -266,5 +285,11 @@ debugGroups groups =
             ]
         , tr [] 
             [ td [cellStyle] (List.map debugGroup groups.sou)
+            ]
+        , tr [] 
+            [ td [cellStyle] (List.map debugGroup groups.pin)
+            ]
+        , tr [] 
+            [ td [cellStyle] (List.map debugGroup groups.honor)
             ]
         ]
