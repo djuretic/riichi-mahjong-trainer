@@ -2,7 +2,7 @@ module Main exposing (main)
 import Browser
 import Html exposing (Html, div, text, input, p, table, tr, td, ul, li)
 import Html.Events exposing (onInput)
-import Html.Attributes exposing (type_, placeholder, value, src, style)
+import Html.Attributes exposing (type_, placeholder, value, style)
 import Parser exposing (Parser, (|.), (|=), succeed, oneOf, loop, getChompedString, chompIf, chompWhile)
 import List.Extra exposing (permutations)
 
@@ -13,8 +13,9 @@ main = Browser.sandbox { init = init, update = update, view = view}
 type alias Model = { hand: String }
 
 type Suit = Sou | Man | Pin | Honor | Invalid
+type alias TileNumber = Int
 type alias Tile =
-    { number: Int
+    { number: TileNumber
     , suit: Suit }
 type alias TilesPerSuit =
     { sou: List Tile
@@ -26,10 +27,10 @@ type alias GroupsPerSuit =
     , man: List (List Group)
     , pin: List (List Group)
     , honor: List (List Group)}
-type GroupType = Triplet | Run | Kan
+type GroupType = Triplet | Run
 type alias Group =
     { type_: GroupType
-    , tiles: List Tile }
+    , tileNumbers: List TileNumber }
 
 init : Model
 init = Model "2555m"
@@ -158,13 +159,7 @@ showParseResult input =
         Ok value -> value
         Err _ -> []
 
-
-isHonor : Tile -> Bool
-isHonor tile =
-    tile.suit == Honor
-
-
-isTriplet : List Tile -> Bool
+isTriplet : List TileNumber -> Bool
 isTriplet tiles =
     case tiles of
         x :: y :: [z] -> x == y  && y == z
@@ -172,15 +167,11 @@ isTriplet tiles =
 
 
 -- TODO: red dora
-isRun : List Tile -> Bool
+isRun : List TileNumber -> Bool
 isRun tiles =
     case tiles of
         x :: y :: [z] ->
-            not (isHonor x) &&
-            x.suit == y.suit &&
-            y.suit == z.suit &&
-            x.number + 1 == y.number &&
-            y.number + 1 == z.number
+            x + 1 == y && y + 1 == z
         _ -> False
 
 
@@ -194,17 +185,17 @@ partitionBySuit tiles =
     { sou = sou, man = man, pin = pin, honor = rest3}
 
 
-findGroupsInSuit : List Tile -> List Group
-findGroupsInSuit tiles =
+findGroupsInSuit : List TileNumber -> Bool -> List Group
+findGroupsInSuit tiles considerRuns =
     case tiles of
         x :: y :: z :: xs ->
             let
                 candidate = [x, y, z]
             in
-            if isRun candidate then
-               Group Run candidate :: findGroupsInSuit xs
+            if considerRuns && isRun candidate then
+               Group Run candidate :: findGroupsInSuit xs considerRuns
             else if isTriplet candidate then
-                Group Triplet candidate :: findGroupsInSuit xs
+                Group Triplet candidate :: findGroupsInSuit xs considerRuns
             else
                 []
         _ -> []
@@ -231,42 +222,30 @@ deduplicate list =
             x :: helper [] x xs
 
 
-permutationsAndDedup : List Tile -> List (List Tile)
-permutationsAndDedup tiles = 
+permutationsAndDedup : List TileNumber -> List (List TileNumber)
+permutationsAndDedup tileNumbers = 
     let
-        perms = permutations tiles
-        sortedPerms = List.sortBy (\t -> List.map .number t) perms
+        perms = permutations tileNumbers
+        -- TODO remove permutations of 3, abc def == def abc
+        sortedPerms = List.sort perms
     in
     deduplicate sortedPerms
-
-
-groupToTuple : Group -> List (Char, Int)
-groupToTuple group =
-    let
-        suitToChar s = case s of
-            Man -> 'm'
-            Pin -> 'p'
-            Sou -> 's'
-            Honor -> 'z'
-            Invalid -> ' '
-    in
-    List.map (\t -> (suitToChar t.suit, t.number)) group.tiles 
-
 
 findGroups : List Tile -> GroupsPerSuit
 findGroups tiles =
     let
         part = partitionBySuit tiles
-        findAllGroups = \t ->
-            permutationsAndDedup t
-                |> List.map findGroupsInSuit
-                |> List.sortBy (\g -> List.map groupToTuple g )
+        findAllGroups = \t withRuns->
+            List.map .number t
+                |> permutationsAndDedup
+                |> List.map (\p -> findGroupsInSuit p withRuns)
+                |> List.sortBy (\g -> List.map .tileNumbers g)
                 |> deduplicate
         groupsPerSuit = {
-            sou = findAllGroups part.sou
-            , man = findAllGroups part.man
-            , pin = findAllGroups part.pin
-            , honor = findAllGroups part.honor }
+            sou = findAllGroups part.sou True
+            , man = findAllGroups part.man True
+            , pin = findAllGroups part.pin True
+            , honor = findAllGroups part.honor False }
     in
     groupsPerSuit
 
