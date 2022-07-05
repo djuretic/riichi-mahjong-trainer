@@ -5,6 +5,7 @@ import Html.Events exposing (onInput)
 import Html.Attributes exposing (type_, placeholder, value, style)
 import Parser exposing (Parser, (|.), (|=), succeed, oneOf, loop, getChompedString, chompIf, chompWhile)
 import List.Extra exposing (permutations)
+import Maybe
 
 main : Program () Model Msg
 main = Browser.sandbox { init = init, update = update, view = view}
@@ -30,7 +31,8 @@ type alias GroupsPerSuit =
 type GroupType = Triplet | Run | Pair
 type alias Group =
     { type_: GroupType
-    , tileNumbers: List TileNumber }
+    , tileNumbers: List TileNumber
+    , suit: Suit }
 
 init : Model
 init = Model "2555m"
@@ -49,14 +51,15 @@ view : Model -> Html Msg
 view model =
     let
         tiles = showParseResult model.hand
+        groups = findGroups tiles
     in 
     div []
         [ input [ type_ "text", placeholder "Hand", value model.hand, onInput Hand] []
-        , p [] [ Debug.toString tiles |> text ]
+        -- , p [] [ Debug.toString tiles |> text ]
         , p [] [ renderTiles tiles ]
-        , p [] [ Debug.toString (partitionBySuit tiles) |> text]
-        -- , p [] [ Debug.toString (findGroups tiles) |> text]
-        , debugGroups (findGroups tiles)
+        , debugGroups groups
+        , drawGroups (findWinningHand groups)
+        , text (Debug.toString (findWinningHand groups))
         ]
 
 
@@ -185,36 +188,36 @@ partitionBySuit tiles =
     { sou = sou, man = man, pin = pin, honor = rest3}
 
 
-findGroupsInSuit : List TileNumber -> Bool -> List Group
-findGroupsInSuit tiles considerRuns =
+findGroupsInSuit : List TileNumber -> Suit -> List Group
+findGroupsInSuit tiles suit =
     case tiles of
         x :: y :: z :: xs ->
             let
                 candidate = [x, y, z]
                 emptyRemaining = List.isEmpty xs
             in
-            if considerRuns && isRun candidate then
+            if suit /= Honor && isRun candidate then
                 let
-                    rest = findGroupsInSuit xs considerRuns
+                    rest = findGroupsInSuit xs suit
                 in
                 if List.isEmpty rest && not emptyRemaining then
                     []
                 else
-                    Group Run candidate :: rest
+                    Group Run candidate suit :: rest
             else if isTriplet candidate then
                 let
-                    rest = findGroupsInSuit xs considerRuns
+                    rest = findGroupsInSuit xs suit
                 in
                 if List.isEmpty rest && not emptyRemaining then
                     []
                 else
-                    Group Triplet candidate :: rest
+                    Group Triplet candidate suit :: rest
             else
                 []
         -- we only search for pairs at the end of the list
         x :: [y] ->
             if x == y then
-                [ Group Pair [x, x] ]
+                [ Group Pair [x, x] suit ]
             else
                 []
         _ -> []
@@ -260,36 +263,61 @@ findGroups tiles =
                 |> List.map (\p -> findGroupsInSuit p withRuns)
                 |> List.sortBy (\g -> List.map .tileNumbers g)
                 |> deduplicate
+                |> List.filter (\g -> not (List.isEmpty g))
         groupsPerSuit = {
-            sou = findAllGroups part.sou True
-            , man = findAllGroups part.man True
-            , pin = findAllGroups part.pin True
-            , honor = findAllGroups part.honor False }
+            sou = findAllGroups part.sou Sou
+            , man = findAllGroups part.man Man
+            , pin = findAllGroups part.pin Pin
+            , honor = findAllGroups part.honor Honor }
     in
     groupsPerSuit
 
 
+findWinningHand : GroupsPerSuit -> List Group
+findWinningHand groups =
+    let
+        firstItem = \g -> Maybe.withDefault [] (List.head g)
+        man = firstItem groups.man
+        pin = firstItem groups.pin
+        sou = firstItem groups.sou
+        honor = firstItem groups.honor
+        possibleGroups = List.concat [ man, pin, sou, honor ]
+        numberPairs = List.filter (\g -> g.type_ == Pair) possibleGroups |> List.length
+    in
+    if List.length possibleGroups == 5 && numberPairs == 1 then
+        possibleGroups
+    else
+        []
+
+
+drawGroup : Group -> Html Msg
+drawGroup group =
+    div []
+        (List.map (\g -> Tile g group.suit |> drawTile) group.tileNumbers)
+
+
+drawGroups : List Group -> Html Msg
+drawGroups groups =
+    div [] (List.map drawGroup groups)
+
+
 debugGroup: List Group -> Html Msg
 debugGroup listGroup =
-    ul [] (List.map (\g -> li [] [text (Debug.toString g)]) listGroup)
+    if List.isEmpty listGroup then
+        text "[]"
+    else
+        ul [] (List.map (\g -> li [] [text (Debug.toString g)]) listGroup)
 
 debugGroups : GroupsPerSuit -> Html Msg
 debugGroups groups =
     let
         cellStyle = style "border" "1px solid black"
-
+        generateTd l= List.map (\g -> td [cellStyle] [debugGroup g]) l
     in
     table []
-        [ tr [] 
-            [ td [cellStyle] (List.map debugGroup groups.man)
-            ]
-        , tr [] 
-            [ td [cellStyle] (List.map debugGroup groups.sou)
-            ]
-        , tr [] 
-            [ td [cellStyle] (List.map debugGroup groups.pin)
-            ]
-        , tr [] 
-            [ td [cellStyle] (List.map debugGroup groups.honor)
-            ]
+        [ tr [] [text "groupsPerSuit"]
+        , tr [] (generateTd groups.man)
+        , tr [] (generateTd groups.pin)
+        , tr [] (generateTd groups.sou)
+        , tr [] (generateTd groups.honor)
         ]
