@@ -11,7 +11,9 @@ main : Program () Model Msg
 main = Browser.sandbox { init = init, update = update, view = view}
 
 
-type alias Model = { hand: String }
+type alias Model =
+    { handString: String
+    , hand: Hand }
 
 type Suit = Sou | Man | Pin | Honor | Invalid
 type alias TileNumber = Int
@@ -33,33 +35,49 @@ type alias Group =
     { type_: GroupType
     , tileNumbers: List TileNumber
     , suit: Suit }
+type WinBy = Ron | Tsumo
+type alias Hand =
+    { tiles: List Tile
+    , groups: List Group
+    , winBy: WinBy
+    , fu: List FuSource }
+type alias FuSource =
+    { fu: Int
+    , description: String
+    , groups: List Group }
 
 init : Model
-init = Model "2555m"
+init = Model "2555m" (Hand [] [] Tsumo [])
 
 
-type Msg = Hand String
+type Msg = HandStr String
 
 update: Msg -> Model -> Model
 update msg model =
     case msg of
-        Hand hand ->
-            { model | hand = hand }
+        HandStr handString ->
+            let
+                tiles = showParseResult handString
+                allGroups = findGroups tiles
+                groups = findWinningHand allGroups
+                hand = { tiles = tiles, winBy = Tsumo, groups = groups, fu = []}
+            in
+            { model | handString = handString, hand = hand }
 
 
 view : Model -> Html Msg
 view model =
     let
-        tiles = showParseResult model.hand
-        groups = findGroups tiles
+        allGroups = findGroups model.hand.tiles
     in 
     div []
-        [ input [ type_ "text", placeholder "Hand", value model.hand, onInput Hand] []
+        [ input [ type_ "text", placeholder "Hand", value model.handString, onInput HandStr] []
         -- , p [] [ Debug.toString tiles |> text ]
-        , p [] [ renderTiles tiles ]
-        , debugGroups groups
-        , drawGroups (findWinningHand groups)
-        , text (Debug.toString (findWinningHand groups))
+        , p [] [ renderTiles model.hand.tiles ]
+        , debugGroups allGroups
+        , drawGroups model.hand.groups
+        , text (Debug.toString model.hand.groups)
+        , p [] [text ("Fu:" ++ (Debug.toString (.fu (countFu model.hand))))]
         ]
 
 
@@ -332,3 +350,23 @@ debugGroups groups =
         , tr [] (generateTd groups.sou)
         , tr [] (generateTd groups.honor)
         ]
+
+
+fuBase: Hand -> Hand
+fuBase hand =
+    -- TODO seven pairs, 25 fu
+    { hand | fu = (FuSource 20 "Base hand value" []) :: hand.fu }        
+
+fuClosedRon: Hand -> Hand
+fuClosedRon hand =
+    -- TODO only for *closed* ron
+    if hand.winBy == Ron then
+        { hand | fu = (FuSource 10 "Closed Ron" []) :: hand.fu }        
+    else
+        hand
+
+countFu : Hand -> Hand
+countFu hand =
+    hand
+        |> fuBase
+        |> fuClosedRon
