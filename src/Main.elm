@@ -122,6 +122,15 @@ toSuit s =
         "z" -> Honor
         _ -> Invalid
 
+suitToString : Suit -> String
+suitToString suit =
+    case suit of
+        Man -> "m"
+        Pin -> "p"
+        Sou -> "s"
+        Honor -> "z"
+        _ -> ""
+
 tilesFromSuitString : String -> List Tile
 tilesFromSuitString parsedSuit =
     let
@@ -283,9 +292,11 @@ findWinningHand groups =
         honor = firstItem groups.honor
         possibleGroups = List.concat [ man, pin, sou, honor ]
         numberPairs = List.filter (\g -> g.type_ == Pair) possibleGroups |> List.length
+        groupSort g =
+            (suitToString g.suit, Maybe.withDefault 0 (List.head g.tileNumbers))
     in
     if List.length possibleGroups == 5 && numberPairs == 1 then
-        possibleGroups
+        List.sortBy groupSort possibleGroups
     else
         []
 
