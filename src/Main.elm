@@ -36,6 +36,18 @@ type alias Group =
     , tileNumbers: List TileNumber
     , suit: Suit }
 type WinBy = Ron | Tsumo
+
+type ValuePairTimes = Single | Double
+type OpenClose = Open | Closed
+type TripletKind = IsTerminal | IsHonor | HasNoValue
+type FuDescription =
+    BaseFu
+    | TsumoNotPinfu
+    | ClosedRon
+    | ValuePair ValuePairTimes
+    | IsTriplet OpenClose TripletKind
+    | IsKan OpenClose TripletKind
+    | NoFu
 type alias Hand =
     { tiles: List Tile
     , groups: List Group
@@ -43,7 +55,7 @@ type alias Hand =
     , fu: List FuSource }
 type alias FuSource =
     { fu: Int
-    , description: String
+    , description: FuDescription
     , groups: List Group }
 
 init : Model
@@ -352,21 +364,53 @@ debugGroups groups =
         ]
 
 
-fuBase: Hand -> Hand
-fuBase hand =
-    -- TODO seven pairs, 25 fu
-    { hand | fu = (FuSource 20 "Base hand value" []) :: hand.fu }        
+noFu: FuSource
+noFu =
+    FuSource 0 NoFu []
 
-fuClosedRon: Hand -> Hand
+fuBase: Hand -> FuSource
+fuBase _ =
+    -- TODO seven pairs, 25 fu
+    FuSource 20 BaseFu []
+
+fuClosedRon: Hand -> FuSource
 fuClosedRon hand =
     -- TODO only for *closed* ron
     if hand.winBy == Ron then
-        { hand | fu = (FuSource 10 "Closed Ron" []) :: hand.fu }        
+        FuSource 10 ClosedRon []
     else
-        hand
+        noFu
+
+fuTriplet: Group -> FuSource
+fuTriplet group =
+    if group.type_== Triplet then
+        -- TODO closed
+        let
+            first = Maybe.withDefault 0 (List.head group.tileNumbers)
+        in
+        if first == 1 || first == 9 then
+            FuSource 8 (IsTriplet Closed IsTerminal) [ group ]
+        else if group.suit == Honor then
+            FuSource 8 (IsTriplet Closed IsHonor) [ group ]
+        else
+            FuSource 4 (IsTriplet Closed HasNoValue) [ group ]
+    else
+        noFu
+
+fuTriplets: Hand -> List FuSource
+fuTriplets hand =
+    let
+        triplets = List.filter (\g -> g.type_ == Triplet) hand.groups
+    in    
+    List.map fuTriplet triplets
 
 countFu : Hand -> Hand
 countFu hand =
-    hand
-        |> fuBase
-        |> fuClosedRon
+    let
+        base = fuBase hand
+        closedRon = fuClosedRon hand
+        triplets = fuTriplets hand
+        allFu = List.concat [[base, closedRon], triplets]
+        allValidFu = List.filter (\f -> not (f == noFu)) allFu
+    in
+    { hand | fu = allValidFu }
