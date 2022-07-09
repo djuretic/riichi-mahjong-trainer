@@ -6,6 +6,7 @@ import Html.Attributes exposing (type_, placeholder, value, style)
 import Parser exposing (Parser, (|.), (|=), succeed, oneOf, loop, getChompedString, chompIf, chompWhile)
 import List.Extra exposing (permutations)
 import Maybe
+import Html.Events exposing (onClick)
 
 main : Program () Model Msg
 main = Browser.sandbox { init = init, update = update, view = view}
@@ -48,10 +49,13 @@ type FuDescription =
     | TripletFu OpenClose TripletKind
     | KanFu OpenClose TripletKind
     | NoFu
+type Wind = East | South | West | North
 type alias Hand =
     { tiles: List Tile
     , groups: List Group
     , winBy: WinBy
+    , seatWind: Wind
+    , roundWind: Wind 
     , fu: List FuSource }
 type alias FuSource =
     { fu: Int
@@ -59,10 +63,12 @@ type alias FuSource =
     , groups: List Group }
 
 init : Model
-init = Model "2555m" (Hand [] [] Tsumo [])
+init = Model "2555m" (Hand [] [] Tsumo East East [])
 
 
 type Msg = HandStr String
+    | ChangeSeatWind
+    | ChangeRoundWind
 
 update: Msg -> Model -> Model
 update msg model =
@@ -72,9 +78,28 @@ update msg model =
                 tiles = showParseResult handString
                 allGroups = findGroups tiles
                 groups = findWinningHand allGroups
-                hand = { tiles = tiles, winBy = Tsumo, groups = groups, fu = []}
+                prevHand = model.hand
+                hand = 
+                    -- keep the older winds
+                    { prevHand | tiles = tiles
+                    , winBy = Tsumo
+                    , groups = groups
+                    , fu = []}
             in
             { model | handString = handString, hand = hand }
+        ChangeRoundWind ->
+            let
+                prevHand = model.hand
+                newHand = { prevHand | roundWind = cycleWind prevHand.roundWind }
+            in
+            { model | hand = newHand }
+        ChangeSeatWind ->
+            let
+                prevHand = model.hand
+                newHand = { prevHand | seatWind = cycleWind prevHand.seatWind }
+            in
+            { model | hand = newHand }
+        
 
 
 view : Model -> Html Msg
@@ -87,6 +112,7 @@ view model =
         [ input [ type_ "text", placeholder "Hand", value model.handString, onInput HandStr] []
         -- , p [] [ Debug.toString tiles |> text ]
         , p [] [ renderTiles model.hand.tiles ]
+        , renderWinds model.hand
         , debugGroups allGroups
         , drawGroups model.hand.groups
         , p [] [text (Debug.toString model.hand.groups), clearFixDiv]
@@ -383,6 +409,34 @@ fuClosedRon hand =
     else
         noFu
 
+fuValuePair: Hand -> FuSource
+fuValuePair hand =
+    let
+        possiblePair = List.filter (\g -> g.type_ == Pair) hand.groups
+            |> List.head
+    in
+    case possiblePair of
+        Just pair ->
+            case pair.tileNumbers of
+                n :: _ ->
+                    let
+                        possibleWind = groupToWind pair
+                        isRoundWind = Just hand.roundWind == possibleWind
+                        isSeatWind = Just hand.seatWind == possibleWind
+                    in
+                    -- dragon
+                    if (n == 5 || n == 6 || n == 7) && pair.suit == Honor then
+                        FuSource 2 (ValuePair Single) [pair]
+                    else if isRoundWind && isSeatWind then
+                        FuSource 4 (ValuePair Double) [pair]
+                    else if isRoundWind || isSeatWind then
+                        FuSource 2 (ValuePair Single) [pair]
+                    else
+                        noFu
+                _ -> noFu
+        Nothing ->
+            noFu
+
 fuTriplet: Group -> FuSource
 fuTriplet group =
     if group.type_== Triplet then
@@ -411,8 +465,9 @@ countFu hand =
     let
         base = fuBase hand
         closedRon = fuClosedRon hand
+        valuePair = fuValuePair hand
         triplets = fuTriplets hand
-        allFu = List.concat [[base, closedRon], triplets]
+        allFu = List.concat [[base, closedRon, valuePair], triplets]
         allValidFu = List.filter (\f -> not (f == noFu)) allFu
     in
     { hand | fu = allValidFu }
@@ -431,16 +486,55 @@ renderFuSource fuSource =
             ClosedRon -> "Closed ron"
             ValuePair Single -> "Value pair"
             ValuePair Double -> "Value pair x2"
-            -- TODO openClosed
-            TripletFu _ kind ->
+            TripletFu openClosed kind ->
+                let
+                    openClosedStr = case openClosed of
+                        Open -> "(open)"
+                        Closed -> "(closed)"
+                in
                 case kind of
-                    IsHonor -> "Triplet of honors"
-                    IsTerminal -> "Triplet of terminals"
-                    HasNoValue -> "Triplet of simples"
+                    IsHonor -> "Triplet of honors " ++ openClosedStr
+                    IsTerminal -> "Triplet of terminals " ++ openClosedStr
+                    HasNoValue -> "Triplet of simples " ++ openClosedStr
             -- TODO
             KanFu _ _-> "Kan"
             NoFu -> "?"
     in
     tr []
         [ td [] [text explanation]
-        , td [] [text (String.fromInt fuSource.fu)]]
+        , td [] [text (String.fromInt fuSource.fu ++ " fu")]
+        , td [] [drawGroups fuSource.groups]]
+
+renderWinds: Hand -> Html Msg
+renderWinds hand =
+    div [] 
+        [ p [onClick ChangeSeatWind] [text ("Seat wind: " ++ Debug.toString hand.seatWind) ]
+        , p [onClick ChangeRoundWind] [text ("Round wind: " ++ Debug.toString hand.roundWind) ] ]
+
+cycleWind: Wind -> Wind
+cycleWind wind =
+    case wind of
+        East -> South
+        South -> West
+        West -> North
+        North -> East
+
+groupToWind: Group -> Maybe Wind
+groupToWind group =
+    let
+        firstTile = List.head group.tileNumbers
+            |> Maybe.withDefault 0
+        getWind g = if g.suit == Honor then
+            case firstTile of
+                1 -> Just East
+                2 -> Just South
+                3 -> Just West
+                4 -> Just North
+                _ -> Nothing
+            else 
+                Nothing  
+    in
+    case group.type_ of
+        Triplet -> getWind group
+        Pair -> getWind group
+        Run -> Nothing
