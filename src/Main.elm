@@ -45,8 +45,8 @@ type FuDescription =
     | TsumoNotPinfu
     | ClosedRon
     | ValuePair ValuePairTimes
-    | IsTriplet OpenClose TripletKind
-    | IsKan OpenClose TripletKind
+    | TripletFu OpenClose TripletKind
+    | KanFu OpenClose TripletKind
     | NoFu
 type alias Hand =
     { tiles: List Tile
@@ -81,6 +81,7 @@ view : Model -> Html Msg
 view model =
     let
         allGroups = findGroups model.hand.tiles
+        handWithFu = countFu model.hand
     in 
     div []
         [ input [ type_ "text", placeholder "Hand", value model.handString, onInput HandStr] []
@@ -88,8 +89,9 @@ view model =
         , p [] [ renderTiles model.hand.tiles ]
         , debugGroups allGroups
         , drawGroups model.hand.groups
-        , text (Debug.toString model.hand.groups)
-        , p [] [text ("Fu:" ++ (Debug.toString (.fu (countFu model.hand))))]
+        , p [] [text (Debug.toString model.hand.groups), clearFixDiv]
+        , p [] [text ("Fu:" ++ (Debug.toString (.fu handWithFu)))]
+        , renderFuDetails (.fu handWithFu)
         ]
 
 
@@ -389,11 +391,11 @@ fuTriplet group =
             first = Maybe.withDefault 0 (List.head group.tileNumbers)
         in
         if first == 1 || first == 9 then
-            FuSource 8 (IsTriplet Closed IsTerminal) [ group ]
+            FuSource 8 (TripletFu Closed IsTerminal) [ group ]
         else if group.suit == Honor then
-            FuSource 8 (IsTriplet Closed IsHonor) [ group ]
+            FuSource 8 (TripletFu Closed IsHonor) [ group ]
         else
-            FuSource 4 (IsTriplet Closed HasNoValue) [ group ]
+            FuSource 4 (TripletFu Closed HasNoValue) [ group ]
     else
         noFu
 
@@ -414,3 +416,31 @@ countFu hand =
         allValidFu = List.filter (\f -> not (f == noFu)) allFu
     in
     { hand | fu = allValidFu }
+
+renderFuDetails: List FuSource -> Html Msg
+renderFuDetails fuSources =
+    table [] (List.map renderFuSource fuSources)
+
+
+renderFuSource: FuSource -> Html Msg
+renderFuSource fuSource =
+    let
+        explanation = case fuSource.description of
+            BaseFu -> "Base hand value"
+            TsumoNotPinfu -> "Tsumo (if not pinfu)"
+            ClosedRon -> "Closed ron"
+            ValuePair Single -> "Value pair"
+            ValuePair Double -> "Value pair x2"
+            -- TODO openClosed
+            TripletFu _ kind ->
+                case kind of
+                    IsHonor -> "Triplet of honors"
+                    IsTerminal -> "Triplet of terminals"
+                    HasNoValue -> "Triplet of simples"
+            -- TODO
+            KanFu _ _-> "Kan"
+            NoFu -> "?"
+    in
+    tr []
+        [ td [] [text explanation]
+        , td [] [text (String.fromInt fuSource.fu)]]
