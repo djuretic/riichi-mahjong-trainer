@@ -1,15 +1,20 @@
 module Main exposing (main)
 import Browser
-import Html exposing (Html, div, text, input, p, table, tr, td, ul, li)
+import Html exposing (Html, div, text, input, p, table, tr, td, ul, li, button)
 import Html.Events exposing (onInput)
 import Html.Attributes exposing (type_, placeholder, value, style)
 import Parser exposing (Parser, (|.), (|=), succeed, oneOf, loop, getChompedString, chompIf, chompWhile)
 import List.Extra exposing (permutations)
 import Maybe
 import Html.Events exposing (onClick)
+import Random
 
-main : Program () Model Msg
-main = Browser.sandbox { init = init, update = update, view = view}
+
+main = Browser.element 
+    { init = init
+    , update = update
+    , view = view
+    , subscriptions = subscriptions}
 
 
 type alias Model =
@@ -62,15 +67,18 @@ type alias FuSource =
     , description: FuDescription
     , groups: List Group }
 
-init : Model
-init = Model "2555m" (Hand [] [] Tsumo East East [])
+init : () -> (Model, Cmd Msg)
+init _ = 
+    ( Model "2555m" (Hand [] [] Tsumo East East [])
+    , Cmd.none )
 
 
 type Msg = HandStr String
     | ChangeSeatWind
     | ChangeRoundWind
+    | GenerateRandomHand
 
-update: Msg -> Model -> Model
+update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         HandStr handString ->
@@ -86,21 +94,33 @@ update msg model =
                     , groups = groups
                     , fu = []}
             in
-            { model | handString = handString, hand = hand }
+            ({ model | handString = handString, hand = hand }, Cmd.none)
         ChangeRoundWind ->
             let
                 prevHand = model.hand
                 newHand = { prevHand | roundWind = cycleWind prevHand.roundWind }
             in
-            { model | hand = newHand }
+            ({ model | hand = newHand }, Cmd.none)
         ChangeSeatWind ->
             let
                 prevHand = model.hand
                 newHand = { prevHand | seatWind = cycleWind prevHand.seatWind }
             in
-            { model | hand = newHand }
+            ({ model | hand = newHand }, Cmd.none)
+        GenerateRandomHand ->
+            let
+                randomSuit = Random.uniform Man [Pin, Sou, Honor]
+                randomTileNumbers = Random.list 5 (Random.int 1 9)
+                handStr = Random.pair randomTileNumbers randomSuit
+                    |> Random.map randomHandToString
+            in
+            ( model
+            , Random.generate HandStr handStr)
         
 
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
 
 view : Model -> Html Msg
 view model =
@@ -110,6 +130,7 @@ view model =
     in 
     div []
         [ input [ type_ "text", placeholder "Hand", value model.handString, onInput HandStr] []
+        , button [ onClick GenerateRandomHand ] [ text "Random" ]
         -- , p [] [ Debug.toString tiles |> text ]
         , p [] [ renderTiles model.hand.tiles ]
         , renderWinds model.hand
@@ -538,3 +559,21 @@ groupToWind group =
         Triplet -> getWind group
         Pair -> getWind group
         Run -> Nothing
+
+randomHandToString: (List TileNumber, Suit) -> String
+randomHandToString (tileNumbers, suit) =
+    case tileNumbers of
+        m :: p :: s :: h :: [extra] ->
+            String.join ""
+                [ String.repeat 3 (String.fromInt m)
+                , "m"
+                , String.repeat 3 (String.fromInt p)
+                , "p"
+                , String.repeat 3 (String.fromInt s)
+                , "s"
+                , String.repeat 3 (String.fromInt h)
+                , "z"
+                , String.repeat 2 (String.fromInt extra)
+                , suitToString suit]
+        _ ->
+            ""
