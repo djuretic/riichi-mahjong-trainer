@@ -10,6 +10,7 @@ import Html.Events exposing (onClick)
 import Random
 
 
+main : Program () Model Msg
 main = Browser.element 
     { init = init
     , update = update
@@ -43,14 +44,14 @@ type alias Group =
     , suit: Suit }
 type WinBy = Ron | Tsumo
 
-type ValuePairTimes = Single | Double
+type ValuePairBy = ByDragon | BySeatWind | ByRoundWind | BySeatAndRoundWind
 type OpenClose = Open | Closed
 type TripletKind = IsTerminal | IsHonor | HasNoValue
 type FuDescription =
     BaseFu
     | TsumoNotPinfu
     | ClosedRon
-    | ValuePair ValuePairTimes
+    | ValuePair ValuePairBy
     | TripletFu OpenClose TripletKind
     | KanFu OpenClose TripletKind
     | NoFu
@@ -119,7 +120,7 @@ update msg model =
         
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.none
 
 view : Model -> Html Msg
@@ -447,11 +448,13 @@ fuValuePair hand =
                     in
                     -- dragon
                     if (n == 5 || n == 6 || n == 7) && pair.suit == Honor then
-                        FuSource 2 (ValuePair Single) [pair]
+                        FuSource 2 (ValuePair ByDragon) [pair]
                     else if isRoundWind && isSeatWind then
-                        FuSource 4 (ValuePair Double) [pair]
-                    else if isRoundWind || isSeatWind then
-                        FuSource 2 (ValuePair Single) [pair]
+                        FuSource 4 (ValuePair BySeatAndRoundWind) [pair]
+                    else if isRoundWind then
+                        FuSource 2 (ValuePair ByRoundWind) [pair]
+                    else if isSeatWind then
+                        FuSource 2 (ValuePair BySeatWind) [pair]
                     else
                         noFu
                 _ -> noFu
@@ -505,8 +508,10 @@ renderFuSource fuSource =
             BaseFu -> "Base hand value"
             TsumoNotPinfu -> "Tsumo (if not pinfu)"
             ClosedRon -> "Closed ron"
-            ValuePair Single -> "Value pair"
-            ValuePair Double -> "Value pair x2"
+            ValuePair ByDragon -> "Value pair (dragon)"
+            ValuePair ByRoundWind -> "Value pair (round wind)"
+            ValuePair BySeatWind -> "Value pair (seat wind)"
+            ValuePair BySeatAndRoundWind -> "Value pair (seat & round wind)"
             TripletFu openClosed kind ->
                 let
                     openClosedStr = case openClosed of
@@ -564,6 +569,13 @@ randomHandToString: (List TileNumber, Suit) -> String
 randomHandToString (tileNumbers, suit) =
     case tileNumbers of
         m :: p :: s :: h :: [extra] ->
+            let
+                honorMin n = if suit == Honor then
+                        min n 7
+                    else
+                        n
+            in
+            
             String.join ""
                 [ String.repeat 3 (String.fromInt m)
                 , "m"
@@ -571,9 +583,9 @@ randomHandToString (tileNumbers, suit) =
                 , "p"
                 , String.repeat 3 (String.fromInt s)
                 , "s"
-                , String.repeat 3 (String.fromInt h)
+                , String.repeat 3 (String.fromInt (min h 7))
                 , "z"
-                , String.repeat 2 (String.fromInt extra)
+                , String.repeat 2 (String.fromInt (honorMin extra))
                 , suitToString suit]
         _ ->
             ""
