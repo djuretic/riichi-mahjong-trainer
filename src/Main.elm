@@ -40,7 +40,8 @@ type alias GroupsPerSuit =
 type GroupType = Triplet | Run | Pair
 type alias Group =
     { type_: GroupType
-    , tileNumbers: List TileNumber
+    -- for runs, is the first (lowest) tile
+    , tileNumber: TileNumber
     , suit: Suit }
 type WinBy = Ron | Tsumo
 
@@ -292,7 +293,7 @@ findGroupsInSuit tiles suit =
                 if List.isEmpty rest && not emptyRemaining then
                     []
                 else
-                    Group Run candidate suit :: rest
+                    Group Run x suit :: rest
             else if isTriplet candidate then
                 let
                     rest = findGroupsInSuit xs suit
@@ -300,13 +301,13 @@ findGroupsInSuit tiles suit =
                 if List.isEmpty rest && not emptyRemaining then
                     []
                 else
-                    Group Triplet candidate suit :: rest
+                    Group Triplet x suit :: rest
             else
                 []
         -- we only search for pairs at the end of the list
         x :: [y] ->
             if x == y then
-                [ Group Pair [x, x] suit ]
+                [ Group Pair x suit ]
             else
                 []
         _ -> []
@@ -350,7 +351,7 @@ findGroups tiles =
             List.map .number t
                 |> permutationsAndDedup
                 |> List.map (\p -> findGroupsInSuit p withRuns)
-                |> List.sortBy (\g -> List.map .tileNumbers g)
+                |> List.sortBy (\g -> List.map .tileNumber g)
                 |> deduplicate
                 |> List.filter (\g -> not (List.isEmpty g))
         groupsPerSuit = {
@@ -373,7 +374,7 @@ findWinningHand groups =
         possibleGroups = List.concat [ man, pin, sou, honor ]
         numberPairs = List.filter (\g -> g.type_ == Pair) possibleGroups |> List.length
         groupSort g =
-            (suitToString g.suit, Maybe.withDefault 0 (List.head g.tileNumbers))
+            (suitToString g.suit, g.tileNumber)
     in
     if List.length possibleGroups == 5 && numberPairs == 1 then
         List.sortBy groupSort possibleGroups
@@ -384,7 +385,20 @@ findWinningHand groups =
 drawGroup : Group -> Html Msg
 drawGroup group =
     div []
-        (List.map (\g -> Tile g group.suit |> drawTile) group.tileNumbers)
+        (List.map drawTile (groupToTiles group))
+
+groupToTiles: Group -> List Tile
+groupToTiles group =
+    case group.type_ of
+        Pair ->
+            List.repeat 2 (Tile group.tileNumber group.suit)
+        Triplet ->
+            List.repeat 3 (Tile group.tileNumber group.suit)
+        Run ->
+            [ Tile group.tileNumber group.suit
+            , Tile (group.tileNumber + 1) group.suit
+            , Tile (group.tileNumber + 2) group.suit]
+        
 
 
 drawGroups : List Group -> Html Msg
@@ -439,25 +453,23 @@ fuValuePair hand =
     in
     case possiblePair of
         Just pair ->
-            case pair.tileNumbers of
-                n :: _ ->
-                    let
-                        possibleWind = groupToWind pair
-                        isRoundWind = Just hand.roundWind == possibleWind
-                        isSeatWind = Just hand.seatWind == possibleWind
-                    in
-                    -- dragon
-                    if (n == 5 || n == 6 || n == 7) && pair.suit == Honor then
-                        FuSource 2 (ValuePair ByDragon) [pair]
-                    else if isRoundWind && isSeatWind then
-                        FuSource 4 (ValuePair BySeatAndRoundWind) [pair]
-                    else if isRoundWind then
-                        FuSource 2 (ValuePair ByRoundWind) [pair]
-                    else if isSeatWind then
-                        FuSource 2 (ValuePair BySeatWind) [pair]
-                    else
-                        noFu
-                _ -> noFu
+            let
+                possibleWind = groupToWind pair
+                isRoundWind = Just hand.roundWind == possibleWind
+                isSeatWind = Just hand.seatWind == possibleWind
+                n = pair.tileNumber
+            in
+            -- dragon
+            if (n == 5 || n == 6 || n == 7) && pair.suit == Honor then
+                FuSource 2 (ValuePair ByDragon) [pair]
+            else if isRoundWind && isSeatWind then
+                FuSource 4 (ValuePair BySeatAndRoundWind) [pair]
+            else if isRoundWind then
+                FuSource 2 (ValuePair ByRoundWind) [pair]
+            else if isSeatWind then
+                FuSource 2 (ValuePair BySeatWind) [pair]
+            else
+                noFu
         Nothing ->
             noFu
 
@@ -465,10 +477,7 @@ fuTriplet: Group -> FuSource
 fuTriplet group =
     if group.type_== Triplet then
         -- TODO closed
-        let
-            first = Maybe.withDefault 0 (List.head group.tileNumbers)
-        in
-        if first == 1 || first == 9 then
+        if group.tileNumber == 1 || group.tileNumber == 9 then
             FuSource 8 (TripletFu Closed IsTerminal) [ group ]
         else if group.suit == Honor then
             FuSource 8 (TripletFu Closed IsHonor) [ group ]
@@ -548,10 +557,8 @@ cycleWind wind =
 groupToWind: Group -> Maybe Wind
 groupToWind group =
     let
-        firstTile = List.head group.tileNumbers
-            |> Maybe.withDefault 0
         getWind g = if g.suit == Honor then
-            case firstTile of
+            case group.tileNumber of
                 1 -> Just East
                 2 -> Just South
                 3 -> Just West
