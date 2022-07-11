@@ -1,247 +1,420 @@
 module Main exposing (main)
+
 import Browser
-import Html exposing (Html, div, text, input, p, table, tr, td, ul, li, button)
-import Html.Events exposing (onInput, onClick)
-import Html.Attributes exposing (type_, placeholder, value, style)
-import Parser exposing (Parser, (|.), (|=), succeed, oneOf, loop, getChompedString, chompIf, chompWhile)
+import Html exposing (Html, button, div, input, li, p, table, td, text, tr, ul)
+import Html.Attributes exposing (placeholder, style, type_, value)
+import Html.Events exposing (onClick, onInput)
 import List.Extra exposing (permutations)
 import Maybe
+import Parser exposing ((|.), (|=), Parser, chompIf, chompWhile, getChompedString, loop, oneOf, succeed)
 import Random
 
 
 main : Program () Model Msg
-main = Browser.element 
-    { init = init
-    , update = update
-    , view = view
-    , subscriptions = subscriptions}
+main =
+    Browser.element
+        { init = init
+        , update = update
+        , view = view
+        , subscriptions = subscriptions
+        }
 
 
 type alias Model =
-    { handString: String
-    , hand: Hand
-    , allGroups: GroupsPerSuit }
+    { handString : String
+    , hand : Hand
+    , allGroups : GroupsPerSuit
+    }
 
-type Suit = Sou | Man | Pin | Honor | Invalid
-type alias TileNumber = Int
+
+type Suit
+    = Sou
+    | Man
+    | Pin
+    | Honor
+    | Invalid
+
+
+type alias TileNumber =
+    Int
+
+
 type alias Tile =
-    { number: TileNumber
-    , suit: Suit }
-type alias TilesPerSuit =
-    { sou: List Tile
-    , man: List Tile
-    , pin: List Tile
-    , honor: List Tile}
-type alias GroupsPerSuit =
-    { sou: List (List Group)
-    , man: List (List Group)
-    , pin: List (List Group)
-    , honor: List (List Group)}
-type GroupType = Triplet | Run | Pair
-type alias Group =
-    { type_: GroupType
-    -- for runs, is the first (lowest) tile
-    , tileNumber: TileNumber
-    , suit: Suit }
-type WinBy = Ron | Tsumo
+    { number : TileNumber
+    , suit : Suit
+    }
 
-type ValuePairBy = ByDragon | BySeatWind | ByRoundWind | BySeatAndRoundWind
-type OpenClose = Open | Closed
-type TripletKind = IsTerminal | IsHonor | HasNoValue
-type FuDescription =
-    BaseFu
+
+type alias TilesPerSuit =
+    { sou : List Tile
+    , man : List Tile
+    , pin : List Tile
+    , honor : List Tile
+    }
+
+
+type alias GroupsPerSuit =
+    { sou : List (List Group)
+    , man : List (List Group)
+    , pin : List (List Group)
+    , honor : List (List Group)
+    }
+
+
+type GroupType
+    = Triplet
+    | Run
+    | Pair
+
+
+type alias Group =
+    { type_ : GroupType
+
+    -- for runs, is the first (lowest) tile
+    , tileNumber : TileNumber
+    , suit : Suit
+    }
+
+
+type WinBy
+    = Ron
+    | Tsumo
+
+
+type ValuePairBy
+    = ByDragon
+    | BySeatWind
+    | ByRoundWind
+    | BySeatAndRoundWind
+
+
+type OpenClose
+    = Open
+    | Closed
+
+
+type TripletKind
+    = IsTerminal
+    | IsHonor
+    | HasNoValue
+
+
+type FuDescription
+    = BaseFu
     | TsumoNotPinfu
     | ClosedRon
     | ValuePair ValuePairBy
     | TripletFu OpenClose TripletKind
     | KanFu OpenClose TripletKind
     | NoFu
-type Wind = East | South | West | North
+
+
+type Wind
+    = East
+    | South
+    | West
+    | North
+
+
 type alias Hand =
-    { tiles: List Tile
-    , groups: List Group
-    , winBy: WinBy
-    , seatWind: Wind
-    , roundWind: Wind 
-    , fu: List FuSource }
+    { tiles : List Tile
+    , groups : List Group
+    , winBy : WinBy
+    , seatWind : Wind
+    , roundWind : Wind
+    , fu : List FuSource
+    }
+
+
 type alias FuSource =
-    { fu: Int
-    , description: FuDescription
-    , groups: List Group }
-type Yaku =
-    Chiitoitsu
+    { fu : Int
+    , description : FuDescription
+    , groups : List Group
+    }
+
+
+type Yaku
+    = Chiitoitsu
     | Pinfu
     | NoYaku
 
-init : () -> (Model, Cmd Msg)
-init _ = 
-    ( Model "2555m" (Hand [] [] Tsumo East East []) (GroupsPerSuit [[]] [[]] [[]] [[]])
-    , Cmd.none )
+
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( Model "2555m" (Hand [] [] Tsumo East East []) (GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ])
+    , Cmd.none
+    )
 
 
-type Msg = HandStr String
+type Msg
+    = HandStr String
     | ChangeSeatWind
     | ChangeRoundWind
     | ChangeWinBy
     | GenerateRandomHand
 
-update: Msg -> Model -> (Model, Cmd Msg)
+
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         HandStr handString ->
             let
-                tiles = showParseResult handString
-                allGroups = findGroups tiles
-                groups = findWinningHand allGroups
-                prevHand = model.hand
-                hand = 
+                tiles =
+                    showParseResult handString
+
+                allGroups =
+                    findGroups tiles
+
+                groups =
+                    findWinningHand allGroups
+
+                prevHand =
+                    model.hand
+
+                hand =
                     -- keep the older winds
-                    { prevHand | tiles = tiles
-                    , winBy = Tsumo
-                    , groups = groups
-                    , fu = []}
+                    { prevHand
+                        | tiles = tiles
+                        , winBy = Tsumo
+                        , groups = groups
+                        , fu = []
+                    }
             in
-            ({ model | handString = handString, hand = hand, allGroups = allGroups }, Cmd.none)
+            ( { model | handString = handString, hand = hand, allGroups = allGroups }, Cmd.none )
+
         ChangeRoundWind ->
             let
-                prevHand = model.hand
-                newHand = { prevHand | roundWind = cycleWind prevHand.roundWind }
+                prevHand =
+                    model.hand
+
+                newHand =
+                    { prevHand | roundWind = cycleWind prevHand.roundWind }
             in
-            ({ model | hand = newHand }, Cmd.none)
+            ( { model | hand = newHand }, Cmd.none )
+
         ChangeSeatWind ->
             let
-                prevHand = model.hand
-                newHand = { prevHand | seatWind = cycleWind prevHand.seatWind }
+                prevHand =
+                    model.hand
+
+                newHand =
+                    { prevHand | seatWind = cycleWind prevHand.seatWind }
             in
-            ({ model | hand = newHand }, Cmd.none)
+            ( { model | hand = newHand }, Cmd.none )
+
         ChangeWinBy ->
             let
-                prevHand = model.hand
-                newWinBy = if model.hand.winBy == Ron then Tsumo else Ron
-                newHand = { prevHand | winBy = newWinBy }
+                prevHand =
+                    model.hand
+
+                newWinBy =
+                    if model.hand.winBy == Ron then
+                        Tsumo
+
+                    else
+                        Ron
+
+                newHand =
+                    { prevHand | winBy = newWinBy }
             in
-            ({ model | hand = newHand }, Cmd.none)
+            ( { model | hand = newHand }, Cmd.none )
+
         GenerateRandomHand ->
             let
-                randomHand = randomWinningHand
-                    |> Random.map (\lg -> List.map groupToString lg |> String.join "")               
+                randomHand =
+                    randomWinningHand
+                        |> Random.map (\lg -> List.map groupToString lg |> String.join "")
             in
             ( model
-            , Random.generate HandStr randomHand)
-        
+            , Random.generate HandStr randomHand
+            )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
 
+
 view : Model -> Html Msg
 view model =
     let
-        handWithFu = countFu model.hand
-    in 
+        handWithFu =
+            countFu model.hand
+    in
     div []
-        [ input [ type_ "text", placeholder "Hand", value model.handString, onInput HandStr] []
+        [ input [ type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
         , button [ onClick GenerateRandomHand ] [ text "Random" ]
+
         -- , p [] [ Debug.toString tiles |> text ]
         , p [] [ renderTiles model.hand.tiles ]
         , renderWinBy model.hand
         , renderWinds model.hand
         , debugGroups model.allGroups
         , drawGroups model.hand.groups
+
         --, p [] [text (Debug.toString model.hand.groups), clearFixDiv]
         , clearFixDiv
         , renderFuDetails handWithFu.fu
         ]
 
 
-drawTile: Tile -> Html Msg
+drawTile : Tile -> Html Msg
 drawTile tile =
     let
-        n = String.fromInt tile.number
-        isRedDora = tile.number == 0
-        path = if isRedDora then
+        n =
+            String.fromInt tile.number
+
+        isRedDora =
+            tile.number == 0
+
+        path =
+            if isRedDora then
                 case tile.suit of
-                    Sou -> "/img/red-doras/red-dora-bamboo5.png"
-                    Pin -> "/img/red-doras/red-dora-pin5.png"
-                    Man ->  "/img/red-doras/red-dora-man5.png"
-                    Honor -> ""
-                    Invalid -> ""
+                    Sou ->
+                        "/img/red-doras/red-dora-bamboo5.png"
+
+                    Pin ->
+                        "/img/red-doras/red-dora-pin5.png"
+
+                    Man ->
+                        "/img/red-doras/red-dora-man5.png"
+
+                    Honor ->
+                        ""
+
+                    Invalid ->
+                        ""
+
             else
                 case tile.suit of
-                    Sou -> "/img/bamboo/bamboo" ++ n ++ ".png"
-                    Pin -> "/img/pin/pin" ++ n ++ ".png"
-                    Man -> "/img/man/man" ++ n ++ ".png"
-                    Honor -> pathHonorTile tile.number
-                    Invalid -> ""
+                    Sou ->
+                        "/img/bamboo/bamboo" ++ n ++ ".png"
+
+                    Pin ->
+                        "/img/pin/pin" ++ n ++ ".png"
+
+                    Man ->
+                        "/img/man/man" ++ n ++ ".png"
+
+                    Honor ->
+                        pathHonorTile tile.number
+
+                    Invalid ->
+                        ""
     in
     if String.isEmpty path then
         text ""
-    else 
-        div [ style "background-image" ("url(" ++ path ++ ")")
+
+    else
+        div
+            [ style "background-image" ("url(" ++ path ++ ")")
             , style "background-position-x" "-10px"
             , style "float" "left"
             , style "height" "64px"
-            , style "width" "45px"] []
+            , style "width" "45px"
+            ]
+            []
 
 
-pathHonorTile: Int -> String
-pathHonorTile n = 
+pathHonorTile : Int -> String
+pathHonorTile n =
     case n of
-        1 -> "/img/winds/wind-east.png"
-        2 -> "/img/winds/wind-south.png"
-        3 -> "/img/winds/wind-west.png"
-        4 -> "/img/winds/wind-north.png"
-        5 -> "/img/dragons/dragon-haku.png"
-        6 -> "/img/dragons/dragon-green.png"
-        7 -> "/img/dragons/dragon-chun.png"
-        _ -> ""
+        1 ->
+            "/img/winds/wind-east.png"
+
+        2 ->
+            "/img/winds/wind-south.png"
+
+        3 ->
+            "/img/winds/wind-west.png"
+
+        4 ->
+            "/img/winds/wind-north.png"
+
+        5 ->
+            "/img/dragons/dragon-haku.png"
+
+        6 ->
+            "/img/dragons/dragon-green.png"
+
+        7 ->
+            "/img/dragons/dragon-chun.png"
+
+        _ ->
+            ""
 
 
 clearFixDiv : Html msg
-clearFixDiv = div [style "clear" "both"] []
+clearFixDiv =
+    div [ style "clear" "both" ] []
 
-renderTiles: List Tile -> Html Msg
+
+renderTiles : List Tile -> Html Msg
 renderTiles tiles =
-    div [] (List.append (List.map drawTile tiles) [clearFixDiv])
+    div [] (List.append (List.map drawTile tiles) [ clearFixDiv ])
+
 
 toSuit : String -> Suit
 toSuit s =
     case s of
-        "p" -> Pin
-        "s" -> Sou
-        "m" -> Man
-        "z" -> Honor
-        _ -> Invalid
+        "p" ->
+            Pin
+
+        "s" ->
+            Sou
+
+        "m" ->
+            Man
+
+        "z" ->
+            Honor
+
+        _ ->
+            Invalid
+
 
 suitToString : Suit -> String
 suitToString suit =
     case suit of
-        Man -> "m"
-        Pin -> "p"
-        Sou -> "s"
-        Honor -> "z"
-        _ -> ""
+        Man ->
+            "m"
+
+        Pin ->
+            "p"
+
+        Sou ->
+            "s"
+
+        Honor ->
+            "z"
+
+        _ ->
+            ""
+
 
 tilesFromSuitString : String -> List Tile
 tilesFromSuitString parsedSuit =
     let
-        suit = String.right 1 parsedSuit |> toSuit
-        tiles = String.dropRight 1 parsedSuit
-            |> String.toList
-            |> List.map String.fromChar
-            |> List.filterMap String.toInt
-        
+        suit =
+            String.right 1 parsedSuit |> toSuit
+
+        tiles =
+            String.dropRight 1 parsedSuit
+                |> String.toList
+                |> List.map String.fromChar
+                |> List.filterMap String.toInt
     in
-    List.map (\n ->  Tile n suit) tiles
+    List.map (\n -> Tile n suit) tiles
 
 
 handSuit : Parser (List Tile)
 handSuit =
-    Parser.map tilesFromSuitString  <|
+    Parser.map tilesFromSuitString <|
         getChompedString <|
             succeed ()
                 |. chompWhile (\c -> Char.isDigit c)
                 |. chompIf (\c -> c == 's' || c == 'm' || c == 'p' || c == 'z')
+
 
 parseHandHelper : List Tile -> Parser (Parser.Step (List Tile) (List Tile))
 parseHandHelper parsedSuits =
@@ -252,40 +425,59 @@ parseHandHelper parsedSuits =
             |> Parser.map (\_ -> Parser.Done parsedSuits)
         ]
 
+
 handSuits : Parser (List Tile)
 handSuits =
     loop [] parseHandHelper
 
-showParseResult: String -> List Tile
+
+showParseResult : String -> List Tile
 showParseResult input =
     case Parser.run handSuits input of
-        Ok value -> value
-        Err _ -> []
+        Ok value ->
+            value
+
+        Err _ ->
+            []
+
 
 isTriplet : List TileNumber -> Bool
 isTriplet tiles =
     case tiles of
-        x :: y :: [z] -> x == y  && y == z
-        _ -> False
+        x :: y :: [ z ] ->
+            x == y && y == z
+
+        _ ->
+            False
+
 
 
 -- TODO: red dora
+
+
 isRun : List TileNumber -> Bool
 isRun tiles =
     case tiles of
-        x :: y :: [z] ->
+        x :: y :: [ z ] ->
             x + 1 == y && y + 1 == z
-        _ -> False
+
+        _ ->
+            False
 
 
 partitionBySuit : List Tile -> TilesPerSuit
 partitionBySuit tiles =
     let
-        (pin, rest) = List.partition (\t -> t.suit == Pin) tiles
-        (sou, rest2) = List.partition (\t -> t.suit == Sou) rest
-        (man, rest3) = List.partition (\t -> t.suit == Man) rest2
+        ( pin, rest ) =
+            List.partition (\t -> t.suit == Pin) tiles
+
+        ( sou, rest2 ) =
+            List.partition (\t -> t.suit == Sou) rest
+
+        ( man, rest3 ) =
+            List.partition (\t -> t.suit == Man) rest2
     in
-    { sou = sou, man = man, pin = pin, honor = rest3}
+    { sou = sou, man = man, pin = pin, honor = rest3 }
 
 
 findGroupsInSuit : List TileNumber -> Suit -> List Group
@@ -293,37 +485,53 @@ findGroupsInSuit tiles suit =
     case tiles of
         x :: y :: z :: xs ->
             let
-                candidate = [x, y, z]
-                emptyRemaining = List.isEmpty xs
+                candidate =
+                    [ x, y, z ]
+
+                emptyRemaining =
+                    List.isEmpty xs
             in
             if suit /= Honor && isRun candidate then
                 let
-                    rest = findGroupsInSuit xs suit
+                    rest =
+                        findGroupsInSuit xs suit
                 in
                 if List.isEmpty rest && not emptyRemaining then
                     []
+
                 else
                     Group Run x suit :: rest
+
             else if isTriplet candidate then
                 let
-                    rest = findGroupsInSuit xs suit
+                    rest =
+                        findGroupsInSuit xs suit
                 in
                 if List.isEmpty rest && not emptyRemaining then
                     []
+
                 else
                     Group Triplet x suit :: rest
+
             else
                 []
+
         -- we only search for pairs at the end of the list
-        x :: [y] ->
+        x :: [ y ] ->
             if x == y then
                 [ Group Pair x suit ]
+
             else
                 []
-        _ -> []
+
+        _ ->
+            []
+
 
 
 -- only works on sorted input
+
+
 deduplicate : List a -> List a
 deduplicate list =
     let
@@ -331,44 +539,56 @@ deduplicate list =
             case remaining of
                 [] ->
                     accum
+
                 first :: rest ->
                     if first == previousElement then
                         helper accum previousElement rest
+
                     else
                         helper (first :: accum) first rest
     in
     case list of
         [] ->
             []
+
         x :: xs ->
             x :: helper [] x xs
 
 
 permutationsAndDedup : List TileNumber -> List (List TileNumber)
-permutationsAndDedup tileNumbers = 
+permutationsAndDedup tileNumbers =
     let
-        perms = permutations tileNumbers
+        perms =
+            permutations tileNumbers
+
         -- TODO remove permutations of 3, abc def == def abc
-        sortedPerms = List.sort perms
+        sortedPerms =
+            List.sort perms
     in
     deduplicate sortedPerms
+
 
 findGroups : List Tile -> GroupsPerSuit
 findGroups tiles =
     let
-        part = partitionBySuit tiles
-        findAllGroups = \t withRuns->
-            List.map .number t
-                |> permutationsAndDedup
-                |> List.map (\p -> findGroupsInSuit p withRuns)
-                |> List.sortBy (\g -> List.map .tileNumber g)
-                |> deduplicate
-                |> List.filter (\g -> not (List.isEmpty g))
-        groupsPerSuit = {
-            sou = findAllGroups part.sou Sou
+        part =
+            partitionBySuit tiles
+
+        findAllGroups =
+            \t withRuns ->
+                List.map .number t
+                    |> permutationsAndDedup
+                    |> List.map (\p -> findGroupsInSuit p withRuns)
+                    |> List.sortBy (\g -> List.map .tileNumber g)
+                    |> deduplicate
+                    |> List.filter (\g -> not (List.isEmpty g))
+
+        groupsPerSuit =
+            { sou = findAllGroups part.sou Sou
             , man = findAllGroups part.man Man
             , pin = findAllGroups part.pin Pin
-            , honor = findAllGroups part.honor Honor }
+            , honor = findAllGroups part.honor Honor
+            }
     in
     groupsPerSuit
 
@@ -376,18 +596,33 @@ findGroups tiles =
 findWinningHand : GroupsPerSuit -> List Group
 findWinningHand groups =
     let
-        firstItem = \g -> Maybe.withDefault [] (List.head g)
-        man = firstItem groups.man
-        pin = firstItem groups.pin
-        sou = firstItem groups.sou
-        honor = firstItem groups.honor
-        possibleGroups = List.concat [ man, pin, sou, honor ]
-        numberPairs = List.filter (\g -> g.type_ == Pair) possibleGroups |> List.length
+        firstItem =
+            \g -> Maybe.withDefault [] (List.head g)
+
+        man =
+            firstItem groups.man
+
+        pin =
+            firstItem groups.pin
+
+        sou =
+            firstItem groups.sou
+
+        honor =
+            firstItem groups.honor
+
+        possibleGroups =
+            List.concat [ man, pin, sou, honor ]
+
+        numberPairs =
+            List.filter (\g -> g.type_ == Pair) possibleGroups |> List.length
+
         groupSort g =
-            (suitToString g.suit, g.tileNumber)
+            ( suitToString g.suit, g.tileNumber )
     in
     if List.length possibleGroups == 5 && numberPairs == 1 then
         List.sortBy groupSort possibleGroups
+
     else
         []
 
@@ -397,18 +632,21 @@ drawGroup group =
     div []
         (List.map drawTile (groupToTiles group))
 
-groupToTiles: Group -> List Tile
+
+groupToTiles : Group -> List Tile
 groupToTiles group =
     case group.type_ of
         Pair ->
             List.repeat 2 (Tile group.tileNumber group.suit)
+
         Triplet ->
             List.repeat 3 (Tile group.tileNumber group.suit)
+
         Run ->
             [ Tile group.tileNumber group.suit
             , Tile (group.tileNumber + 1) group.suit
-            , Tile (group.tileNumber + 2) group.suit]
-        
+            , Tile (group.tileNumber + 2) group.suit
+            ]
 
 
 drawGroups : List Group -> Html Msg
@@ -416,21 +654,26 @@ drawGroups groups =
     div [] (List.map drawGroup groups)
 
 
-debugGroup: List Group -> Html Msg
+debugGroup : List Group -> Html Msg
 debugGroup listGroup =
     if List.isEmpty listGroup then
         text "[]"
+
     else
-        ul [] (List.map (\g -> li [] [text (Debug.toString g)]) listGroup)
+        ul [] (List.map (\g -> li [] [ text (Debug.toString g) ]) listGroup)
+
 
 debugGroups : GroupsPerSuit -> Html Msg
 debugGroups groups =
     let
-        cellStyle = style "border" "1px solid black"
-        generateTd l= List.map (\g -> td [cellStyle] [debugGroup g]) l
+        cellStyle =
+            style "border" "1px solid black"
+
+        generateTd l =
+            List.map (\g -> td [ cellStyle ] [ debugGroup g ]) l
     in
     table []
-        [ tr [] [text "groupsPerSuit"]
+        [ tr [] [ text "groupsPerSuit" ]
         , tr [] (generateTd groups.man)
         , tr [] (generateTd groups.pin)
         , tr [] (generateTd groups.sou)
@@ -438,246 +681,400 @@ debugGroups groups =
         ]
 
 
-noFu: FuSource
+noFu : FuSource
 noFu =
     FuSource 0 NoFu []
 
-fuBase: Hand -> FuSource
+
+fuBase : Hand -> FuSource
 fuBase _ =
     -- TODO seven pairs, 25 fu
     FuSource 20 BaseFu []
 
-fuClosedRon: Hand -> FuSource
+
+fuClosedRon : Hand -> FuSource
 fuClosedRon hand =
     -- TODO only for *closed* ron
     if hand.winBy == Ron then
         FuSource 10 ClosedRon []
+
     else
         noFu
 
-fuValuePair: Hand -> FuSource
+
+fuValuePair : Hand -> FuSource
 fuValuePair hand =
     let
-        possiblePair = List.filter (\g -> g.type_ == Pair) hand.groups
-            |> List.head
+        possiblePair =
+            List.filter (\g -> g.type_ == Pair) hand.groups
+                |> List.head
     in
     case possiblePair of
         Just pair ->
             let
-                possibleWind = groupToWind pair
-                isRoundWind = Just hand.roundWind == possibleWind
-                isSeatWind = Just hand.seatWind == possibleWind
-                n = pair.tileNumber
+                possibleWind =
+                    groupToWind pair
+
+                isRoundWind =
+                    Just hand.roundWind == possibleWind
+
+                isSeatWind =
+                    Just hand.seatWind == possibleWind
+
+                n =
+                    pair.tileNumber
             in
             -- dragon
             if (n == 5 || n == 6 || n == 7) && pair.suit == Honor then
-                FuSource 2 (ValuePair ByDragon) [pair]
+                FuSource 2 (ValuePair ByDragon) [ pair ]
+
             else if isRoundWind && isSeatWind then
-                FuSource 4 (ValuePair BySeatAndRoundWind) [pair]
+                FuSource 4 (ValuePair BySeatAndRoundWind) [ pair ]
+
             else if isRoundWind then
-                FuSource 2 (ValuePair ByRoundWind) [pair]
+                FuSource 2 (ValuePair ByRoundWind) [ pair ]
+
             else if isSeatWind then
-                FuSource 2 (ValuePair BySeatWind) [pair]
+                FuSource 2 (ValuePair BySeatWind) [ pair ]
+
             else
                 noFu
+
         Nothing ->
             noFu
 
-fuTriplet: Group -> FuSource
+
+fuTriplet : Group -> FuSource
 fuTriplet group =
-    if group.type_== Triplet then
+    if group.type_ == Triplet then
         -- TODO closed
         if group.tileNumber == 1 || group.tileNumber == 9 then
             FuSource 8 (TripletFu Closed IsTerminal) [ group ]
+
         else if group.suit == Honor then
             FuSource 8 (TripletFu Closed IsHonor) [ group ]
+
         else
             FuSource 4 (TripletFu Closed HasNoValue) [ group ]
+
     else
         noFu
 
-fuTriplets: Hand -> List FuSource
+
+fuTriplets : Hand -> List FuSource
 fuTriplets hand =
     let
-        triplets = List.filter (\g -> g.type_ == Triplet) hand.groups
-    in    
+        triplets =
+            List.filter (\g -> g.type_ == Triplet) hand.groups
+    in
     List.map fuTriplet triplets
+
 
 countFu : Hand -> Hand
 countFu hand =
     let
-        base = fuBase hand
-        closedRon = fuClosedRon hand
-        valuePair = fuValuePair hand
-        triplets = fuTriplets hand
-        allFu = List.concat [[base, closedRon, valuePair], triplets]
-        allValidFu = List.filter (\f -> not (f == noFu)) allFu
+        base =
+            fuBase hand
+
+        closedRon =
+            fuClosedRon hand
+
+        valuePair =
+            fuValuePair hand
+
+        triplets =
+            fuTriplets hand
+
+        allFu =
+            List.concat [ [ base, closedRon, valuePair ], triplets ]
+
+        allValidFu =
+            List.filter (\f -> not (f == noFu)) allFu
     in
     { hand | fu = allValidFu }
 
-renderFuDetails: List FuSource -> Html Msg
+
+renderFuDetails : List FuSource -> Html Msg
 renderFuDetails fuSources =
-    table []
-        <| List.concat [List.map renderFuSource fuSources, renderTotalFu fuSources]
+    table [] <|
+        List.concat [ List.map renderFuSource fuSources, renderTotalFu fuSources ]
 
 
-renderFuSource: FuSource -> Html Msg
+renderFuSource : FuSource -> Html Msg
 renderFuSource fuSource =
     let
-        explanation = case fuSource.description of
-            BaseFu -> "Base hand value"
-            TsumoNotPinfu -> "Tsumo (if not pinfu)"
-            ClosedRon -> "Closed ron"
-            ValuePair ByDragon -> "Value pair (dragon)"
-            ValuePair ByRoundWind -> "Value pair (round wind)"
-            ValuePair BySeatWind -> "Value pair (seat wind)"
-            ValuePair BySeatAndRoundWind -> "Value pair (seat & round wind)"
-            TripletFu openClosed kind ->
-                let
-                    openClosedStr = case openClosed of
-                        Open -> "(open)"
-                        Closed -> "(closed)"
-                in
-                case kind of
-                    IsHonor -> "Triplet of honors " ++ openClosedStr
-                    IsTerminal -> "Triplet of terminals " ++ openClosedStr
-                    HasNoValue -> "Triplet of simples " ++ openClosedStr
-            -- TODO
-            KanFu _ _-> "Kan"
-            NoFu -> "?"
+        explanation =
+            case fuSource.description of
+                BaseFu ->
+                    "Base hand value"
+
+                TsumoNotPinfu ->
+                    "Tsumo (if not pinfu)"
+
+                ClosedRon ->
+                    "Closed ron"
+
+                ValuePair ByDragon ->
+                    "Value pair (dragon)"
+
+                ValuePair ByRoundWind ->
+                    "Value pair (round wind)"
+
+                ValuePair BySeatWind ->
+                    "Value pair (seat wind)"
+
+                ValuePair BySeatAndRoundWind ->
+                    "Value pair (seat & round wind)"
+
+                TripletFu openClosed kind ->
+                    let
+                        openClosedStr =
+                            case openClosed of
+                                Open ->
+                                    "(open)"
+
+                                Closed ->
+                                    "(closed)"
+                    in
+                    case kind of
+                        IsHonor ->
+                            "Triplet of honors " ++ openClosedStr
+
+                        IsTerminal ->
+                            "Triplet of terminals " ++ openClosedStr
+
+                        HasNoValue ->
+                            "Triplet of simples " ++ openClosedStr
+
+                -- TODO
+                KanFu _ _ ->
+                    "Kan"
+
+                NoFu ->
+                    "?"
     in
     tr []
-        [ td [] [text explanation]
-        , td [] [text (String.fromInt fuSource.fu ++ " fu")]
-        , td [] [drawGroups fuSource.groups]]
+        [ td [] [ text explanation ]
+        , td [] [ text (String.fromInt fuSource.fu ++ " fu") ]
+        , td [] [ drawGroups fuSource.groups ]
+        ]
 
-renderTotalFu: List FuSource -> List (Html Msg)
+
+renderTotalFu : List FuSource -> List (Html Msg)
 renderTotalFu fuSources =
     let
-        sumFu = List.map .fu fuSources
-            |> List.sum
-        roundFu n = (toFloat n) / 10
-            |> ceiling
-            |> (*) 10
+        sumFu =
+            List.map .fu fuSources
+                |> List.sum
 
+        roundFu n =
+            toFloat n
+                / 10
+                |> ceiling
+                |> (*) 10
     in
     [ tr []
-        [ td [] [text "Total (before rounding)"]
-        , td [] [text <| String.fromInt sumFu ++ " fu"]]
+        [ td [] [ text "Total (before rounding)" ]
+        , td [] [ text <| String.fromInt sumFu ++ " fu" ]
+        ]
     , tr []
-        [ td [] [text "Total"]
-        , td [] [text <| String.fromInt (roundFu sumFu) ++ " fu"]]]
+        [ td [] [ text "Total" ]
+        , td [] [ text <| String.fromInt (roundFu sumFu) ++ " fu" ]
+        ]
+    ]
 
-renderWinBy: Hand -> Html Msg
+
+renderWinBy : Hand -> Html Msg
 renderWinBy hand =
     div []
-        [ p [onClick ChangeWinBy] [text <| "Win by: " ++  (winByToString hand.winBy )]]
+        [ p [ onClick ChangeWinBy ] [ text <| "Win by: " ++ winByToString hand.winBy ] ]
 
-renderWinds: Hand -> Html Msg
+
+renderWinds : Hand -> Html Msg
 renderWinds hand =
-    div [] 
-        [ p [onClick ChangeSeatWind] [text ("Seat wind: " ++ windToString hand.seatWind) ]
-        , p [onClick ChangeRoundWind] [text ("Round wind: " ++ windToString hand.roundWind) ] ]
+    div []
+        [ p [ onClick ChangeSeatWind ] [ text ("Seat wind: " ++ windToString hand.seatWind) ]
+        , p [ onClick ChangeRoundWind ] [ text ("Round wind: " ++ windToString hand.roundWind) ]
+        ]
 
-cycleWind: Wind -> Wind
+
+cycleWind : Wind -> Wind
 cycleWind wind =
     case wind of
-        East -> South
-        South -> West
-        West -> North
-        North -> East
+        East ->
+            South
 
-winByToString: WinBy -> String
+        South ->
+            West
+
+        West ->
+            North
+
+        North ->
+            East
+
+
+winByToString : WinBy -> String
 winByToString winBy =
     case winBy of
-        Tsumo -> "Tsumo"
-        Ron -> "Ron"
+        Tsumo ->
+            "Tsumo"
 
-groupToWind: Group -> Maybe Wind
+        Ron ->
+            "Ron"
+
+
+groupToWind : Group -> Maybe Wind
 groupToWind group =
     let
-        getWind g = if g.suit == Honor then
-            case group.tileNumber of
-                1 -> Just East
-                2 -> Just South
-                3 -> Just West
-                4 -> Just North
-                _ -> Nothing
-            else 
-                Nothing  
+        getWind g =
+            if g.suit == Honor then
+                case group.tileNumber of
+                    1 ->
+                        Just East
+
+                    2 ->
+                        Just South
+
+                    3 ->
+                        Just West
+
+                    4 ->
+                        Just North
+
+                    _ ->
+                        Nothing
+
+            else
+                Nothing
     in
     case group.type_ of
-        Triplet -> getWind group
-        Pair -> getWind group
-        Run -> Nothing
+        Triplet ->
+            getWind group
 
-randomTripletOrRun: Suit -> Random.Generator Group
+        Pair ->
+            getWind group
+
+        Run ->
+            Nothing
+
+
+randomTripletOrRun : Suit -> Random.Generator Group
 randomTripletOrRun suit =
     let
-        maxRange = if suit == Honor then 7 else (9 + 7)
+        maxRange =
+            if suit == Honor then
+                7
+
+            else
+                9 + 7
     in
     Random.int 1 maxRange
-        |> Random.map (\n -> if n < 10 then Group Triplet n suit else Group Run (n - 9) suit)
+        |> Random.map
+            (\n ->
+                if n < 10 then
+                    Group Triplet n suit
 
-randomPair: Random.Generator Group
+                else
+                    Group Run (n - 9) suit
+            )
+
+
+randomPair : Random.Generator Group
 randomPair =
     let
-        maxRange suit = if suit == Honor then 7 else 9
-    in
-    Random.uniform Man [Pin, Sou, Honor]
-        |> Random.andThen (\s -> Random.pair (Random.int 1 (maxRange s)) (Random.constant s))
-        |> Random.map (\(n, suit) -> Group Pair n suit)
+        maxRange suit =
+            if suit == Honor then
+                7
 
-randomWinningHand: Random.Generator (List Group)
+            else
+                9
+    in
+    Random.uniform Man [ Pin, Sou, Honor ]
+        |> Random.andThen (\s -> Random.pair (Random.int 1 (maxRange s)) (Random.constant s))
+        |> Random.map (\( n, suit ) -> Group Pair n suit)
+
+
+randomWinningHand : Random.Generator (List Group)
 randomWinningHand =
     let
-        man = randomTripletOrRun Man
-        pin = randomTripletOrRun Pin
-        sou = randomTripletOrRun Sou
-        honor = randomTripletOrRun Honor
-        pair = randomPair
-    in
-    Random.map5 (\m p s h pp -> [m, p, s, h, pp])  man pin sou honor pair
+        man =
+            randomTripletOrRun Man
 
-groupToString: Group -> String
+        pin =
+            randomTripletOrRun Pin
+
+        sou =
+            randomTripletOrRun Sou
+
+        honor =
+            randomTripletOrRun Honor
+
+        pair =
+            randomPair
+    in
+    Random.map5 (\m p s h pp -> [ m, p, s, h, pp ]) man pin sou honor pair
+
+
+groupToString : Group -> String
 groupToString group =
     case group.type_ of
         Triplet ->
-            String.repeat 3 (String.fromInt group.tileNumber) ++ (suitToString group.suit)
+            String.repeat 3 (String.fromInt group.tileNumber) ++ suitToString group.suit
+
         Pair ->
-            String.repeat 2 (String.fromInt group.tileNumber) ++ (suitToString group.suit)
+            String.repeat 2 (String.fromInt group.tileNumber) ++ suitToString group.suit
+
         Run ->
             String.join ""
                 [ String.fromInt group.tileNumber
                 , String.fromInt (group.tileNumber + 1)
                 , String.fromInt (group.tileNumber + 2)
-                , suitToString group.suit ]
+                , suitToString group.suit
+                ]
 
-windToString: Wind -> String
+
+windToString : Wind -> String
 windToString wind =
     case wind of
-        East -> "East"
-        South -> "South"
-        West -> "West"
-        North -> "North"
+        East ->
+            "East"
 
-isChiitoitsu: Hand -> Yaku
+        South ->
+            "South"
+
+        West ->
+            "West"
+
+        North ->
+            "North"
+
+
+isChiitoitsu : Hand -> Yaku
 isChiitoitsu { tiles } =
     let
-        groups = findAllPairs tiles |> deduplicate
-    in    
+        groups =
+            findAllPairs tiles |> deduplicate
+    in
     if List.length groups == 7 then
         Chiitoitsu
+
     else
         NoYaku
 
-findAllPairs: List Tile -> List Group
+
+findAllPairs : List Tile -> List Group
 findAllPairs tiles =
     case tiles of
-        [] -> []
-        [_] -> []
+        [] ->
+            []
+
+        [ _ ] ->
+            []
+
         x :: y :: xs ->
             if x == y then
-                (Group Pair x.number x.suit) :: findAllPairs xs
+                Group Pair x.number x.suit :: findAllPairs xs
+
             else
                 []
