@@ -1,12 +1,11 @@
 module Main exposing (main)
 import Browser
 import Html exposing (Html, div, text, input, p, table, tr, td, ul, li, button)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onInput, onClick)
 import Html.Attributes exposing (type_, placeholder, value, style)
 import Parser exposing (Parser, (|.), (|=), succeed, oneOf, loop, getChompedString, chompIf, chompWhile)
 import List.Extra exposing (permutations)
 import Maybe
-import Html.Events exposing (onClick)
 import Random
 
 
@@ -83,6 +82,7 @@ init _ =
 type Msg = HandStr String
     | ChangeSeatWind
     | ChangeRoundWind
+    | ChangeWinBy
     | GenerateRandomHand
 
 update: Msg -> Model -> (Model, Cmd Msg)
@@ -114,6 +114,13 @@ update msg model =
                 newHand = { prevHand | seatWind = cycleWind prevHand.seatWind }
             in
             ({ model | hand = newHand }, Cmd.none)
+        ChangeWinBy ->
+            let
+                prevHand = model.hand
+                newWinBy = if model.hand.winBy == Ron then Tsumo else Ron
+                newHand = { prevHand | winBy = newWinBy }
+            in
+            ({ model | hand = newHand }, Cmd.none)
         GenerateRandomHand ->
             let
                 randomHand = randomWinningHand
@@ -137,6 +144,7 @@ view model =
         , button [ onClick GenerateRandomHand ] [ text "Random" ]
         -- , p [] [ Debug.toString tiles |> text ]
         , p [] [ renderTiles model.hand.tiles ]
+        , renderWinBy model.hand
         , renderWinds model.hand
         , debugGroups model.allGroups
         , drawGroups model.hand.groups
@@ -560,6 +568,11 @@ renderTotalFu fuSources =
         [ td [] [text "Total"]
         , td [] [text <| String.fromInt (roundFu sumFu) ++ " fu"]]]
 
+renderWinBy: Hand -> Html Msg
+renderWinBy hand =
+    div []
+        [ p [onClick ChangeWinBy] [text <| "Win by: " ++  (winByToString hand.winBy )]]
+
 renderWinds: Hand -> Html Msg
 renderWinds hand =
     div [] 
@@ -573,6 +586,12 @@ cycleWind wind =
         South -> West
         West -> North
         North -> East
+
+winByToString: WinBy -> String
+winByToString winBy =
+    case winBy of
+        Tsumo -> "Tsumo"
+        Ron -> "Ron"
 
 groupToWind: Group -> Maybe Wind
 groupToWind group =
