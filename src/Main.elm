@@ -20,7 +20,8 @@ main = Browser.element
 
 type alias Model =
     { handString: String
-    , hand: Hand }
+    , hand: Hand
+    , allGroups: GroupsPerSuit }
 
 type Suit = Sou | Man | Pin | Honor | Invalid
 type alias TileNumber = Int
@@ -68,10 +69,14 @@ type alias FuSource =
     { fu: Int
     , description: FuDescription
     , groups: List Group }
+type Yaku =
+    Chiitoitsu
+    | Pinfu
+    | NoYaku
 
 init : () -> (Model, Cmd Msg)
 init _ = 
-    ( Model "2555m" (Hand [] [] Tsumo East East [])
+    ( Model "2555m" (Hand [] [] Tsumo East East []) (GroupsPerSuit [[]] [[]] [[]] [[]])
     , Cmd.none )
 
 
@@ -96,7 +101,7 @@ update msg model =
                     , groups = groups
                     , fu = []}
             in
-            ({ model | handString = handString, hand = hand }, Cmd.none)
+            ({ model | handString = handString, hand = hand, allGroups = allGroups }, Cmd.none)
         ChangeRoundWind ->
             let
                 prevHand = model.hand
@@ -127,7 +132,6 @@ subscriptions _ =
 view : Model -> Html Msg
 view model =
     let
-        allGroups = findGroups model.hand.tiles
         handWithFu = countFu model.hand
     in 
     div []
@@ -136,7 +140,7 @@ view model =
         -- , p [] [ Debug.toString tiles |> text ]
         , p [] [ renderTiles model.hand.tiles ]
         , renderWinds model.hand
-        , debugGroups allGroups
+        , debugGroups model.allGroups
         , drawGroups model.hand.groups
         , p [] [text (Debug.toString model.hand.groups), clearFixDiv]
         , p [] [text ("Fu:" ++ (Debug.toString (.fu handWithFu)))]
@@ -596,3 +600,24 @@ randomHandToString (tileNumbers, suit) =
                 , suitToString suit]
         _ ->
             ""
+
+isChiitoitsu: Hand -> Yaku
+isChiitoitsu { tiles } =
+    let
+        groups = findAllPairs tiles |> deduplicate
+    in    
+    if List.length groups == 7 then
+        Chiitoitsu
+    else
+        NoYaku
+
+findAllPairs: List Tile -> List Group
+findAllPairs tiles =
+    case tiles of
+        [] -> []
+        [_] -> []
+        x :: y :: xs ->
+            if x == y then
+                (Group Pair x.number x.suit) :: findAllPairs xs
+            else
+                []
