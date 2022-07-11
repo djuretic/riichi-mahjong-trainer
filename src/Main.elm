@@ -510,7 +510,7 @@ countFu hand =
 renderFuDetails: List FuSource -> Html Msg
 renderFuDetails fuSources =
     table []
-        <| List.concat [List.map renderFuSource fuSources, [renderTotalFu fuSources]]
+        <| List.concat [List.map renderFuSource fuSources, renderTotalFu fuSources]
 
 
 renderFuSource: FuSource -> Html Msg
@@ -543,15 +543,22 @@ renderFuSource fuSource =
         , td [] [text (String.fromInt fuSource.fu ++ " fu")]
         , td [] [drawGroups fuSource.groups]]
 
-renderTotalFu: List FuSource -> Html Msg
+renderTotalFu: List FuSource -> List (Html Msg)
 renderTotalFu fuSources =
     let
         sumFu = List.map .fu fuSources
             |> List.sum
+        roundFu n = (toFloat n) / 10
+            |> ceiling
+            |> (*) 10
+
     in
-    tr []
-        [ td [] [text "Total"]
+    [ tr []
+        [ td [] [text "Total (before rounding)"]
         , td [] [text <| String.fromInt sumFu ++ " fu"]]
+    , tr []
+        [ td [] [text "Total"]
+        , td [] [text <| String.fromInt (roundFu sumFu) ++ " fu"]]]
 
 renderWinds: Hand -> Html Msg
 renderWinds hand =
