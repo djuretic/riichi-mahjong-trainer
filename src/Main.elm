@@ -32,7 +32,6 @@ type Suit
     | Man
     | Pin
     | Honor
-    | Invalid
 
 
 type alias TileNumber =
@@ -282,9 +281,6 @@ drawTile tile =
                     Honor ->
                         ""
 
-                    Invalid ->
-                        ""
-
             else
                 case tile.suit of
                     Sou ->
@@ -299,8 +295,6 @@ drawTile tile =
                     Honor ->
                         pathHonorTile tile.number
 
-                    Invalid ->
-                        ""
     in
     if String.isEmpty path then
         text ""
@@ -354,23 +348,23 @@ renderTiles tiles =
     div [] (List.append (List.map drawTile tiles) [ clearFixDiv ])
 
 
-toSuit : String -> Suit
+toSuit : String -> Maybe Suit
 toSuit s =
     case s of
         "p" ->
-            Pin
+            Just Pin
 
         "s" ->
-            Sou
+            Just Sou
 
         "m" ->
-            Man
+            Just Man
 
         "z" ->
-            Honor
+            Just Honor
 
         _ ->
-            Invalid
+            Nothing
 
 
 suitToString : Suit -> String
@@ -388,9 +382,6 @@ suitToString suit =
         Honor ->
             "z"
 
-        _ ->
-            ""
-
 
 tilesFromSuitString : String -> List Tile
 tilesFromSuitString parsedSuit =
@@ -404,7 +395,12 @@ tilesFromSuitString parsedSuit =
                 |> List.map String.fromChar
                 |> List.filterMap String.toInt
     in
-    List.map (\n -> Tile n suit) tiles
+    case suit of
+        Just s ->
+            List.map (\n -> Tile n s) tiles
+        
+        Nothing ->
+            []
 
 
 handSuit : Parser (List Tile)
