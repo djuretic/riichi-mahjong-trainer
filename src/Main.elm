@@ -140,9 +140,9 @@ view model =
         , renderWinds model.hand
         , debugGroups model.allGroups
         , drawGroups model.hand.groups
-        , p [] [text (Debug.toString model.hand.groups), clearFixDiv]
-        , p [] [text ("Fu:" ++ (Debug.toString (.fu handWithFu)))]
-        , renderFuDetails (.fu handWithFu)
+        --, p [] [text (Debug.toString model.hand.groups), clearFixDiv]
+        , clearFixDiv
+        , renderFuDetails handWithFu.fu
         ]
 
 
@@ -509,7 +509,8 @@ countFu hand =
 
 renderFuDetails: List FuSource -> Html Msg
 renderFuDetails fuSources =
-    table [] (List.map renderFuSource fuSources)
+    table []
+        <| List.concat [List.map renderFuSource fuSources, [renderTotalFu fuSources]]
 
 
 renderFuSource: FuSource -> Html Msg
@@ -542,11 +543,21 @@ renderFuSource fuSource =
         , td [] [text (String.fromInt fuSource.fu ++ " fu")]
         , td [] [drawGroups fuSource.groups]]
 
+renderTotalFu: List FuSource -> Html Msg
+renderTotalFu fuSources =
+    let
+        sumFu = List.map .fu fuSources
+            |> List.sum
+    in
+    tr []
+        [ td [] [text "Total"]
+        , td [] [text <| String.fromInt sumFu ++ " fu"]]
+
 renderWinds: Hand -> Html Msg
 renderWinds hand =
     div [] 
-        [ p [onClick ChangeSeatWind] [text ("Seat wind: " ++ Debug.toString hand.seatWind) ]
-        , p [onClick ChangeRoundWind] [text ("Round wind: " ++ Debug.toString hand.roundWind) ] ]
+        [ p [onClick ChangeSeatWind] [text ("Seat wind: " ++ windToString hand.seatWind) ]
+        , p [onClick ChangeRoundWind] [text ("Round wind: " ++ windToString hand.roundWind) ] ]
 
 cycleWind: Wind -> Wind
 cycleWind wind =
@@ -615,6 +626,14 @@ groupToString group =
                 , String.fromInt (group.tileNumber + 1)
                 , String.fromInt (group.tileNumber + 2)
                 , suitToString group.suit ]
+
+windToString: Wind -> String
+windToString wind =
+    case wind of
+        East -> "East"
+        South -> "South"
+        West -> "West"
+        North -> "North"
 
 isChiitoitsu: Hand -> Yaku
 isChiitoitsu { tiles } =
