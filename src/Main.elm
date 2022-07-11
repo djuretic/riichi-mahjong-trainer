@@ -116,13 +116,11 @@ update msg model =
             ({ model | hand = newHand }, Cmd.none)
         GenerateRandomHand ->
             let
-                randomSuit = Random.uniform Man [Pin, Sou, Honor]
-                randomTileNumbers = Random.list 5 (Random.int 1 9)
-                handStr = Random.pair randomTileNumbers randomSuit
-                    |> Random.map randomHandToString
+                randomHand = randomWinningHand
+                    |> Random.map (\lg -> List.map groupToString lg |> String.join "")               
             in
             ( model
-            , Random.generate HandStr handStr)
+            , Random.generate HandStr randomHand)
         
 
 subscriptions : Model -> Sub Msg
@@ -576,30 +574,47 @@ groupToWind group =
         Pair -> getWind group
         Run -> Nothing
 
-randomHandToString: (List TileNumber, Suit) -> String
-randomHandToString (tileNumbers, suit) =
-    case tileNumbers of
-        m :: p :: s :: h :: [extra] ->
-            let
-                honorMin n = if suit == Honor then
-                        min n 7
-                    else
-                        n
-            in
-            
+randomTripletOrRun: Suit -> Random.Generator Group
+randomTripletOrRun suit =
+    let
+        maxRange = if suit == Honor then 7 else (9 + 7)
+    in
+    Random.int 1 maxRange
+        |> Random.map (\n -> if n < 10 then Group Triplet n suit else Group Run (n - 9) suit)
+
+randomPair: Random.Generator Group
+randomPair =
+    let
+        maxRange suit = if suit == Honor then 7 else 9
+    in
+    Random.uniform Man [Pin, Sou, Honor]
+        |> Random.andThen (\s -> Random.pair (Random.int 1 (maxRange s)) (Random.constant s))
+        |> Random.map (\(n, suit) -> Group Pair n suit)
+
+randomWinningHand: Random.Generator (List Group)
+randomWinningHand =
+    let
+        man = randomTripletOrRun Man
+        pin = randomTripletOrRun Pin
+        sou = randomTripletOrRun Sou
+        honor = randomTripletOrRun Honor
+        pair = randomPair
+    in
+    Random.map5 (\m p s h pp -> [m, p, s, h, pp])  man pin sou honor pair
+
+groupToString: Group -> String
+groupToString group =
+    case group.type_ of
+        Triplet ->
+            String.repeat 3 (String.fromInt group.tileNumber) ++ (suitToString group.suit)
+        Pair ->
+            String.repeat 2 (String.fromInt group.tileNumber) ++ (suitToString group.suit)
+        Run ->
             String.join ""
-                [ String.repeat 3 (String.fromInt m)
-                , "m"
-                , String.repeat 3 (String.fromInt p)
-                , "p"
-                , String.repeat 3 (String.fromInt s)
-                , "s"
-                , String.repeat 3 (String.fromInt (min h 7))
-                , "z"
-                , String.repeat 2 (String.fromInt (honorMin extra))
-                , suitToString suit]
-        _ ->
-            ""
+                [ String.fromInt group.tileNumber
+                , String.fromInt (group.tileNumber + 1)
+                , String.fromInt (group.tileNumber + 2)
+                , suitToString group.suit ]
 
 isChiitoitsu: Hand -> Yaku
 isChiitoitsu { tiles } =
