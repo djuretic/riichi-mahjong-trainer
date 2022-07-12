@@ -121,6 +121,7 @@ type alias Hand =
     , winBy : WinBy
     , seatWind : Wind
     , roundWind : Wind
+    , yaku : List Yaku
     , fu : List FuSource
     }
 
@@ -135,12 +136,13 @@ type alias FuSource =
 type Yaku
     = Chiitoitsu
     | Pinfu
+    | Tanyao
     | NoYaku
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model "2555m" (Hand [] [] Tsumo East East []) (GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ])
+    ( Model "2555m" (Hand [] [] Tsumo East East [] []) (GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ])
     , Cmd.none
     )
 
@@ -176,10 +178,17 @@ update msg model =
                         | tiles = tiles
                         , winBy = Tsumo
                         , groups = groups
+                        , yaku = []
                         , fu = []
                     }
+
+                allYaku =
+                    List.filter (\y -> not (y == NoYaku)) [ checkTanyao hand ]
+
+                handWithYaku =
+                    { hand | yaku = allYaku }
             in
-            ( { model | handString = handString, hand = hand, allGroups = allGroups }, Cmd.none )
+            ( { model | handString = handString, hand = handWithYaku, allGroups = allGroups }, Cmd.none )
 
         ChangeRoundWind ->
             let
@@ -250,6 +259,7 @@ view model =
         , renderWinds model.hand
         , debugGroups model.allGroups
         , drawGroups model.hand.groups
+        , p [] [ text <| "Yaku: " ++ Debug.toString model.hand.yaku ]
 
         --, p [] [text (Debug.toString model.hand.groups), clearFixDiv]
         , clearFixDiv
@@ -294,7 +304,6 @@ drawTile tile =
 
                     Honor ->
                         pathHonorTile tile.number
-
     in
     if String.isEmpty path then
         text ""
@@ -398,7 +407,7 @@ tilesFromSuitString parsedSuit =
     case suit of
         Just s ->
             List.map (\n -> Tile n s) tiles
-        
+
         Nothing ->
             []
 
@@ -1074,3 +1083,40 @@ findAllPairs tiles =
 
             else
                 []
+
+
+checkTanyao : Hand -> Yaku
+checkTanyao hand =
+    let
+        isSimple group =
+            if group.suit == Honor then
+                False
+
+            else
+                case ( group.type_, group.tileNumber ) of
+                    ( Triplet, 1 ) ->
+                        False
+
+                    ( Triplet, 9 ) ->
+                        False
+
+                    ( Run, 1 ) ->
+                        False
+
+                    ( Run, 7 ) ->
+                        False
+
+                    ( Pair, _ ) ->
+                        True
+
+                    ( Triplet, _ ) ->
+                        True
+
+                    ( Run, _ ) ->
+                        True
+    in
+    if List.all isSimple hand.groups then
+        Tanyao
+
+    else
+        NoYaku
