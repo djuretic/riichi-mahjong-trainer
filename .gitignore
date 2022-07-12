@@ -1,2 +1,4 @@
 img
 elm-stuff
+package*.json
+node_modules/

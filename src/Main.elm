@@ -138,6 +138,8 @@ type Yaku
     | Pinfu
     | Yakuhai
     | Tanyao
+    | SanshokuDoujun
+    | Chanta
     | Toitoi
     | NoYaku
 
@@ -185,7 +187,7 @@ update msg model =
                     }
 
                 allYaku =
-                    List.filter (\y -> not (y == NoYaku)) [ checkTanyao hand, checkToitoi hand ]
+                    List.filter (\y -> not (y == NoYaku)) [ checkTanyao hand, checkToitoi hand, checkChanta hand, checkSanshokuDoujun hand ]
                         |> List.append (checkYakuhai hand)
 
                 handWithYaku =
@@ -1135,6 +1137,23 @@ isDragon group =
     groupIsTriplet group && group.suit == Honor && List.member group.tileNumber [ 5, 6, 7 ]
 
 
+containsTerminal : Group -> Bool
+containsTerminal group =
+    if group.suit == Honor then
+        False
+
+    else
+        case group.type_ of
+            Triplet ->
+                group.tileNumber == 1 || group.tileNumber == 9
+
+            Pair ->
+                group.tileNumber == 1 || group.tileNumber == 9
+
+            Run ->
+                group.tileNumber == 1 || group.tileNumber == 7
+
+
 checkToitoi : Hand -> Yaku
 checkToitoi hand =
     let
@@ -1160,3 +1179,35 @@ checkYakuhai hand =
 
     else
         []
+
+
+checkChanta : Hand -> Yaku
+checkChanta hand =
+    let
+        containsTerminalOrHonor g =
+            g.suit == Honor || containsTerminal g
+    in
+    if List.all containsTerminalOrHonor hand.groups then
+        Chanta
+
+    else
+        NoYaku
+
+
+checkSanshokuDoujun : Hand -> Yaku
+checkSanshokuDoujun hand =
+    let
+        sameSequence n =
+            List.member (Group Run n Man) hand.groups
+                && List.member (Group Run n Pin) hand.groups
+                && List.member (Group Run n Sou) hand.groups
+
+        checkRes =
+            List.range 1 7
+                |> List.map sameSequence
+    in
+    if List.any identity checkRes then
+        SanshokuDoujun
+
+    else
+        NoYaku
