@@ -136,7 +136,9 @@ type alias FuSource =
 type Yaku
     = Chiitoitsu
     | Pinfu
+    | Yakuhai
     | Tanyao
+    | Toitoi
     | NoYaku
 
 
@@ -183,7 +185,8 @@ update msg model =
                     }
 
                 allYaku =
-                    List.filter (\y -> not (y == NoYaku)) [ checkTanyao hand ]
+                    List.filter (\y -> not (y == NoYaku)) [ checkTanyao hand, checkToitoi hand ]
+                        |> List.append (checkYakuhai hand)
 
                 handWithYaku =
                     { hand | yaku = allYaku }
@@ -1120,3 +1123,40 @@ checkTanyao hand =
 
     else
         NoYaku
+
+
+groupIsTriplet : Group -> Bool
+groupIsTriplet group =
+    group.type_ == Triplet
+
+
+isDragon : Group -> Bool
+isDragon group =
+    groupIsTriplet group && group.suit == Honor && List.member group.tileNumber [ 5, 6, 7 ]
+
+
+checkToitoi : Hand -> Yaku
+checkToitoi hand =
+    let
+        -- TODO kan
+        triplets =
+            List.filter groupIsTriplet hand.groups
+    in
+    if List.length triplets == 4 then
+        Toitoi
+
+    else
+        NoYaku
+
+
+checkYakuhai : Hand -> List Yaku
+checkYakuhai hand =
+    let
+        triplets =
+            List.filter (\g -> groupIsTriplet g && isDragon g) hand.groups
+    in
+    if not (List.isEmpty triplets) then
+        List.map (\_ -> Yakuhai) triplets
+
+    else
+        []
