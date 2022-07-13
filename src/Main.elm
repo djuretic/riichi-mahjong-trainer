@@ -1276,6 +1276,7 @@ checkIipeikou hand =
 
             res =
                 List.map2 (\g1 g2 -> g1 == g2) runs (List.tail runs |> Maybe.withDefault [])
+                    |> List.filter identity
         in
         if List.length res == 2 then
             HanSource 13 Ryanpeikou
