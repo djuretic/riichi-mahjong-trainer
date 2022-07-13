@@ -121,7 +121,7 @@ type alias Hand =
     , winBy : WinBy
     , seatWind : Wind
     , roundWind : Wind
-    , yaku : List Yaku
+    , han : List HanSource
     , fu : List FuSource
     }
 
@@ -142,6 +142,12 @@ type Yaku
     | Chanta
     | Toitoi
     | NoYaku
+
+
+type alias HanSource =
+    { han : Int
+    , description : Yaku
+    }
 
 
 init : () -> ( Model, Cmd Msg )
@@ -182,16 +188,16 @@ update msg model =
                         | tiles = tiles
                         , winBy = Tsumo
                         , groups = groups
-                        , yaku = []
+                        , han = []
                         , fu = []
                     }
 
                 allYaku =
-                    List.filter (\y -> not (y == NoYaku)) [ checkTanyao hand, checkToitoi hand, checkChanta hand, checkSanshokuDoujun hand ]
+                    List.filter (\y -> not (y == noYaku)) [ checkTanyao hand, checkToitoi hand, checkChanta hand, checkSanshokuDoujun hand ]
                         |> List.append (checkYakuhai hand)
 
                 handWithYaku =
-                    { hand | yaku = allYaku }
+                    { hand | han = allYaku }
             in
             ( { model | handString = handString, hand = handWithYaku, allGroups = allGroups }, Cmd.none )
 
@@ -264,7 +270,7 @@ view model =
         , renderWinds model.hand
         , debugGroups model.allGroups
         , drawGroups model.hand.groups
-        , p [] [ text <| "Yaku: " ++ Debug.toString model.hand.yaku ]
+        , p [] [ text <| "Yaku: " ++ Debug.toString model.hand.han ]
 
         --, p [] [text (Debug.toString model.hand.groups), clearFixDiv]
         , clearFixDiv
@@ -1090,7 +1096,12 @@ findAllPairs tiles =
                 []
 
 
-checkTanyao : Hand -> Yaku
+noYaku : HanSource
+noYaku =
+    HanSource 0 NoYaku
+
+
+checkTanyao : Hand -> HanSource
 checkTanyao hand =
     let
         isSimple group =
@@ -1121,10 +1132,10 @@ checkTanyao hand =
                         True
     in
     if List.all isSimple hand.groups then
-        Tanyao
+        HanSource 1 Tanyao
 
     else
-        NoYaku
+        noYaku
 
 
 groupIsTriplet : Group -> Bool
@@ -1154,7 +1165,7 @@ containsTerminal group =
                 group.tileNumber == 1 || group.tileNumber == 7
 
 
-checkToitoi : Hand -> Yaku
+checkToitoi : Hand -> HanSource
 checkToitoi hand =
     let
         -- TODO kan
@@ -1162,39 +1173,54 @@ checkToitoi hand =
             List.filter groupIsTriplet hand.groups
     in
     if List.length triplets == 4 then
-        Toitoi
+        HanSource 2 Toitoi
 
     else
-        NoYaku
+        noYaku
 
 
-checkYakuhai : Hand -> List Yaku
+checkYakuhai : Hand -> List HanSource
 checkYakuhai hand =
     let
         triplets =
             List.filter (\g -> groupIsTriplet g && isDragon g) hand.groups
     in
     if not (List.isEmpty triplets) then
-        List.map (\_ -> Yakuhai) triplets
+        List.map (\_ -> HanSource 1 Yakuhai) triplets
 
     else
         []
 
 
-checkChanta : Hand -> Yaku
+handIsClosed : Hand -> Bool
+handIsClosed _ =
+    -- TODO open
+    True
+
+
+incrementHanIfClosed : Hand -> HanSource -> HanSource
+incrementHanIfClosed hand hanSource =
+    if handIsClosed hand then
+        { hanSource | han = hanSource.han + 1 }
+
+    else
+        hanSource
+
+
+checkChanta : Hand -> HanSource
 checkChanta hand =
     let
         containsTerminalOrHonor g =
             g.suit == Honor || containsTerminal g
     in
     if List.all containsTerminalOrHonor hand.groups then
-        Chanta
+        HanSource 1 Chanta |> incrementHanIfClosed hand
 
     else
-        NoYaku
+        noYaku
 
 
-checkSanshokuDoujun : Hand -> Yaku
+checkSanshokuDoujun : Hand -> HanSource
 checkSanshokuDoujun hand =
     let
         sameSequence n =
@@ -1207,7 +1233,7 @@ checkSanshokuDoujun hand =
                 |> List.map sameSequence
     in
     if List.any identity checkRes then
-        SanshokuDoujun
+        HanSource 1 SanshokuDoujun |> incrementHanIfClosed hand
 
     else
-        NoYaku
+        noYaku
