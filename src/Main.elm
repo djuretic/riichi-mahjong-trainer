@@ -141,6 +141,7 @@ type Yaku
     | SanshokuDoujun
     | Chanta
     | Toitoi
+    | SanshokuDoukou
     | NoYaku
 
 
@@ -193,7 +194,7 @@ update msg model =
                     }
 
                 allYaku =
-                    List.filter (\y -> not (y == noYaku)) [ checkTanyao hand, checkToitoi hand, checkChanta hand, checkSanshokuDoujun hand ]
+                    List.filter (\y -> not (y == noYaku)) [ checkTanyao hand, checkToitoi hand, checkChanta hand, checkSanshokuDoujun hand, checkSanshokuDoukou hand ]
                         |> List.append (checkYakuhai hand)
 
                 handWithYaku =
@@ -1234,6 +1235,25 @@ checkSanshokuDoujun hand =
     in
     if List.any identity checkRes then
         HanSource 1 SanshokuDoujun |> incrementHanIfClosed hand
+
+    else
+        noYaku
+
+
+checkSanshokuDoukou : Hand -> HanSource
+checkSanshokuDoukou hand =
+    let
+        sameTriplet n =
+            List.member (Group Triplet n Man) hand.groups
+                && List.member (Group Triplet n Pin) hand.groups
+                && List.member (Group Triplet n Sou) hand.groups
+
+        checkRes =
+            List.range 1 9
+                |> List.map sameTriplet
+    in
+    if List.any identity checkRes then
+        HanSource 2 SanshokuDoukou
 
     else
         noYaku
