@@ -136,6 +136,8 @@ type alias FuSource =
 type Yaku
     = Chiitoitsu
     | Pinfu
+    | Iipeikou
+    | Ryanpeikou
     | Yakuhai
     | Tanyao
     | SanshokuDoujun
@@ -194,7 +196,7 @@ update msg model =
                     }
 
                 allYaku =
-                    List.filter (\y -> not (y == noYaku)) [ checkTanyao hand, checkToitoi hand, checkChanta hand, checkSanshokuDoujun hand, checkSanshokuDoukou hand ]
+                    List.filter (\y -> not (y == noYaku)) [ checkIipeikou hand, checkTanyao hand, checkToitoi hand, checkChanta hand, checkSanshokuDoujun hand, checkSanshokuDoukou hand ]
                         |> List.append (checkYakuhai hand)
 
                 handWithYaku =
@@ -1144,6 +1146,11 @@ groupIsTriplet group =
     group.type_ == Triplet
 
 
+groupIsRun : Group -> Bool
+groupIsRun group =
+    group.type_ == Run
+
+
 isDragon : Group -> Bool
 isDragon group =
     groupIsTriplet group && group.suit == Honor && List.member group.tileNumber [ 5, 6, 7 ]
@@ -1254,6 +1261,30 @@ checkSanshokuDoukou hand =
     in
     if List.any identity checkRes then
         HanSource 2 SanshokuDoukou
+
+    else
+        noYaku
+
+
+checkIipeikou : Hand -> HanSource
+checkIipeikou hand =
+    if handIsClosed hand then
+        let
+            runs =
+                List.filter groupIsRun hand.groups
+                    |> List.sortBy (\g -> ( suitToString g.suit, g.tileNumber ))
+
+            res =
+                List.map2 (\g1 g2 -> g1 == g2) runs (List.tail runs |> Maybe.withDefault [])
+        in
+        if List.length res == 2 then
+            HanSource 13 Ryanpeikou
+
+        else if List.length res == 1 then
+            HanSource 1 Iipeikou
+
+        else
+            noYaku
 
     else
         noYaku
