@@ -103,6 +103,7 @@ type FuDescription
     | TsumoNotPinfu
     | ClosedRon
     | ValuePair ValuePairBy
+    | WaitFu WaitType
     | TripletFu OpenClose TripletKind
     | KanFu OpenClose TripletKind
     | NoFu
@@ -770,6 +771,29 @@ fuValuePair hand =
             noFu
 
 
+fuWaitType : Hand -> FuSource
+fuWaitType hand =
+    let
+        waitType =
+            waitTypeHand hand
+    in
+    case waitType of
+        EdgeWait ->
+            FuSource 2 (WaitFu EdgeWait) []
+
+        ClosedWait ->
+            FuSource 2 (WaitFu ClosedWait) []
+
+        PairWait ->
+            FuSource 2 (WaitFu PairWait) []
+
+        OpenWait ->
+            noFu
+
+        NoWait ->
+            noFu
+
+
 fuTriplet : Group -> FuSource
 fuTriplet group =
     if group.type_ == Triplet then
@@ -808,11 +832,14 @@ countFu hand =
         valuePair =
             fuValuePair hand
 
+        waitFu =
+            fuWaitType hand
+
         triplets =
             fuTriplets hand
 
         allFu =
-            List.concat [ [ base, closedRon, valuePair ], triplets ]
+            List.concat [ [ base, closedRon, valuePair, waitFu ], triplets ]
 
         allValidFu =
             List.filter (\f -> not (f == noFu)) allFu
@@ -851,6 +878,9 @@ renderFuSource fuSource =
 
                 ValuePair BySeatAndRoundWind ->
                     "Value pair (seat & round wind)"
+
+                WaitFu waitType ->
+                    waitTypeToString waitType
 
                 TripletFu openClosed kind ->
                     let
@@ -1406,3 +1436,22 @@ waitTypeGroup tile group =
 
     else
         NoWait
+
+
+waitTypeToString : WaitType -> String
+waitTypeToString waitType =
+    case waitType of
+        EdgeWait ->
+            "Edge wait"
+
+        ClosedWait ->
+            "Closed wait"
+
+        OpenWait ->
+            "Open wait"
+
+        PairWait ->
+            "Pair wait"
+
+        NoWait ->
+            "-"
