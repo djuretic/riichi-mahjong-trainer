@@ -774,23 +774,26 @@ fuValuePair hand =
 fuWaitType : Hand -> FuSource
 fuWaitType hand =
     let
-        waitType =
+        res =
             waitTypeHand hand
     in
-    case waitType of
-        EdgeWait ->
-            FuSource 2 (WaitFu EdgeWait) []
+    case res of
+        Just ( EdgeWait, group ) ->
+            FuSource 2 (WaitFu EdgeWait) [ group ]
 
-        ClosedWait ->
-            FuSource 2 (WaitFu ClosedWait) []
+        Just ( ClosedWait, group ) ->
+            FuSource 2 (WaitFu ClosedWait) [ group ]
 
-        PairWait ->
-            FuSource 2 (WaitFu PairWait) []
+        Just ( PairWait, group ) ->
+            FuSource 2 (WaitFu PairWait) [ group ]
 
-        OpenWait ->
+        Just ( OpenWait, _ ) ->
             noFu
 
-        NoWait ->
+        Just ( NoWait, _ ) ->
+            noFu
+
+        Nothing ->
             noFu
 
 
@@ -1357,10 +1360,11 @@ checkPinfu hand =
             pairIsValueLessPair =
                 fuValuePair hand == noFu
 
-            isTwoSidedOpenWait =
-                waitTypeHand hand == OpenWait
+            waitType =
+                waitTypeHand hand
+                    |> Maybe.map Tuple.first
         in
-        if List.length runs == 4 && pairIsValueLessPair && isTwoSidedOpenWait then
+        if List.length runs == 4 && pairIsValueLessPair && waitType == Just OpenWait then
             HanSource 1 Pinfu
 
         else
@@ -1376,7 +1380,7 @@ winningTile hand =
         |> List.head
 
 
-waitTypeHand : Hand -> WaitType
+waitTypeHand : Hand -> Maybe ( WaitType, Group )
 waitTypeHand hand =
     let
         winTile =
@@ -1386,19 +1390,23 @@ waitTypeHand hand =
         Just t ->
             let
                 waits =
-                    List.map (waitTypeGroup t) hand.groups
-                        |> List.filter (\w -> w /= NoWait)
+                    List.map (\g -> Tuple.pair (waitTypeGroup t g) g) hand.groups
+                        |> List.filter (\tt -> Tuple.first tt /= NoWait)
+
+                pairWait =
+                    List.filter (\tt -> Tuple.first tt == PairWait) waits
+                        |> List.head
             in
-            if List.member PairWait waits then
-                PairWait
+            case pairWait of
+                Just ( PairWait, group ) ->
+                    Just ( PairWait, group )
 
-            else
-                --- TODO pick one with better scoring
-                List.head waits
-                    |> Maybe.withDefault NoWait
+                _ ->
+                    --- TODO pick one with better scoring
+                    List.head waits
 
-        Nothing ->
-            NoWait
+        _ ->
+            Nothing
 
 
 waitTypeGroup : Tile -> Group -> WaitType
