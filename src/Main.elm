@@ -153,6 +153,14 @@ type alias HanSource =
     }
 
 
+type WaitType
+    = OpenWait
+    | ClosedWait
+    | EdgeWait
+    | PairWait
+    | NoWait
+
+
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model "2555m" (Hand [] [] Tsumo East East [] []) (GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ])
@@ -1319,11 +1327,10 @@ checkPinfu hand =
             pairIsValueLessPair =
                 fuValuePair hand == noFu
 
-            -- TODO
-            isTwoSidedOpenWait _ =
-                True
+            isTwoSidedOpenWait =
+                waitTypeHand hand == OpenWait
         in
-        if List.length runs == 4 && pairIsValueLessPair && isTwoSidedOpenWait hand then
+        if List.length runs == 4 && pairIsValueLessPair && isTwoSidedOpenWait then
             HanSource 1 Pinfu
 
         else
@@ -1331,3 +1338,71 @@ checkPinfu hand =
 
     else
         noYaku
+
+
+winningTile : Hand -> Maybe Tile
+winningTile hand =
+    List.reverse hand.tiles
+        |> List.head
+
+
+waitTypeHand : Hand -> WaitType
+waitTypeHand hand =
+    let
+        winTile =
+            winningTile hand
+    in
+    case winTile of
+        Just t ->
+            let
+                waits =
+                    List.map (waitTypeGroup t) hand.groups
+                        |> List.filter (\w -> w /= NoWait)
+            in
+            if List.member PairWait waits then
+                PairWait
+
+            else
+                --- TODO pick one with better scoring
+                List.head waits
+                    |> Maybe.withDefault NoWait
+
+        Nothing ->
+            NoWait
+
+
+waitTypeGroup : Tile -> Group -> WaitType
+waitTypeGroup tile group =
+    if tile.suit == group.suit then
+        case group.type_ of
+            Pair ->
+                if tile.number == group.tileNumber then
+                    PairWait
+
+                else
+                    NoWait
+
+            Triplet ->
+                NoWait
+
+            Run ->
+                if group.tileNumber == 1 && tile.number == 3 then
+                    EdgeWait
+
+                else if group.tileNumber == 7 && tile.number == 7 then
+                    EdgeWait
+
+                else if group.tileNumber + 1 == tile.number then
+                    ClosedWait
+
+                else if group.tileNumber == tile.number then
+                    OpenWait
+
+                else if group.tileNumber + 2 == tile.number then
+                    OpenWait
+
+                else
+                    NoWait
+
+    else
+        NoWait
