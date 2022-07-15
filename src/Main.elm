@@ -196,7 +196,7 @@ update msg model =
                     }
 
                 allYaku =
-                    List.filter (\y -> not (y == noYaku)) [ checkIipeikou hand, checkTanyao hand, checkToitoi hand, checkChanta hand, checkSanshokuDoujun hand, checkSanshokuDoukou hand ]
+                    List.filter (\y -> not (y == noYaku)) [ checkIipeikou hand, checkTanyao hand, checkToitoi hand, checkChanta hand, checkSanshokuDoujun hand, checkSanshokuDoukou hand, checkPinfu hand ]
                         |> List.append (checkYakuhai hand)
 
                 handWithYaku =
@@ -725,8 +725,7 @@ fuValuePair : Hand -> FuSource
 fuValuePair hand =
     let
         possiblePair =
-            List.filter (\g -> g.type_ == Pair) hand.groups
-                |> List.head
+            getPair hand
     in
     case possiblePair of
         Just pair ->
@@ -1146,6 +1145,11 @@ groupIsTriplet group =
     group.type_ == Triplet
 
 
+groupIsPair : Group -> Bool
+groupIsPair group =
+    group.type_ == Pair
+
+
 groupIsRun : Group -> Bool
 groupIsRun group =
     group.type_ == Run
@@ -1283,6 +1287,44 @@ checkIipeikou hand =
 
         else if List.length res == 1 then
             HanSource 1 Iipeikou
+
+        else
+            noYaku
+
+    else
+        noYaku
+
+
+getPair : Hand -> Maybe Group
+getPair hand =
+    let
+        pairs =
+            List.filter groupIsPair hand.groups
+    in
+    case pairs of
+        [ x ] ->
+            Just x
+
+        _ ->
+            Nothing
+
+
+checkPinfu : Hand -> HanSource
+checkPinfu hand =
+    if handIsClosed hand then
+        let
+            runs =
+                List.filter groupIsRun hand.groups
+
+            pairIsValueLessPair =
+                fuValuePair hand == noFu
+
+            -- TODO
+            isTwoSidedOpenWait _ =
+                True
+        in
+        if List.length runs == 4 && pairIsValueLessPair && isTwoSidedOpenWait hand then
+            HanSource 1 Pinfu
 
         else
             noYaku
