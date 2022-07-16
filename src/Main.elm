@@ -720,6 +720,19 @@ fuBase _ =
     FuSource 20 BaseFu []
 
 
+fuTsumoNotPinfu : Hand -> FuSource
+fuTsumoNotPinfu hand =
+    let
+        isPinfu =
+            List.any (\h -> h.description == Pinfu) hand.han
+    in
+    if hand.winBy == Tsumo && not isPinfu then
+        FuSource 2 TsumoNotPinfu []
+
+    else
+        noFu
+
+
 fuClosedRon : Hand -> FuSource
 fuClosedRon hand =
     -- TODO only for *closed* ron
@@ -829,6 +842,9 @@ countFu hand =
         base =
             fuBase hand
 
+        tsumoNotPinfu =
+            fuTsumoNotPinfu hand
+
         closedRon =
             fuClosedRon hand
 
@@ -842,7 +858,7 @@ countFu hand =
             fuTriplets hand
 
         allFu =
-            List.concat [ [ base, closedRon, valuePair, waitFu ], triplets ]
+            List.concat [ [ base, tsumoNotPinfu, closedRon, valuePair, waitFu ], triplets ]
 
         allValidFu =
             List.filter (\f -> not (f == noFu)) allFu
