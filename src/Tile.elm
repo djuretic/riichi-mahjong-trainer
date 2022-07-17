@@ -1,4 +1,21 @@
-module Tile exposing (Group, GroupType(..), GroupsPerSuit, Suit(..), Tile, findGroups)
+module Tile exposing
+    ( Group
+    , GroupType(..)
+    , GroupsPerSuit
+    , Suit(..)
+    , Tile
+    , Wind(..)
+    , containsTerminal
+    , findGroups
+    , groupIsPair
+    , groupIsRun
+    , groupIsTriplet
+    , groupToString
+    , groupToWind
+    , isDragon
+    , suitToString
+    , windToString
+    )
 
 import List.Extra exposing (permutations)
 
@@ -8,6 +25,13 @@ type Suit
     | Man
     | Pin
     | Honor
+
+
+type Wind
+    = East
+    | South
+    | West
+    | North
 
 
 type alias TileNumber =
@@ -49,6 +73,41 @@ type alias Group =
     , tileNumber : TileNumber
     , suit : Suit
     }
+
+
+groupToWind : Group -> Maybe Wind
+groupToWind group =
+    let
+        getWind g =
+            if g.suit == Honor then
+                case group.tileNumber of
+                    1 ->
+                        Just East
+
+                    2 ->
+                        Just South
+
+                    3 ->
+                        Just West
+
+                    4 ->
+                        Just North
+
+                    _ ->
+                        Nothing
+
+            else
+                Nothing
+    in
+    case group.type_ of
+        Triplet ->
+            getWind group
+
+        Pair ->
+            getWind group
+
+        Run ->
+            Nothing
 
 
 partitionBySuit : List Tile -> TilesPerSuit
@@ -214,3 +273,90 @@ findAllPairs tiles =
 
             else
                 []
+
+
+groupToString : Group -> String
+groupToString group =
+    case group.type_ of
+        Triplet ->
+            String.repeat 3 (String.fromInt group.tileNumber) ++ suitToString group.suit
+
+        Pair ->
+            String.repeat 2 (String.fromInt group.tileNumber) ++ suitToString group.suit
+
+        Run ->
+            String.join ""
+                [ String.fromInt group.tileNumber
+                , String.fromInt (group.tileNumber + 1)
+                , String.fromInt (group.tileNumber + 2)
+                , suitToString group.suit
+                ]
+
+
+windToString : Wind -> String
+windToString wind =
+    case wind of
+        East ->
+            "East"
+
+        South ->
+            "South"
+
+        West ->
+            "West"
+
+        North ->
+            "North"
+
+
+suitToString : Suit -> String
+suitToString suit =
+    case suit of
+        Man ->
+            "m"
+
+        Pin ->
+            "p"
+
+        Sou ->
+            "s"
+
+        Honor ->
+            "z"
+
+
+groupIsTriplet : Group -> Bool
+groupIsTriplet group =
+    group.type_ == Triplet
+
+
+groupIsPair : Group -> Bool
+groupIsPair group =
+    group.type_ == Pair
+
+
+groupIsRun : Group -> Bool
+groupIsRun group =
+    group.type_ == Run
+
+
+isDragon : Group -> Bool
+isDragon group =
+    groupIsTriplet group && group.suit == Honor && List.member group.tileNumber [ 5, 6, 7 ]
+
+
+containsTerminal : Group -> Bool
+containsTerminal group =
+    if group.suit == Honor then
+        False
+
+    else
+        case group.type_ of
+            Triplet ->
+                group.tileNumber == 1 || group.tileNumber == 9
+
+            Pair ->
+                group.tileNumber == 1 || group.tileNumber == 9
+
+            Run ->
+                group.tileNumber == 1 || group.tileNumber == 7
