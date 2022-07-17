@@ -1,10 +1,9 @@
-module Hand exposing (FuDescription(..), FuSource, Hand, WinBy(..), Yaku(..), checkAllYaku, countFu, fuDescriptionToString)
+module Hand exposing (FuDescription(..), FuSource, Hand, WinBy(..), Yaku(..), checkAllYaku, countFu, fuDescriptionToString, winByToString)
 
 import Tile
     exposing
         ( Group
         , GroupType(..)
-        , Suit(..)
         , Tile
         , Wind
         , containsTerminal
@@ -97,6 +96,16 @@ type Yaku
     | NoYaku
 
 
+winByToString : WinBy -> String
+winByToString winBy =
+    case winBy of
+        Tsumo ->
+            "Tsumo"
+
+        Ron ->
+            "Ron"
+
+
 noFu : FuSource
 noFu =
     FuSource 0 NoFu []
@@ -153,7 +162,7 @@ fuValuePair hand =
                     pair.tileNumber
             in
             -- dragon
-            if (n == 5 || n == 6 || n == 7) && pair.suit == Honor then
+            if (n == 5 || n == 6 || n == 7) && pair.suit == Tile.Honor then
                 FuSource 2 (ValuePair ByDragon) [ pair ]
 
             else if isRoundWind && isSeatWind then
@@ -205,7 +214,7 @@ fuTriplet group =
         if group.tileNumber == 1 || group.tileNumber == 9 then
             FuSource 8 (TripletFu Closed IsTerminal) [ group ]
 
-        else if group.suit == Honor then
+        else if group.suit == Tile.Honor then
             FuSource 8 (TripletFu Closed IsHonor) [ group ]
 
         else
@@ -318,7 +327,7 @@ checkTanyao : Hand -> HanSource
 checkTanyao hand =
     let
         isSimple group =
-            if group.suit == Honor then
+            if group.suit == Tile.Honor then
                 False
 
             else
@@ -397,7 +406,7 @@ checkChanta : Hand -> HanSource
 checkChanta hand =
     let
         containsTerminalOrHonor g =
-            g.suit == Honor || containsTerminal g
+            g.suit == Tile.Honor || containsTerminal g
     in
     if List.all containsTerminalOrHonor hand.groups then
         HanSource 1 Chanta |> incrementHanIfClosed hand
@@ -410,9 +419,9 @@ checkSanshokuDoujun : Hand -> HanSource
 checkSanshokuDoujun hand =
     let
         sameSequence n =
-            List.member (Group Run n Man) hand.groups
-                && List.member (Group Run n Pin) hand.groups
-                && List.member (Group Run n Sou) hand.groups
+            List.member (Group Run n Tile.Man) hand.groups
+                && List.member (Group Run n Tile.Pin) hand.groups
+                && List.member (Group Run n Tile.Sou) hand.groups
 
         checkRes =
             List.range 1 7
@@ -429,9 +438,9 @@ checkSanshokuDoukou : Hand -> HanSource
 checkSanshokuDoukou hand =
     let
         sameTriplet n =
-            List.member (Group Triplet n Man) hand.groups
-                && List.member (Group Triplet n Pin) hand.groups
-                && List.member (Group Triplet n Sou) hand.groups
+            List.member (Group Triplet n Tile.Man) hand.groups
+                && List.member (Group Triplet n Tile.Pin) hand.groups
+                && List.member (Group Triplet n Tile.Sou) hand.groups
 
         checkRes =
             List.range 1 9

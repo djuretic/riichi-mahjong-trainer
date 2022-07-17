@@ -1,14 +1,14 @@
 module Main exposing (main)
 
 import Browser
-import Hand exposing (FuSource, Hand, WinBy(..), Yaku(..), checkAllYaku, countFu, fuDescriptionToString)
+import Hand exposing (FuSource, Hand, Yaku(..), checkAllYaku, countFu, fuDescriptionToString)
 import Html exposing (Html, button, div, input, li, p, table, td, text, tr, ul)
 import Html.Attributes exposing (placeholder, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Maybe
 import Parser exposing ((|.), (|=), Parser, chompIf, chompWhile, getChompedString, loop, oneOf, succeed)
 import Random
-import Tile exposing (Group, GroupType(..), GroupsPerSuit, Suit(..), Tile, Wind(..), findGroups, groupToString, suitToString, windToString)
+import Tile exposing (Group, GroupType(..), GroupsPerSuit, Suit(..), Tile, findGroups, groupToString, suitToString, windToString)
 
 
 main : Program () Model Msg
@@ -30,7 +30,7 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model "2555m" (Hand [] [] Tsumo East East [] []) (GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ])
+    ( Model "2555m" (Hand [] [] Hand.Tsumo Tile.East Tile.East [] []) (GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ])
     , Cmd.none
     )
 
@@ -64,7 +64,7 @@ update msg model =
                     -- keep the older winds
                     { prevHand
                         | tiles = tiles
-                        , winBy = Tsumo
+                        , winBy = Hand.Tsumo
                         , groups = groups
                         , han = []
                         , fu = []
@@ -104,11 +104,11 @@ update msg model =
                     model.hand
 
                 newWinBy =
-                    if model.hand.winBy == Ron then
-                        Tsumo
+                    if model.hand.winBy == Hand.Ron then
+                        Hand.Tsumo
 
                     else
-                        Ron
+                        Hand.Ron
 
                 newHand =
                     { prevHand | winBy = newWinBy }
@@ -452,7 +452,7 @@ renderTotalFu fuSources =
 renderWinBy : Hand -> Html Msg
 renderWinBy hand =
     div []
-        [ p [ onClick ChangeWinBy ] [ text <| "Win by: " ++ winByToString hand.winBy ] ]
+        [ p [ onClick ChangeWinBy ] [ text <| "Win by: " ++ Hand.winByToString hand.winBy ] ]
 
 
 renderWinds : Hand -> Html Msg
@@ -463,30 +463,20 @@ renderWinds hand =
         ]
 
 
-cycleWind : Wind -> Wind
+cycleWind : Tile.Wind -> Tile.Wind
 cycleWind wind =
     case wind of
-        East ->
-            South
+        Tile.East ->
+            Tile.South
 
-        South ->
-            West
+        Tile.South ->
+            Tile.West
 
-        West ->
-            North
+        Tile.West ->
+            Tile.North
 
-        North ->
-            East
-
-
-winByToString : WinBy -> String
-winByToString winBy =
-    case winBy of
-        Tsumo ->
-            "Tsumo"
-
-        Ron ->
-            "Ron"
+        Tile.North ->
+            Tile.East
 
 
 randomTripletOrRun : Suit -> Random.Generator Group
