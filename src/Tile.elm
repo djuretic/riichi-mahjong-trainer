@@ -7,13 +7,16 @@ module Tile exposing
     , Wind(..)
     , containsTerminal
     , findGroups
+    , greenDragonNumber
     , groupIsPair
     , groupIsRun
     , groupIsTriplet
     , groupToString
     , groupToWind
     , isDragon
+    , redDragonNumber
     , suitToString
+    , whiteDragonNumber
     , windToString
     )
 
@@ -42,6 +45,21 @@ type alias Tile =
     { number : TileNumber
     , suit : Suit
     }
+
+
+redDragonNumber : TileNumber
+redDragonNumber =
+    5
+
+
+greenDragonNumber : TileNumber
+greenDragonNumber =
+    6
+
+
+whiteDragonNumber : TileNumber
+whiteDragonNumber =
+    7
 
 
 type alias TilesPerSuit =
@@ -342,7 +360,11 @@ groupIsRun group =
 
 isDragon : Group -> Bool
 isDragon group =
-    groupIsTriplet group && group.suit == Honor && List.member group.tileNumber [ 5, 6, 7 ]
+    let
+        isTripletOrPair =
+            groupIsTriplet group || groupIsPair group
+    in
+    isTripletOrPair && group.suit == Honor && List.member group.tileNumber [ whiteDragonNumber, greenDragonNumber, redDragonNumber ]
 
 
 containsTerminal : Group -> Bool

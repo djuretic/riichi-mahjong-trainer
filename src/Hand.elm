@@ -88,12 +88,12 @@ type Yaku
     | Iipeikou
     | Ryanpeikou
     | Yakuhai
+    | Shousangen
     | Tanyao
     | SanshokuDoujun
     | Chanta
     | Toitoi
     | SanshokuDoukou
-    | NoYaku
 
 
 init : Hand
@@ -323,12 +323,7 @@ fuDescriptionToString fuDescription =
             "?"
 
 
-noYaku : HanSource
-noYaku =
-    HanSource 0 NoYaku
-
-
-checkTanyao : Hand -> HanSource
+checkTanyao : Hand -> Maybe HanSource
 checkTanyao hand =
     let
         isSimple group =
@@ -359,13 +354,13 @@ checkTanyao hand =
                         True
     in
     if List.all isSimple hand.groups then
-        HanSource 1 Tanyao
+        Just (HanSource 1 Tanyao)
 
     else
-        noYaku
+        Nothing
 
 
-checkToitoi : Hand -> HanSource
+checkToitoi : Hand -> Maybe HanSource
 checkToitoi hand =
     let
         -- TODO kan
@@ -373,10 +368,10 @@ checkToitoi hand =
             List.filter groupIsTriplet hand.groups
     in
     if List.length triplets == 4 then
-        HanSource 2 Toitoi
+        Just (HanSource 2 Toitoi)
 
     else
-        noYaku
+        Nothing
 
 
 checkYakuhai : Hand -> List HanSource
@@ -407,20 +402,22 @@ incrementHanIfClosed hand hanSource =
         hanSource
 
 
-checkChanta : Hand -> HanSource
+checkChanta : Hand -> Maybe HanSource
 checkChanta hand =
     let
         containsTerminalOrHonor g =
             g.suit == Tile.Honor || containsTerminal g
     in
     if List.all containsTerminalOrHonor hand.groups then
-        HanSource 1 Chanta |> incrementHanIfClosed hand
+        HanSource 1 Chanta
+            |> incrementHanIfClosed hand
+            |> Just
 
     else
-        noYaku
+        Nothing
 
 
-checkSanshokuDoujun : Hand -> HanSource
+checkSanshokuDoujun : Hand -> Maybe HanSource
 checkSanshokuDoujun hand =
     let
         sameSequence n =
@@ -433,13 +430,15 @@ checkSanshokuDoujun hand =
                 |> List.map sameSequence
     in
     if List.any identity checkRes then
-        HanSource 1 SanshokuDoujun |> incrementHanIfClosed hand
+        HanSource 1 SanshokuDoujun
+            |> incrementHanIfClosed hand
+            |> Just
 
     else
-        noYaku
+        Nothing
 
 
-checkSanshokuDoukou : Hand -> HanSource
+checkSanshokuDoukou : Hand -> Maybe HanSource
 checkSanshokuDoukou hand =
     let
         sameTriplet n =
@@ -452,13 +451,13 @@ checkSanshokuDoukou hand =
                 |> List.map sameTriplet
     in
     if List.any identity checkRes then
-        HanSource 2 SanshokuDoukou
+        Just (HanSource 2 SanshokuDoukou)
 
     else
-        noYaku
+        Nothing
 
 
-checkIipeikou : Hand -> HanSource
+checkIipeikou : Hand -> Maybe HanSource
 checkIipeikou hand =
     if handIsClosed hand then
         let
@@ -471,16 +470,16 @@ checkIipeikou hand =
                     |> List.filter identity
         in
         if List.length res == 2 then
-            HanSource 13 Ryanpeikou
+            Just (HanSource 13 Ryanpeikou)
 
         else if List.length res == 1 then
-            HanSource 1 Iipeikou
+            Just (HanSource 1 Iipeikou)
 
         else
-            noYaku
+            Nothing
 
     else
-        noYaku
+        Nothing
 
 
 getPair : Hand -> Maybe Group
@@ -497,7 +496,7 @@ getPair hand =
             Nothing
 
 
-checkPinfu : Hand -> HanSource
+checkPinfu : Hand -> Maybe HanSource
 checkPinfu hand =
     if handIsClosed hand then
         let
@@ -512,13 +511,48 @@ checkPinfu hand =
                     |> Maybe.map Tuple.first
         in
         if List.length runs == 4 && pairIsValueLessPair && waitType == Just OpenWait then
-            HanSource 1 Pinfu
+            Just (HanSource 1 Pinfu)
 
         else
-            noYaku
+            Nothing
 
     else
-        noYaku
+        Nothing
+
+
+checkShousangen : Hand -> Maybe HanSource
+checkShousangen hand =
+    let
+        pair =
+            getPair hand
+
+        isDragonPair =
+            Maybe.map isDragon pair
+                |> Maybe.withDefault False
+
+        allDragons =
+            [ Tile.whiteDragonNumber, Tile.greenDragonNumber, Tile.redDragonNumber ]
+    in
+    case ( pair, isDragonPair ) of
+        ( Just dragonPair, True ) ->
+            let
+                remainingDragons =
+                    List.filter (\d -> d /= dragonPair.tileNumber) allDragons
+
+                findTriplet tileNumber =
+                    List.filter (\n -> n == Group Triplet tileNumber Tile.Honor) hand.groups
+
+                groups =
+                    List.concatMap (\d -> findTriplet d) remainingDragons
+            in
+            if List.length groups == 2 then
+                Just (HanSource 2 Shousangen)
+
+            else
+                Nothing
+
+        _ ->
+            Nothing
 
 
 winningTile : Hand -> Maybe Tile
@@ -612,9 +646,10 @@ waitTypeToString waitType =
             "-"
 
 
-yakuChecks : List (Hand -> HanSource)
+yakuChecks : List (Hand -> Maybe HanSource)
 yakuChecks =
     [ checkIipeikou
+    , checkShousangen
     , checkTanyao
     , checkToitoi
     , checkChanta
@@ -630,5 +665,5 @@ checkAllYaku hand =
         checks =
             List.map (\c -> c hand) yakuChecks
     in
-    List.filter (\y -> not (y == noYaku)) checks
+    List.filterMap identity checks
         |> List.append (checkYakuhai hand)
