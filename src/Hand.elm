@@ -1,4 +1,4 @@
-module Hand exposing (FuDescription(..), FuSource, Hand, WinBy(..), Yaku(..), checkAllYaku, countFu, fuDescriptionToString, winByToString)
+module Hand exposing (FuDescription(..), FuSource, HanSource, Hand, WinBy(..), Yaku(..), checkAllYaku, countFu, fuDescriptionToString, init, winByToString)
 
 import Tile
     exposing
@@ -94,6 +94,11 @@ type Yaku
     | Toitoi
     | SanshokuDoukou
     | NoYaku
+
+
+init : Hand
+init =
+    Hand [] [] Tsumo Tile.East Tile.East [] []
 
 
 winByToString : WinBy -> String

@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Main exposing (findWinningHand, main, showParseResult)
 
 import Browser
 import Hand exposing (FuSource, Hand, Yaku(..), checkAllYaku, countFu, fuDescriptionToString)
@@ -30,7 +30,7 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model "2555m" (Hand [] [] Hand.Tsumo Tile.East Tile.East [] []) (GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ])
+    ( Model "2555m" Hand.init (GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ])
     , Cmd.none
     )
 
