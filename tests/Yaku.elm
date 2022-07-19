@@ -10,38 +10,41 @@ import Tile
 suite : Test
 suite =
     describe "Yaku check"
-        [ test "test" <|
-            \_ ->
-                expectHandYaku (Hand.HanSource 1 Hand.Yakuhai) "77789m222p456s555z"
+        [ testHandYaku (Hand.HanSource 1 Hand.Pinfu) "123678m234p99567s"
+        , testHandYaku (Hand.HanSource 1 Hand.Yakuhai) "77789m222p456s555z"
+        , testHandYaku (Hand.HanSource 2 Hand.Chanta) "123999m123s111p44z"
+        , testHandYaku (Hand.HanSource 2 Hand.Toitoi) "22888m333p111s444z"
         ]
 
 
-expectHandYaku : Hand.HanSource -> String -> Expect.Expectation
-expectHandYaku hanSource handString =
-    let
-        tiles =
-            Main.showParseResult handString
+testHandYaku : Hand.HanSource -> String -> Test
+testHandYaku hanSource handString =
+    test ("hand " ++ handString) <|
+        \_ ->
+            let
+                tiles =
+                    Main.showParseResult handString
 
-        allGroups =
-            Tile.findGroups tiles
+                allGroups =
+                    Tile.findGroups tiles
 
-        groups =
-            Main.findWinningHand allGroups
+                groups =
+                    Main.findWinningHand allGroups
 
-        prevHand =
-            Hand.init
+                prevHand =
+                    Hand.init
 
-        hand =
-            -- keep the older winds
-            { prevHand
-                | tiles = tiles
-                , winBy = Hand.Tsumo
-                , groups = groups
-                , han = []
-                , fu = []
-            }
+                hand =
+                    -- keep the older winds
+                    { prevHand
+                        | tiles = tiles
+                        , winBy = Hand.Tsumo
+                        , groups = groups
+                        , han = []
+                        , fu = []
+                    }
 
-        allYaku =
-            Hand.checkAllYaku hand
-    in
-    Expect.equalLists [ hanSource ] allYaku
+                allYaku =
+                    Hand.checkAllYaku hand
+            in
+            Expect.equalLists [ hanSource ] allYaku

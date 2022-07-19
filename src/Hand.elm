@@ -612,7 +612,23 @@ waitTypeToString waitType =
             "-"
 
 
+yakuChecks : List (Hand -> HanSource)
+yakuChecks =
+    [ checkIipeikou
+    , checkTanyao
+    , checkToitoi
+    , checkChanta
+    , checkSanshokuDoujun
+    , checkSanshokuDoukou
+    , checkPinfu
+    ]
+
+
 checkAllYaku : Hand -> List HanSource
 checkAllYaku hand =
-    List.filter (\y -> not (y == noYaku)) [ checkIipeikou hand, checkTanyao hand, checkToitoi hand, checkChanta hand, checkSanshokuDoujun hand, checkSanshokuDoukou hand, checkPinfu hand ]
+    let
+        checks =
+            List.map (\c -> c hand) yakuChecks
+    in
+    List.filter (\y -> not (y == noYaku)) checks
         |> List.append (checkYakuhai hand)
