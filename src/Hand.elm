@@ -111,48 +111,38 @@ winByToString winBy =
             "Ron"
 
 
-noFu : FuSource
-noFu =
-    FuSource 0 NoFu []
-
-
 fuBase : Hand -> FuSource
 fuBase _ =
     -- TODO seven pairs, 25 fu
     FuSource 20 BaseFu []
 
 
-fuTsumoNotPinfu : Hand -> FuSource
+fuTsumoNotPinfu : Hand -> Maybe FuSource
 fuTsumoNotPinfu hand =
     let
         isPinfu =
             List.any (\h -> h.description == Pinfu) hand.han
     in
     if hand.winBy == Tsumo && not isPinfu then
-        FuSource 2 TsumoNotPinfu []
+        Just (FuSource 2 TsumoNotPinfu [])
 
     else
-        noFu
+        Nothing
 
 
-fuClosedRon : Hand -> FuSource
+fuClosedRon : Hand -> Maybe FuSource
 fuClosedRon hand =
-    -- TODO only for *closed* ron
-    if hand.winBy == Ron then
-        FuSource 10 ClosedRon []
+    if hand.winBy == Ron && handIsClosed hand then
+        Just (FuSource 10 ClosedRon [])
 
     else
-        noFu
+        Nothing
 
 
-fuValuePair : Hand -> FuSource
+fuValuePair : Hand -> Maybe FuSource
 fuValuePair hand =
     let
-        possiblePair =
-            getPair hand
-    in
-    case possiblePair of
-        Just pair ->
+        determineFu pair =
             let
                 possibleWind =
                     groupToWind pair
@@ -168,68 +158,66 @@ fuValuePair hand =
             in
             -- dragon
             if (n == 5 || n == 6 || n == 7) && pair.suit == Tile.Honor then
-                FuSource 2 (ValuePair ByDragon) [ pair ]
+                Just (FuSource 2 (ValuePair ByDragon) [ pair ])
 
             else if isRoundWind && isSeatWind then
-                FuSource 4 (ValuePair BySeatAndRoundWind) [ pair ]
+                Just (FuSource 4 (ValuePair BySeatAndRoundWind) [ pair ])
 
             else if isRoundWind then
-                FuSource 2 (ValuePair ByRoundWind) [ pair ]
+                Just (FuSource 2 (ValuePair ByRoundWind) [ pair ])
 
             else if isSeatWind then
-                FuSource 2 (ValuePair BySeatWind) [ pair ]
+                Just (FuSource 2 (ValuePair BySeatWind) [ pair ])
 
             else
-                noFu
+                Nothing
+    in
+    getPair hand
+        |> Maybe.andThen determineFu
 
-        Nothing ->
-            noFu
 
-
-fuWaitType : Hand -> FuSource
+fuWaitType : Hand -> Maybe FuSource
 fuWaitType hand =
     let
-        res =
-            waitTypeHand hand
+        determineFu res =
+            case res of
+                ( EdgeWait, group ) ->
+                    Just (FuSource 2 (WaitFu EdgeWait) [ group ])
+
+                ( ClosedWait, group ) ->
+                    Just (FuSource 2 (WaitFu ClosedWait) [ group ])
+
+                ( PairWait, group ) ->
+                    Just (FuSource 2 (WaitFu PairWait) [ group ])
+
+                ( OpenWait, _ ) ->
+                    Nothing
+
+                ( NoWait, _ ) ->
+                    Nothing
     in
-    case res of
-        Just ( EdgeWait, group ) ->
-            FuSource 2 (WaitFu EdgeWait) [ group ]
-
-        Just ( ClosedWait, group ) ->
-            FuSource 2 (WaitFu ClosedWait) [ group ]
-
-        Just ( PairWait, group ) ->
-            FuSource 2 (WaitFu PairWait) [ group ]
-
-        Just ( OpenWait, _ ) ->
-            noFu
-
-        Just ( NoWait, _ ) ->
-            noFu
-
-        Nothing ->
-            noFu
+    waitTypeHand hand
+        |> Maybe.andThen determineFu
 
 
-fuTriplet : Group -> FuSource
+fuTriplet : Group -> Maybe FuSource
 fuTriplet group =
     if group.type_ == Triplet then
         -- TODO closed
         if group.tileNumber == 1 || group.tileNumber == 9 then
-            FuSource 8 (TripletFu Closed IsTerminal) [ group ]
+            Just (FuSource 8 (TripletFu Closed IsTerminal) [ group ])
 
         else if group.suit == Tile.Honor then
-            FuSource 8 (TripletFu Closed IsHonor) [ group ]
+            Just (FuSource 8 (TripletFu Closed IsHonor) [ group ])
 
         else
-            FuSource 4 (TripletFu Closed HasNoValue) [ group ]
+            Just (FuSource 4 (TripletFu Closed HasNoValue) [ group ])
 
     else
-        noFu
+        Nothing
 
 
-fuTriplets : Hand -> List FuSource
+fuTriplets : Hand -> List (Maybe FuSource)
 fuTriplets hand =
     let
         triplets =
@@ -260,10 +248,10 @@ countFu hand =
             fuTriplets hand
 
         allFu =
-            List.concat [ [ base, tsumoNotPinfu, closedRon, valuePair, waitFu ], triplets ]
+            List.concat [ [ Just base, tsumoNotPinfu, closedRon, valuePair, waitFu ], triplets ]
 
         allValidFu =
-            List.filter (\f -> not (f == noFu)) allFu
+            List.filterMap identity allFu
     in
     { hand | fu = allValidFu }
 
@@ -504,7 +492,7 @@ checkPinfu hand =
                 List.filter groupIsRun hand.groups
 
             pairIsValueLessPair =
-                fuValuePair hand == noFu
+                fuValuePair hand == Nothing
 
             waitType =
                 waitTypeHand hand
