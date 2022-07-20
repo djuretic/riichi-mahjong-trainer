@@ -2,8 +2,8 @@ module Main exposing (findWinningHand, main, showParseResult)
 
 import Browser
 import Hand exposing (FuSource, Hand, Yaku(..), checkAllYaku, countFu, fuDescriptionToString)
-import Html exposing (Html, button, div, input, li, p, table, td, text, tr, ul)
-import Html.Attributes exposing (placeholder, style, type_, value)
+import Html exposing (Html, button, div, h1, input, li, node, p, table, tbody, td, text, tfoot, th, thead, tr, ul)
+import Html.Attributes exposing (attribute, class, colspan, placeholder, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Maybe
 import Parser exposing ((|.), (|=), Parser, chompIf, chompWhile, getChompedString, loop, oneOf, succeed)
@@ -19,6 +19,18 @@ main =
         , view = view
         , subscriptions = subscriptions
         }
+
+
+stylesheet : Html Msg
+stylesheet =
+    let
+        attrs =
+            [ attribute "rel" "stylesheet"
+            , attribute "property" "stylesheet"
+            , attribute "href" "../css/bulma.min.css"
+            ]
+    in
+    node "link" attrs []
 
 
 type alias Model =
@@ -137,9 +149,11 @@ view model =
         handWithFu =
             countFu model.hand
     in
-    div []
-        [ input [ type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
-        , button [ onClick GenerateRandomHand ] [ text "Random" ]
+    div [ class "container" ]
+        [ stylesheet
+        , h1 [ class "title" ] [ text "Riichi mahjong trainer" ]
+        , input [ class "input", type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
+        , button [ class "button is-primary", onClick GenerateRandomHand ] [ text "Random" ]
 
         -- , p [] [ Debug.toString tiles |> text ]
         , p [] [ renderTiles model.hand.tiles ]
@@ -391,25 +405,35 @@ debugGroup listGroup =
 debugGroups : GroupsPerSuit -> Html Msg
 debugGroups groups =
     let
-        cellStyle =
-            style "border" "1px solid black"
-
         generateTd l =
-            List.map (\g -> td [ cellStyle ] [ debugGroup g ]) l
+            List.map (\g -> td [] [ debugGroup g ]) l
     in
-    table []
-        [ tr [] [ text "groupsPerSuit" ]
-        , tr [] (generateTd groups.man)
-        , tr [] (generateTd groups.pin)
-        , tr [] (generateTd groups.sou)
-        , tr [] (generateTd groups.honor)
+    table [ class "table is-striped" ]
+        [ thead []
+            [ tr [] [ th [] [ text "groupsPerSuit" ] ] ]
+        , tbody []
+            [ tr [] (generateTd groups.man)
+            , tr [] (generateTd groups.pin)
+            , tr [] (generateTd groups.sou)
+            , tr [] (generateTd groups.honor)
+            ]
         ]
 
 
 renderFuDetails : List FuSource -> Html Msg
 renderFuDetails fuSources =
-    table [] <|
-        List.concat [ List.map renderFuSource fuSources, renderTotalFu fuSources ]
+    let
+        details =
+            List.concat [ List.map renderFuSource fuSources ]
+
+        footer =
+            renderTotalFu fuSources
+    in
+    table [ class "table is-striped" ]
+        [ thead [] [ th [ colspan 3 ] [ text "Fu" ] ]
+        , tbody [] details
+        , tfoot [] footer
+        ]
 
 
 renderFuSource : FuSource -> Html Msg
@@ -441,10 +465,12 @@ renderTotalFu fuSources =
     [ tr []
         [ td [] [ text "Total (before rounding)" ]
         , td [] [ text <| String.fromInt sumFu ++ " fu" ]
+        , td [] []
         ]
     , tr []
         [ td [] [ text "Total" ]
         , td [] [ text <| String.fromInt (roundFu sumFu) ++ " fu" ]
+        , td [] []
         ]
     ]
 
