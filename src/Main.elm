@@ -165,6 +165,7 @@ view model =
 
         --, p [] [text (Debug.toString model.hand.groups), clearFixDiv]
         , clearFixDiv
+        , renderHanDetails handWithFu.han
         , renderFuDetails handWithFu.fu
         ]
 
@@ -417,6 +418,48 @@ debugGroups groups =
             , tr [] (generateTd groups.sou)
             , tr [] (generateTd groups.honor)
             ]
+        ]
+
+
+renderHanDetails : List Hand.HanSource -> Html Msg
+renderHanDetails hanSources =
+    let
+        details =
+            List.concat [ List.map renderHanSource hanSources ]
+
+        footer =
+            renderTotalHan hanSources
+    in
+    table [ class "table is-striped" ]
+        [ thead [] [ th [ colspan 3 ] [ text "Han" ] ]
+        , tbody [] details
+        , tfoot [] [ footer ]
+        ]
+
+
+renderTotalHan : List Hand.HanSource -> Html Msg
+renderTotalHan hanSources =
+    let
+        totalHan =
+            List.map .han hanSources
+                |> List.sum
+    in
+    tr []
+        [ td [] [ text "Total" ]
+        , td [] [ text <| String.fromInt totalHan ++ " han" ]
+        , td [] []
+        ]
+
+
+renderHanSource : Hand.HanSource -> Html Msg
+renderHanSource hanSource =
+    let
+        explanation =
+            Hand.hanDescriptionToString hanSource.description
+    in
+    tr []
+        [ td [] [ text explanation ]
+        , td [] [ text (String.fromInt hanSource.han ++ " han") ]
         ]
 
 

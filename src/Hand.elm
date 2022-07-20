@@ -1,4 +1,17 @@
-module Hand exposing (FuDescription(..), FuSource, HanSource, Hand, WinBy(..), Yaku(..), checkAllYaku, countFu, fuDescriptionToString, init, winByToString)
+module Hand exposing
+    ( FuDescription(..)
+    , FuSource
+    , HanSource
+    , Hand
+    , WinBy(..)
+    , Yaku(..)
+    , checkAllYaku
+    , countFu
+    , fuDescriptionToString
+    , hanDescriptionToString
+    , init
+    , winByToString
+    )
 
 import Tile
     exposing
@@ -7,12 +20,15 @@ import Tile
         , Tile
         , Wind
         , containsTerminal
+        , greenDragonNumber
         , groupIsPair
         , groupIsRun
         , groupIsTriplet
         , groupToWind
         , isDragon
+        , redDragonNumber
         , suitToString
+        , whiteDragonNumber
         )
 
 
@@ -156,8 +172,7 @@ fuValuePair hand =
                 n =
                     pair.tileNumber
             in
-            -- dragon
-            if (n == 5 || n == 6 || n == 7) && pair.suit == Tile.Honor then
+            if (n == whiteDragonNumber || n == greenDragonNumber || n == redDragonNumber) && pair.suit == Tile.Honor then
                 Just (FuSource 2 (ValuePair ByDragon) [ pair ])
 
             else if isRoundWind && isSeatWind then
@@ -224,6 +239,43 @@ fuTriplets hand =
             List.filter (\g -> g.type_ == Triplet) hand.groups
     in
     List.map fuTriplet triplets
+
+
+hanDescriptionToString : Yaku -> String
+hanDescriptionToString hanSource =
+    case hanSource of
+        Chiitoitsu ->
+            "Chiitoitsu"
+
+        Pinfu ->
+            "Pinfu"
+
+        Iipeikou ->
+            "Iipeikou"
+
+        Ryanpeikou ->
+            "Ryanpeikou"
+
+        Yakuhai ->
+            "Yakuhai"
+
+        Shousangen ->
+            "Shousangen"
+
+        Tanyao ->
+            "Tanyao"
+
+        SanshokuDoujun ->
+            "SanshokuDoujun"
+
+        Chanta ->
+            "Chanta"
+
+        Toitoi ->
+            "Toitoi"
+
+        SanshokuDoukou ->
+            "SanshokuDoukou"
 
 
 countFu : Hand -> Hand
