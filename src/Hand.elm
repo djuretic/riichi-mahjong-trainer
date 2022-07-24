@@ -43,6 +43,7 @@ type alias Hand =
     , hanCount : Int
     , fuSources : List FuSource
     , fuCount : Int
+    , fuCountBeforeRounding : Int
     }
 
 
@@ -117,7 +118,7 @@ type Yaku
 
 init : Hand
 init =
-    Hand [] [] Tsumo Tile.East Tile.East [] 0 [] 0
+    Hand [] [] Tsumo Tile.East Tile.East [] 0 [] 0 0
 
 
 winByToString : WinBy -> String
@@ -312,13 +313,13 @@ countFu hand =
             List.map .fu allValidFu
                 |> List.sum
 
-        roundedFu n =
-            toFloat n
+        roundedFu =
+            toFloat sumFu
                 / 10
                 |> ceiling
                 |> (*) 10
     in
-    { hand | fuSources = allValidFu, fuCount = roundedFu sumFu }
+    { hand | fuSources = allValidFu, fuCount = roundedFu, fuCountBeforeRounding = sumFu }
 
 
 fuDescriptionToString : FuDescription -> String

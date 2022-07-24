@@ -204,7 +204,7 @@ view model =
                         , drawGroups model.hand.groups
                         , clearFixDiv
                         , renderHanDetails model.hand
-                        , renderFuDetails model.hand.fuSources
+                        , renderFuDetails model.hand
                         ]
     in
     div [ class "container" ]
@@ -513,14 +513,14 @@ renderHanSource hanSource =
         ]
 
 
-renderFuDetails : List FuSource -> Html Msg
-renderFuDetails fuSources =
+renderFuDetails : Hand -> Html Msg
+renderFuDetails hand =
     let
         details =
-            List.concat [ List.map renderFuSource fuSources ]
+            List.concat [ List.map renderFuSource hand.fuSources ]
 
         footer =
-            renderTotalFu fuSources
+            renderTotalFu hand
     in
     table [ class "table is-striped" ]
         [ thead [] [ th [ colspan 3 ] [ text "Fu" ] ]
@@ -542,27 +542,16 @@ renderFuSource fuSource =
         ]
 
 
-renderTotalFu : List FuSource -> List (Html Msg)
-renderTotalFu fuSources =
-    let
-        sumFu =
-            List.map .fu fuSources
-                |> List.sum
-
-        roundFu n =
-            toFloat n
-                / 10
-                |> ceiling
-                |> (*) 10
-    in
+renderTotalFu : Hand -> List (Html Msg)
+renderTotalFu { fuCount, fuCountBeforeRounding } =
     [ tr []
         [ td [] [ text "Total (before rounding)" ]
-        , td [] [ text <| String.fromInt sumFu ++ " fu" ]
+        , td [] [ text <| String.fromInt fuCountBeforeRounding ++ " fu" ]
         , td [] []
         ]
     , tr []
         [ td [] [ text "Total" ]
-        , td [] [ text <| String.fromInt (roundFu sumFu) ++ " fu" ]
+        , td [] [ text <| String.fromInt fuCount ++ " fu" ]
         , td [] []
         ]
     ]
@@ -699,9 +688,17 @@ renderGuessTab model =
 
             else
                 []
+
+        fuSummary =
+            case model.guessState of
+                SelectedHanAndFuCount _ _ ->
+                    renderFuDetails model.hand
+
+                _ ->
+                    div [] []
     in
     div []
-        (List.append (List.append hanButtonSection [ hanSummary ]) fuButtonSection)
+        ((hanButtonSection ++ [ hanSummary ]) ++ fuButtonSection ++ [ fuSummary ])
 
 
 guessButtonCss : Int -> Int -> Int -> Maybe String
