@@ -93,8 +93,8 @@ update msg model =
                         | tiles = tiles
                         , winBy = Hand.Tsumo
                         , groups = groups
-                        , han = []
-                        , fu = []
+                        , hanSources = []
+                        , fuSources = []
                     }
 
                 allYaku =
@@ -102,6 +102,7 @@ update msg model =
 
                 handWithYaku =
                     Hand.setHanSources allYaku hand
+                        |> countFu
             in
             ( { model | handString = handString, hand = handWithYaku, allGroups = allGroups, guessState = InitialGuess }, Cmd.none )
 
@@ -167,9 +168,6 @@ subscriptions _ =
 view : Model -> Html Msg
 view model =
     let
-        handWithFu =
-            countFu model.hand
-
         tabAttrs : ActiveTab -> ActiveTab -> List (Html.Attribute Msg)
         tabAttrs tab currentTab =
             if tab == currentTab then
@@ -190,7 +188,7 @@ view model =
                         , drawGroups model.hand.groups
                         , clearFixDiv
                         , renderHanDetails model.hand
-                        , renderFuDetails handWithFu.fu
+                        , renderFuDetails model.hand.fuSources
                         ]
     in
     div [ class "container" ]
@@ -466,7 +464,7 @@ renderHanDetails : Hand -> Html Msg
 renderHanDetails hand =
     let
         details =
-            List.concat [ List.map renderHanSource hand.han ]
+            List.concat [ List.map renderHanSource hand.hanSources ]
 
         footer =
             renderTotalHan hand.hanCount
@@ -686,6 +684,23 @@ renderGuessTab model =
 
                 _ ->
                     renderHanDetails model.hand
+
+        shouldCountFu =
+            model.hand.hanCount < 5
+
+        fuButtonSection =
+            let
+                buttons =
+                    List.range 2 7
+                        |> List.map ((*) 10)
+                        |> List.map String.fromInt
+                        |> List.map (\n -> button [ class "button" ] [ text (n ++ " fu") ])
+            in
+            if shouldCountFu then
+                List.append [ text "Select fu count:" ] buttons
+
+            else
+                []
     in
     div []
-        (List.append hanButtonSection [ hanSummary ])
+        (List.append (List.append hanButtonSection [ hanSummary ]) fuButtonSection)

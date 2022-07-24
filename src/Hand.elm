@@ -39,9 +39,10 @@ type alias Hand =
     , winBy : WinBy
     , seatWind : Wind
     , roundWind : Wind
-    , han : List HanSource
+    , hanSources : List HanSource
     , hanCount : Int
-    , fu : List FuSource
+    , fuSources : List FuSource
+    , fuCount : Int
     }
 
 
@@ -116,7 +117,7 @@ type Yaku
 
 init : Hand
 init =
-    Hand [] [] Tsumo Tile.East Tile.East [] 0 []
+    Hand [] [] Tsumo Tile.East Tile.East [] 0 [] 0
 
 
 winByToString : WinBy -> String
@@ -139,7 +140,7 @@ fuTsumoNotPinfu : Hand -> Maybe FuSource
 fuTsumoNotPinfu hand =
     let
         isPinfu =
-            List.any (\h -> h.description == Pinfu) hand.han
+            List.any (\h -> h.description == Pinfu) hand.hanSources
     in
     if hand.winBy == Tsumo && not isPinfu then
         Just (FuSource 2 TsumoNotPinfu [])
@@ -307,7 +308,7 @@ countFu hand =
         allValidFu =
             List.filterMap identity allFu
     in
-    { hand | fu = allValidFu }
+    { hand | fuSources = allValidFu }
 
 
 fuDescriptionToString : FuDescription -> String
@@ -718,4 +719,4 @@ setHanSources hanSources hand =
             List.map .han hanSources
                 |> List.sum
     in
-    { hand | han = hanSources, hanCount = totalHan }
+    { hand | hanSources = hanSources, hanCount = totalHan }

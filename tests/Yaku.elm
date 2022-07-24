@@ -41,8 +41,8 @@ testHandYaku hanSourceList handString =
                         | tiles = tiles
                         , winBy = Hand.Tsumo
                         , groups = groups
-                        , han = []
-                        , fu = []
+                        , hanSources = []
+                        , fuSources = []
                     }
 
                 allYaku =
