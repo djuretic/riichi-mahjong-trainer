@@ -2,7 +2,7 @@ module Main exposing (findWinningHand, main, showParseResult)
 
 import Browser
 import Hand exposing (FuSource, Hand, Yaku(..), checkAllYaku, countFu, fuDescriptionToString)
-import Html exposing (Html, button, div, h1, input, li, node, p, table, tbody, td, text, tfoot, th, thead, tr, ul)
+import Html exposing (Html, a, button, div, h1, input, li, node, p, table, tbody, td, text, tfoot, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, colspan, placeholder, style, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Maybe
@@ -37,12 +37,25 @@ type alias Model =
     { handString : String
     , hand : Hand
     , allGroups : GroupsPerSuit
+    , activeTab : ActiveTab
+    , guessState : GuessState
     }
+
+
+type ActiveTab
+    = GuessTab
+    | CountSummaryTab
+
+
+type GuessState
+    = InitialGuess
+    | SelectedHanCount Int
+    | SelectedHanAndFuCount Int Int
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model "2555m" Hand.init (GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ])
+    ( Model "2555m" Hand.init (GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ]) GuessTab InitialGuess
     , Cmd.none
     )
 
@@ -53,6 +66,7 @@ type Msg
     | ChangeRoundWind
     | ChangeWinBy
     | GenerateRandomHand
+    | ChangeTab ActiveTab
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -137,6 +151,9 @@ update msg model =
             , Random.generate HandStr randomHand
             )
 
+        ChangeTab tab ->
+            ( { model | activeTab = tab }, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -148,25 +165,45 @@ view model =
     let
         handWithFu =
             countFu model.hand
+
+        tabAttrs : ActiveTab -> ActiveTab -> List (Html.Attribute Msg)
+        tabAttrs tab currentTab =
+            if tab == currentTab then
+                [ class "is-active", onClick (ChangeTab tab) ]
+
+            else
+                [ onClick (ChangeTab tab) ]
+
+        renderTabContent : ActiveTab -> Html Msg
+        renderTabContent tab =
+            case tab of
+                GuessTab ->
+                    div [] []
+
+                CountSummaryTab ->
+                    div []
+                        [ debugGroups model.allGroups
+                        , drawGroups model.hand.groups
+                        , clearFixDiv
+                        , renderHanDetails handWithFu.han
+                        , renderFuDetails handWithFu.fu
+                        ]
     in
     div [ class "container" ]
         [ stylesheet
         , h1 [ class "title" ] [ text "Riichi mahjong trainer" ]
         , input [ class "input", type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
         , button [ class "button is-primary", onClick GenerateRandomHand ] [ text "Random" ]
-
-        -- , p [] [ Debug.toString tiles |> text ]
         , p [] [ renderTiles model.hand.tiles ]
         , renderWinBy model.hand
         , renderWinds model.hand
-        , debugGroups model.allGroups
-        , drawGroups model.hand.groups
-        , p [] [ text <| "Yaku: " ++ Debug.toString model.hand.han ]
-
-        --, p [] [text (Debug.toString model.hand.groups), clearFixDiv]
-        , clearFixDiv
-        , renderHanDetails handWithFu.han
-        , renderFuDetails handWithFu.fu
+        , div [ class "tabs" ]
+            [ ul []
+                [ li (tabAttrs GuessTab model.activeTab) [ a [] [ text "Score" ] ]
+                , li (tabAttrs CountSummaryTab model.activeTab) [ a [] [ text "Count summary" ] ]
+                ]
+            ]
+        , renderTabContent model.activeTab
         ]
 
 
