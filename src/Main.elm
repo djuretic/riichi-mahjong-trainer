@@ -68,6 +68,7 @@ type Msg
     | GenerateRandomHand
     | ChangeTab ActiveTab
     | SetGuessedHan Int
+    | SetGuessedFu Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -156,8 +157,23 @@ update msg model =
         ChangeTab tab ->
             ( { model | activeTab = tab }, Cmd.none )
 
-        SetGuessedHan nHan ->
-            ( { model | guessState = SelectedHanCount nHan }, Cmd.none )
+        SetGuessedHan han ->
+            ( { model | guessState = SelectedHanCount han }, Cmd.none )
+
+        SetGuessedFu fu ->
+            let
+                nextState =
+                    case model.guessState of
+                        InitialGuess ->
+                            InitialGuess
+
+                        SelectedHanCount han ->
+                            SelectedHanAndFuCount han fu
+
+                        SelectedHanAndFuCount han _ ->
+                            SelectedHanAndFuCount han fu
+            in
+            ( { model | guessState = nextState }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -642,37 +658,20 @@ randomWinningHand =
 renderGuessTab : Model -> Html Msg
 renderGuessTab model =
     let
-        guessedHan =
+        ( guessedHan, guessedFu ) =
             case model.guessState of
                 InitialGuess ->
-                    Nothing
+                    ( Nothing, Nothing )
 
-                SelectedHanCount n ->
-                    Just n
+                SelectedHanCount han ->
+                    ( Just han, Nothing )
 
-                SelectedHanAndFuCount n _ ->
-                    Just n
-
-        buttonClass : Int -> String
-        buttonClass n =
-            guessedHan
-                |> Maybe.andThen
-                    (\expectedNHan ->
-                        if n == expectedNHan then
-                            if n == model.hand.hanCount then
-                                Just "is-success"
-
-                            else
-                                Just "is-danger"
-
-                        else
-                            Nothing
-                    )
-                |> Maybe.withDefault ""
+                SelectedHanAndFuCount han fu ->
+                    ( Just han, Just fu )
 
         hanButtons =
             List.range 1 13
-                |> List.map (\n -> button [ class ("button " ++ buttonClass n), onClick (SetGuessedHan n) ] [ text (String.fromInt n ++ " han") ])
+                |> List.map (guessHanButton model guessedHan)
 
         hanButtonSection =
             List.append [ text "Select han count:" ] hanButtons
@@ -693,8 +692,7 @@ renderGuessTab model =
                 buttons =
                     List.range 2 7
                         |> List.map ((*) 10)
-                        |> List.map String.fromInt
-                        |> List.map (\n -> button [ class "button" ] [ text (n ++ " fu") ])
+                        |> List.map (guessFuButton model guessedFu)
             in
             if shouldCountFu then
                 List.append [ text "Select fu count:" ] buttons
@@ -704,3 +702,38 @@ renderGuessTab model =
     in
     div []
         (List.append (List.append hanButtonSection [ hanSummary ]) fuButtonSection)
+
+
+guessButtonCss : Int -> Int -> Int -> Maybe String
+guessButtonCss buttonValue correctValue guess =
+    if guess == buttonValue then
+        if guess == correctValue then
+            Just "is-success"
+
+        else
+            Just "is-danger"
+
+    else
+        Nothing
+
+
+guessHanButton : Model -> Maybe Int -> Int -> Html Msg
+guessHanButton model guessedHan n =
+    let
+        buttonClass nn realCount =
+            guessedHan
+                |> Maybe.andThen (guessButtonCss nn realCount)
+                |> Maybe.withDefault ""
+    in
+    button [ class ("button " ++ buttonClass n model.hand.hanCount), onClick (SetGuessedHan n) ] [ text (String.fromInt n ++ " han") ]
+
+
+guessFuButton : Model -> Maybe Int -> Int -> Html Msg
+guessFuButton model guessedFu n =
+    let
+        buttonClass nn realCount =
+            guessedFu
+                |> Maybe.andThen (guessButtonCss nn realCount)
+                |> Maybe.withDefault ""
+    in
+    button [ class ("button " ++ buttonClass n model.hand.fuCount), onClick (SetGuessedFu n) ] [ text (String.fromInt n ++ " fu") ]

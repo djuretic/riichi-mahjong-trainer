@@ -307,8 +307,18 @@ countFu hand =
 
         allValidFu =
             List.filterMap identity allFu
+
+        sumFu =
+            List.map .fu allValidFu
+                |> List.sum
+
+        roundedFu n =
+            toFloat n
+                / 10
+                |> ceiling
+                |> (*) 10
     in
-    { hand | fuSources = allValidFu }
+    { hand | fuSources = allValidFu, fuCount = roundedFu sumFu }
 
 
 fuDescriptionToString : FuDescription -> String
