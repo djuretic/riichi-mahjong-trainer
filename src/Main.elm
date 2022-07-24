@@ -101,7 +101,7 @@ update msg model =
                     checkAllYaku hand
 
                 handWithYaku =
-                    { hand | han = allYaku }
+                    Hand.setHanSources allYaku hand
             in
             ( { model | handString = handString, hand = handWithYaku, allGroups = allGroups, guessState = InitialGuess }, Cmd.none )
 
@@ -182,45 +182,14 @@ view model =
         renderTabContent tab =
             case tab of
                 GuessTab ->
-                    let
-                        guessedHan =
-                            case model.guessState of
-                                InitialGuess ->
-                                    Nothing
-
-                                SelectedHanCount n ->
-                                    Just n
-
-                                SelectedHanAndFuCount n _ ->
-                                    Just n
-
-                        buttonClass : Int -> String
-                        buttonClass n =
-                            guessedHan
-                                -- TODO count han and compare
-                                |> Maybe.andThen
-                                    (\expectedNHan ->
-                                        if n == expectedNHan then
-                                            Just "is-success"
-
-                                        else
-                                            Just "is-danger"
-                                    )
-                                |> Maybe.withDefault ""
-
-                        hanButtons =
-                            List.range 1 13
-                                |> List.map (\n -> button [ class ("button " ++ buttonClass n), onClick (SetGuessedHan n) ] [ text (String.fromInt n ++ " han") ])
-                    in
-                    div []
-                        (List.append [ text "Select han count:" ] hanButtons)
+                    renderGuessTab model
 
                 CountSummaryTab ->
                     div []
                         [ debugGroups model.allGroups
                         , drawGroups model.hand.groups
                         , clearFixDiv
-                        , renderHanDetails handWithFu.han
+                        , renderHanDetails model.hand
                         , renderFuDetails handWithFu.fu
                         ]
     in
@@ -493,14 +462,14 @@ debugGroups groups =
         ]
 
 
-renderHanDetails : List Hand.HanSource -> Html Msg
-renderHanDetails hanSources =
+renderHanDetails : Hand -> Html Msg
+renderHanDetails hand =
     let
         details =
-            List.concat [ List.map renderHanSource hanSources ]
+            List.concat [ List.map renderHanSource hand.han ]
 
         footer =
-            renderTotalHan hanSources
+            renderTotalHan hand.hanCount
     in
     table [ class "table is-striped" ]
         [ thead [] [ th [ colspan 3 ] [ text "Han" ] ]
@@ -509,13 +478,8 @@ renderHanDetails hanSources =
         ]
 
 
-renderTotalHan : List Hand.HanSource -> Html Msg
-renderTotalHan hanSources =
-    let
-        totalHan =
-            List.map .han hanSources
-                |> List.sum
-    in
+renderTotalHan : Int -> Html Msg
+renderTotalHan totalHan =
     tr []
         [ td [] [ text "Total" ]
         , td [] [ text <| String.fromInt totalHan ++ " han" ]
@@ -675,3 +639,53 @@ randomWinningHand =
             randomPair
     in
     Random.map5 (\m p s h pp -> [ m, p, s, h, pp ]) man pin sou honor pair
+
+
+renderGuessTab : Model -> Html Msg
+renderGuessTab model =
+    let
+        guessedHan =
+            case model.guessState of
+                InitialGuess ->
+                    Nothing
+
+                SelectedHanCount n ->
+                    Just n
+
+                SelectedHanAndFuCount n _ ->
+                    Just n
+
+        buttonClass : Int -> String
+        buttonClass n =
+            guessedHan
+                |> Maybe.andThen
+                    (\expectedNHan ->
+                        if n == expectedNHan then
+                            if n == model.hand.hanCount then
+                                Just "is-success"
+
+                            else
+                                Just "is-danger"
+
+                        else
+                            Nothing
+                    )
+                |> Maybe.withDefault ""
+
+        hanButtons =
+            List.range 1 13
+                |> List.map (\n -> button [ class ("button " ++ buttonClass n), onClick (SetGuessedHan n) ] [ text (String.fromInt n ++ " han") ])
+
+        hanButtonSection =
+            List.append [ text "Select han count:" ] hanButtons
+
+        hanSummary =
+            case model.guessState of
+                InitialGuess ->
+                    div [] []
+
+                _ ->
+                    renderHanDetails model.hand
+    in
+    div []
+        (List.append hanButtonSection [ hanSummary ])

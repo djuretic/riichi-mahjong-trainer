@@ -10,6 +10,7 @@ module Hand exposing
     , fuDescriptionToString
     , hanDescriptionToString
     , init
+    , setHanSources
     , winByToString
     )
 
@@ -39,6 +40,7 @@ type alias Hand =
     , seatWind : Wind
     , roundWind : Wind
     , han : List HanSource
+    , hanCount : Int
     , fu : List FuSource
     }
 
@@ -114,7 +116,7 @@ type Yaku
 
 init : Hand
 init =
-    Hand [] [] Tsumo Tile.East Tile.East [] []
+    Hand [] [] Tsumo Tile.East Tile.East [] 0 []
 
 
 winByToString : WinBy -> String
@@ -707,3 +709,13 @@ checkAllYaku hand =
     in
     List.filterMap identity checks
         |> List.append (checkYakuhai hand)
+
+
+setHanSources : List HanSource -> Hand -> Hand
+setHanSources hanSources hand =
+    let
+        totalHan =
+            List.map .han hanSources
+                |> List.sum
+    in
+    { hand | han = hanSources, hanCount = totalHan }
