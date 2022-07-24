@@ -67,6 +67,7 @@ type Msg
     | ChangeWinBy
     | GenerateRandomHand
     | ChangeTab ActiveTab
+    | SetGuessedHan Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -102,7 +103,7 @@ update msg model =
                 handWithYaku =
                     { hand | han = allYaku }
             in
-            ( { model | handString = handString, hand = handWithYaku, allGroups = allGroups }, Cmd.none )
+            ( { model | handString = handString, hand = handWithYaku, allGroups = allGroups, guessState = InitialGuess }, Cmd.none )
 
         ChangeRoundWind ->
             let
@@ -154,6 +155,9 @@ update msg model =
         ChangeTab tab ->
             ( { model | activeTab = tab }, Cmd.none )
 
+        SetGuessedHan nHan ->
+            ( { model | guessState = SelectedHanCount nHan }, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -178,7 +182,38 @@ view model =
         renderTabContent tab =
             case tab of
                 GuessTab ->
-                    div [] []
+                    let
+                        guessedHan =
+                            case model.guessState of
+                                InitialGuess ->
+                                    Nothing
+
+                                SelectedHanCount n ->
+                                    Just n
+
+                                SelectedHanAndFuCount n _ ->
+                                    Just n
+
+                        buttonClass : Int -> String
+                        buttonClass n =
+                            guessedHan
+                                -- TODO count han and compare
+                                |> Maybe.andThen
+                                    (\expectedNHan ->
+                                        if n == expectedNHan then
+                                            Just "is-success"
+
+                                        else
+                                            Just "is-danger"
+                                    )
+                                |> Maybe.withDefault ""
+
+                        hanButtons =
+                            List.range 1 13
+                                |> List.map (\n -> button [ class ("button " ++ buttonClass n), onClick (SetGuessedHan n) ] [ text (String.fromInt n ++ " han") ])
+                    in
+                    div []
+                        (List.append [ text "Select han count:" ] hanButtons)
 
                 CountSummaryTab ->
                     div []
