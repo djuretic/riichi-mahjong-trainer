@@ -5,8 +5,7 @@ module Hand exposing
     , Hand
     , WinBy(..)
     , Yaku(..)
-    , checkAllYaku
-    , countFu
+    , count
     , fuDescriptionToString
     , hanDescriptionToString
     , init
@@ -731,3 +730,13 @@ setHanSources hanSources hand =
                 |> List.sum
     in
     { hand | hanSources = hanSources, hanCount = totalHan }
+
+
+count : Hand -> Hand
+count hand =
+    let
+        allYaku =
+            checkAllYaku hand
+    in
+    setHanSources allYaku hand
+        |> countFu

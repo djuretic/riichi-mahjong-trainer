@@ -45,7 +45,7 @@ testHandYaku hanSourceList handString =
                         , fuSources = []
                     }
 
-                allYaku =
-                    Hand.checkAllYaku hand
+                handCounted =
+                    Hand.count hand
             in
-            Expect.equalLists hanSourceList allYaku
+            Expect.equalLists hanSourceList handCounted.hanSources

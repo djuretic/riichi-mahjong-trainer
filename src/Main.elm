@@ -1,7 +1,7 @@
 module Main exposing (findWinningHand, main, showParseResult)
 
 import Browser
-import Hand exposing (FuSource, Hand, Yaku(..), checkAllYaku, countFu, fuDescriptionToString)
+import Hand exposing (FuSource, Hand, Yaku(..), fuDescriptionToString)
 import Html exposing (Html, a, button, div, h1, input, li, node, p, table, tbody, td, text, tfoot, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, colspan, placeholder, style, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -97,15 +97,8 @@ update msg model =
                         , hanSources = []
                         , fuSources = []
                     }
-
-                allYaku =
-                    checkAllYaku hand
-
-                handWithYaku =
-                    Hand.setHanSources allYaku hand
-                        |> countFu
             in
-            ( { model | handString = handString, hand = handWithYaku, allGroups = allGroups, guessState = InitialGuess }, Cmd.none )
+            ( { model | handString = handString, hand = Hand.count hand, allGroups = allGroups, guessState = InitialGuess }, Cmd.none )
 
         ChangeRoundWind ->
             let
@@ -115,7 +108,7 @@ update msg model =
                 newHand =
                     { prevHand | roundWind = cycleWind prevHand.roundWind }
             in
-            ( { model | hand = newHand }, Cmd.none )
+            ( { model | hand = Hand.count newHand }, Cmd.none )
 
         ChangeSeatWind ->
             let
