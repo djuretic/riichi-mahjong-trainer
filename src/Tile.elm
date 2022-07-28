@@ -21,8 +21,8 @@ module Tile exposing
     , windToString
     )
 
-import List.Extra exposing (permutations)
 import Array
+import List.Extra exposing (permutations)
 
 
 type Suit
@@ -94,7 +94,10 @@ type alias Group =
     , suit : Suit
     }
 
-type alias Counter = Array.Array Int
+
+type alias Counter =
+    Array.Array Int
+
 
 groupToWind : Group -> Maybe Wind
 groupToWind group =
@@ -185,9 +188,6 @@ findGroups2 tiles =
                     |> toArrayCounter
                     |> findGroupsInSuit2 suit 0
                     |> Maybe.withDefault []
-                    -- |> List.sortBy (\g -> List.map .tileNumber g)
-                    -- |> deduplicate
-                    -- |> List.filter (\g -> not (List.isEmpty g))
 
         groupsPerSuit =
             { sou = findAllGroups part.sou Sou
@@ -202,10 +202,12 @@ findGroups2 tiles =
 toArrayCounter : List TileNumber -> Counter
 toArrayCounter tileNumbers =
     let
-        counter = Array.initialize 9 (always 0)
+        counter =
+            Array.initialize 9 (always 0)
+
         accum : TileNumber -> Array.Array Int -> Array.Array Int
         accum n cnt =
-            Array.set (n - 1) ((Maybe.withDefault 0 (Array.get (n - 1) cnt)) + 1) cnt
+            Array.set (n - 1) (Maybe.withDefault 0 (Array.get (n - 1) cnt) + 1) cnt
     in
     List.foldl accum counter tileNumbers
 
@@ -215,38 +217,56 @@ getCount n counter =
     Array.get n counter
         |> Maybe.withDefault 0
 
+
 findGroupsInSuit2 : Suit -> Int -> Counter -> Maybe (List (List Group))
 findGroupsInSuit2 suit n counter =
     let
-        count = Array.get n counter
-            |> Maybe.withDefault 0
+        count =
+            Array.get n counter
+                |> Maybe.withDefault 0
     in
-    if count == 0 then
+    if n >= Array.length counter then
+        Just [ [] ]
+
+    else if count == 0 then
         findGroupsInSuit2 suit (n + 1) counter
-    else if n >= Array.length counter then
-        Just [[]]
+
     else
         let
-            foundTriplet = count >= 3
+            foundTriplet =
+                count >= 3
+
             triplet =
                 if foundTriplet then
                     findGroupsInSuit2 suit n (Array.set n (count - 3) counter)
                         |> addGroupToHead (Group Triplet (n + 1) suit)
+
                 else
                     Nothing
-            foundPair = count >= 2
+
+            foundPair =
+                count >= 2
+
             pair =
                 if foundPair then
                     findGroupsInSuit2 suit n (Array.set n (count - 2) counter)
                         |> addGroupToHead (Group Pair (n + 1) suit)
+
                 else
                     Nothing
-            foundRun = suit /= Honor && n < 6 && count >= 1 && getCount (n + 1) counter > 0 && getCount (n + 2) counter > 0
+
+            foundRun =
+                suit /= Honor && n < 6 && count >= 1 && getCount (n + 1) counter > 0 && getCount (n + 2) counter > 0
+
             run =
                 if foundRun then
                     let
-                        count2 = getCount (n + 1) counter
-                        count3 = getCount (n + 2) counter
+                        count2 =
+                            getCount (n + 1) counter
+
+                        count3 =
+                            getCount (n + 2) counter
+
                         updatedCounter =
                             counter
                                 |> Array.set n (count - 1)
@@ -255,12 +275,29 @@ findGroupsInSuit2 suit n counter =
                     in
                     findGroupsInSuit2 suit n updatedCounter
                         |> addGroupToHead (Group Run (n + 1) suit)
+
                 else
                     Nothing
         in
-        Maybe.map2 List.append triplet run
-            |> Maybe.map2 List.append pair
-        
+        map2RetainJust List.append triplet run
+            |> map2RetainJust List.append pair
+
+
+
+-- using Maybe.map2 with only 1 Nothing just retains the Nothing
+
+
+map2RetainJust : (a -> a -> a) -> Maybe a -> Maybe a -> Maybe a
+map2RetainJust func a b =
+    case ( a, b ) of
+        ( Nothing, bb ) ->
+            bb
+
+        ( aa, Nothing ) ->
+            aa
+
+        ( Just aa, Just bb ) ->
+            Maybe.map2 func (Just aa) (Just bb)
 
 
 addGroupToHead : Group -> Maybe (List (List Group)) -> Maybe (List (List Group))
