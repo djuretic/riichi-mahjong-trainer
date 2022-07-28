@@ -7,6 +7,7 @@ module Tile exposing
     , Wind(..)
     , containsTerminal
     , findGroups
+    , findGroups2
     , greenDragonNumber
     , groupIsPair
     , groupIsRun
@@ -21,6 +22,7 @@ module Tile exposing
     )
 
 import List.Extra exposing (permutations)
+import Array
 
 
 type Suit
@@ -92,6 +94,7 @@ type alias Group =
     , suit : Suit
     }
 
+type alias Counter = Array.Array Int
 
 groupToWind : Group -> Maybe Wind
 groupToWind group =
@@ -166,6 +169,103 @@ findGroups tiles =
             }
     in
     groupsPerSuit
+
+
+findGroups2 : List Tile -> GroupsPerSuit
+findGroups2 tiles =
+    let
+        part =
+            partitionBySuit tiles
+
+        findAllGroups : List Tile -> Suit -> List (List Group)
+        findAllGroups =
+            \t suit ->
+                List.map .number t
+                    |> List.sort
+                    |> toArrayCounter
+                    |> findGroupsInSuit2 suit 0
+                    |> Maybe.withDefault []
+                    -- |> List.sortBy (\g -> List.map .tileNumber g)
+                    -- |> deduplicate
+                    -- |> List.filter (\g -> not (List.isEmpty g))
+
+        groupsPerSuit =
+            { sou = findAllGroups part.sou Sou
+            , man = findAllGroups part.man Man
+            , pin = findAllGroups part.pin Pin
+            , honor = findAllGroups part.honor Honor
+            }
+    in
+    groupsPerSuit
+
+
+toArrayCounter : List TileNumber -> Counter
+toArrayCounter tileNumbers =
+    let
+        counter = Array.initialize 9 (always 0)
+        accum : TileNumber -> Array.Array Int -> Array.Array Int
+        accum n cnt =
+            Array.set (n - 1) ((Maybe.withDefault 0 (Array.get (n - 1) cnt)) + 1) cnt
+    in
+    List.foldl accum counter tileNumbers
+
+
+getCount : Int -> Counter -> Int
+getCount n counter =
+    Array.get n counter
+        |> Maybe.withDefault 0
+
+findGroupsInSuit2 : Suit -> Int -> Counter -> Maybe (List (List Group))
+findGroupsInSuit2 suit n counter =
+    let
+        count = Array.get n counter
+            |> Maybe.withDefault 0
+    in
+    if count == 0 then
+        findGroupsInSuit2 suit (n + 1) counter
+    else if n >= Array.length counter then
+        Just [[]]
+    else
+        let
+            foundTriplet = count >= 3
+            triplet =
+                if foundTriplet then
+                    findGroupsInSuit2 suit n (Array.set n (count - 3) counter)
+                        |> addGroupToHead (Group Triplet (n + 1) suit)
+                else
+                    Nothing
+            foundPair = count >= 2
+            pair =
+                if foundPair then
+                    findGroupsInSuit2 suit n (Array.set n (count - 2) counter)
+                        |> addGroupToHead (Group Pair (n + 1) suit)
+                else
+                    Nothing
+            foundRun = suit /= Honor && n < 6 && count >= 1 && getCount (n + 1) counter > 0 && getCount (n + 2) counter > 0
+            run =
+                if foundRun then
+                    let
+                        count2 = getCount (n + 1) counter
+                        count3 = getCount (n + 2) counter
+                        updatedCounter =
+                            counter
+                                |> Array.set n (count - 1)
+                                |> Array.set (n + 1) (count2 - 1)
+                                |> Array.set (n + 2) (count3 - 1)
+                    in
+                    findGroupsInSuit2 suit n updatedCounter
+                        |> addGroupToHead (Group Run (n + 1) suit)
+                else
+                    Nothing
+        in
+        Maybe.map2 List.append triplet run
+            |> Maybe.map2 List.append pair
+        
+
+
+addGroupToHead : Group -> Maybe (List (List Group)) -> Maybe (List (List Group))
+addGroupToHead group foundGroups =
+    Maybe.map (\fg -> List.map ((::) group) fg) foundGroups
 
 
 isRun : List TileNumber -> Bool

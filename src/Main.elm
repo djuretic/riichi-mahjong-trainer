@@ -8,7 +8,7 @@ import Html.Events exposing (onClick, onInput)
 import Maybe
 import Parser exposing ((|.), (|=), Parser, chompIf, chompWhile, getChompedString, loop, oneOf, succeed)
 import Random
-import Tile exposing (Group, GroupType(..), GroupsPerSuit, Suit(..), Tile, findGroups, groupToString, suitToString, windToString)
+import Tile exposing (Group, GroupType(..), GroupsPerSuit, Suit(..), Tile, groupToString, suitToString, windToString)
 
 
 main : Program () Model Msg
@@ -80,7 +80,7 @@ update msg model =
                     showParseResult handString
 
                 allGroups =
-                    findGroups tiles
+                    Tile.findGroups2 tiles
 
                 groups =
                     findWinningHand allGroups
