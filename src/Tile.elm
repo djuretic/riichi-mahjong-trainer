@@ -256,7 +256,7 @@ findGroupsInSuit2 suit n counter =
                     Nothing
 
             foundRun =
-                suit /= Honor && n < 6 && count >= 1 && getCount (n + 1) counter > 0 && getCount (n + 2) counter > 0
+                suit /= Honor && n < 7 && count >= 1 && getCount (n + 1) counter > 0 && getCount (n + 2) counter > 0
 
             run =
                 if foundRun then
