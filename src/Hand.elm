@@ -112,6 +112,7 @@ type Yaku
     | Shousangen
     | Tanyao
     | SanshokuDoujun
+    | Ittsu
     | Chanta
     | Toitoi
     | SanshokuDoukou
@@ -271,7 +272,10 @@ hanDescriptionToString hanSource =
             "Tanyao"
 
         SanshokuDoujun ->
-            "SanshokuDoujun"
+            "Sanshoku Doujun"
+
+        Ittsu ->
+            "Ittsu"
 
         Chanta ->
             "Chanta"
@@ -280,7 +284,7 @@ hanDescriptionToString hanSource =
             "Toitoi"
 
         SanshokuDoukou ->
-            "SanshokuDoukou"
+            "Sanshoku Doukou"
 
 
 countFu : Hand -> Hand
@@ -610,6 +614,21 @@ checkShousangen hand =
             Nothing
 
 
+checkIttsu : Hand -> Maybe HanSource
+checkIttsu hand =
+    let
+        hasIttsu suit =
+            List.member (Group Run 1 suit) hand.groups
+                && List.member (Group Run 4 suit) hand.groups
+                && List.member (Group Run 7 suit) hand.groups
+    in
+    if hasIttsu Tile.Man || hasIttsu Tile.Pin || hasIttsu Tile.Sou then
+        Just (HanSource 1 Ittsu |> incrementHanIfClosed hand)
+
+    else
+        Nothing
+
+
 winningTile : Hand -> Maybe Tile
 winningTile hand =
     List.reverse hand.tiles
@@ -709,6 +728,7 @@ yakuChecks =
     , checkToitoi
     , checkChanta
     , checkSanshokuDoujun
+    , checkIttsu
     , checkSanshokuDoukou
     , checkPinfu
     ]
