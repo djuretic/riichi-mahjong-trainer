@@ -648,6 +648,41 @@ checkDaisangen { groups } =
         Nothing
 
 
+checkSousuushi : Hand -> Maybe HanSource
+checkSousuushi { groups } =
+    let
+        isWindTripletOrPair group =
+            group.suit
+                == Tile.Honor
+                && (group.type_ == Tile.Triplet || group.type_ == Tile.Pair)
+                && group.tileNumber
+                <= 4
+
+        windGroups =
+            List.filter isWindTripletOrPair groups
+
+        windGroupsNumbers =
+            List.map .tileNumber windGroups
+
+        pairs =
+            List.filter groupIsPair windGroups
+    in
+    if
+        List.length windGroups
+            == 4
+            && List.length pairs
+            == 1
+            && List.member 1 windGroupsNumbers
+            && List.member 2 windGroupsNumbers
+            && List.member 3 windGroupsNumbers
+            && List.member 4 windGroupsNumbers
+    then
+        Just (HanSource 13 Shousuushi)
+
+    else
+        Nothing
+
+
 checkDaisuushi : Hand -> Maybe HanSource
 checkDaisuushi { groups } =
     if
@@ -795,6 +830,7 @@ yakuChecks =
     [ checkIipeikou
     , checkShousangen
     , checkDaisangen
+    , checkSousuushi
     , checkDaisuushi
     , checkTanyao
     , checkToitoi
