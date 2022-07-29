@@ -140,8 +140,8 @@ update msg model =
         GenerateRandomHand ->
             let
                 randomHand =
-                    randomWinningHand
-                        |> Random.map (\lg -> List.map groupToString lg |> String.join "")
+                    Hand.randomWinningHand
+                        |> Random.map (\lg -> List.map groupToString lg.groups |> String.join "")
             in
             ( model
             , Random.generate HandStr randomHand
@@ -578,63 +578,6 @@ cycleWind wind =
 
         Tile.North ->
             Tile.East
-
-
-randomTripletOrRun : Suit -> Random.Generator Group
-randomTripletOrRun suit =
-    let
-        maxRange =
-            if suit == Honor then
-                7
-
-            else
-                9 + 7
-    in
-    Random.int 1 maxRange
-        |> Random.map
-            (\n ->
-                if n < 10 then
-                    Group Triplet n suit
-
-                else
-                    Group Run (n - 9) suit
-            )
-
-
-randomPair : Random.Generator Group
-randomPair =
-    let
-        maxRange suit =
-            if suit == Honor then
-                7
-
-            else
-                9
-    in
-    Random.uniform Man [ Pin, Sou, Honor ]
-        |> Random.andThen (\s -> Random.pair (Random.int 1 (maxRange s)) (Random.constant s))
-        |> Random.map (\( n, suit ) -> Group Pair n suit)
-
-
-randomWinningHand : Random.Generator (List Group)
-randomWinningHand =
-    let
-        man =
-            randomTripletOrRun Man
-
-        pin =
-            randomTripletOrRun Pin
-
-        sou =
-            randomTripletOrRun Sou
-
-        honor =
-            randomTripletOrRun Honor
-
-        pair =
-            randomPair
-    in
-    Random.map5 (\m p s h pp -> [ m, p, s, h, pp ]) man pin sou honor pair
 
 
 renderGuessTab : Model -> Html Msg
