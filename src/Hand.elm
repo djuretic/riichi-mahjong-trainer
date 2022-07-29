@@ -15,6 +15,7 @@ module Hand exposing
     )
 
 import Random
+import Set exposing (Set)
 import Tile
     exposing
         ( Group
@@ -116,6 +117,8 @@ type Yaku
     | Chanta
     | Toitoi
     | SanshokuDoukou
+    | Honitsu
+    | Chinitsu
 
 
 init : Hand
@@ -285,6 +288,12 @@ hanDescriptionToString hanSource =
 
         SanshokuDoukou ->
             "Sanshoku Doukou"
+
+        Honitsu ->
+            "Honitsu"
+
+        Chinitsu ->
+            "Chinitsu"
 
 
 countFu : Hand -> Hand
@@ -629,6 +638,27 @@ checkIttsu hand =
         Nothing
 
 
+checkHonitsu : Hand -> Maybe HanSource
+checkHonitsu hand =
+    let
+        suits =
+            List.map .suit hand.groups
+                |> List.map suitToString
+                |> Set.fromList
+
+        honor =
+            suitToString Tile.Honor
+    in
+    if Set.size suits == 1 && Set.member honor suits then
+        Just (HanSource 5 Chinitsu |> incrementHanIfClosed hand)
+
+    else if Set.size suits == 2 && Set.member honor suits then
+        Just (HanSource 2 Honitsu |> incrementHanIfClosed hand)
+
+    else
+        Nothing
+
+
 winningTile : Hand -> Maybe Tile
 winningTile hand =
     List.reverse hand.tiles
@@ -731,6 +761,7 @@ yakuChecks =
     , checkIttsu
     , checkSanshokuDoukou
     , checkPinfu
+    , checkHonitsu
     ]
 
 
