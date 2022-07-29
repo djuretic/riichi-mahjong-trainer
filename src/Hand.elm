@@ -15,7 +15,7 @@ module Hand exposing
     )
 
 import Random
-import Set exposing (Set)
+import Set
 import Tile
     exposing
         ( Group
@@ -111,6 +111,9 @@ type Yaku
     | Ryanpeikou
     | Yakuhai
     | Shousangen
+    | Daisangen
+    | Shousuushi
+    | Daisuushi
     | Tanyao
     | SanshokuDoujun
     | Ittsu
@@ -270,6 +273,15 @@ hanDescriptionToString hanSource =
 
         Shousangen ->
             "Shousangen"
+
+        Daisangen ->
+            "Daisangen"
+
+        Shousuushi ->
+            "Shousuushi"
+
+        Daisuushi ->
+            "Daisuushi"
 
         Tanyao ->
             "Tanyao"
@@ -623,6 +635,34 @@ checkShousangen hand =
             Nothing
 
 
+checkDaisangen : Hand -> Maybe HanSource
+checkDaisangen { groups } =
+    if
+        List.member (Group Triplet whiteDragonNumber Tile.Honor) groups
+            && List.member (Group Triplet greenDragonNumber Tile.Honor) groups
+            && List.member (Group Triplet redDragonNumber Tile.Honor) groups
+    then
+        Just (HanSource 13 Daisangen)
+
+    else
+        Nothing
+
+
+checkDaisuushi : Hand -> Maybe HanSource
+checkDaisuushi { groups } =
+    if
+        List.member (Group Triplet 1 Tile.Honor) groups
+            && List.member (Group Triplet 2 Tile.Honor) groups
+            && List.member (Group Triplet 3 Tile.Honor) groups
+            && List.member (Group Triplet 4 Tile.Honor) groups
+    then
+        -- TODO double yakuman
+        Just (HanSource 13 Daisuushi)
+
+    else
+        Nothing
+
+
 checkIttsu : Hand -> Maybe HanSource
 checkIttsu hand =
     let
@@ -754,6 +794,8 @@ yakuChecks : List (Hand -> Maybe HanSource)
 yakuChecks =
     [ checkIipeikou
     , checkShousangen
+    , checkDaisangen
+    , checkDaisuushi
     , checkTanyao
     , checkToitoi
     , checkChanta
