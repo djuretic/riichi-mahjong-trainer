@@ -186,7 +186,7 @@ findGroups2 tiles =
                 List.map .number t
                     |> List.sort
                     |> toArrayCounter
-                    |> findGroupsInSuit2 suit 0
+                    |> findGroupsInSuit2 suit 0 True
                     |> Maybe.withDefault []
 
         groupsPerSuit =
@@ -218,8 +218,8 @@ getCount n counter =
         |> Maybe.withDefault 0
 
 
-findGroupsInSuit2 : Suit -> Int -> Counter -> Maybe (List (List Group))
-findGroupsInSuit2 suit n counter =
+findGroupsInSuit2 : Suit -> Int -> Bool -> Counter -> Maybe (List (List Group))
+findGroupsInSuit2 suit n shouldFindPair counter =
     let
         count =
             Array.get n counter
@@ -229,7 +229,7 @@ findGroupsInSuit2 suit n counter =
         Just [ [] ]
 
     else if count == 0 then
-        findGroupsInSuit2 suit (n + 1) counter
+        findGroupsInSuit2 suit (n + 1) shouldFindPair counter
 
     else
         let
@@ -238,7 +238,7 @@ findGroupsInSuit2 suit n counter =
 
             triplet =
                 if foundTriplet then
-                    findGroupsInSuit2 suit n (Array.set n (count - 3) counter)
+                    findGroupsInSuit2 suit n shouldFindPair (Array.set n (count - 3) counter)
                         |> addGroupToHead (Group Triplet (n + 1) suit)
 
                 else
@@ -248,8 +248,8 @@ findGroupsInSuit2 suit n counter =
                 count >= 2
 
             pair =
-                if foundPair then
-                    findGroupsInSuit2 suit n (Array.set n (count - 2) counter)
+                if foundPair && shouldFindPair then
+                    findGroupsInSuit2 suit n False (Array.set n (count - 2) counter)
                         |> addGroupToHead (Group Pair (n + 1) suit)
 
                 else
@@ -273,7 +273,7 @@ findGroupsInSuit2 suit n counter =
                                 |> Array.set (n + 1) (count2 - 1)
                                 |> Array.set (n + 2) (count3 - 1)
                     in
-                    findGroupsInSuit2 suit n updatedCounter
+                    findGroupsInSuit2 suit n shouldFindPair updatedCounter
                         |> addGroupToHead (Group Run (n + 1) suit)
 
                 else
