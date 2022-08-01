@@ -11,6 +11,7 @@ module Hand exposing
     , init
     , randomWinningHand
     , setHanSources
+    , shouldCountFu
     , winByToString
     )
 
@@ -314,42 +315,46 @@ hanDescriptionToString hanSource =
 
 countFu : Hand -> Hand
 countFu hand =
-    let
-        base =
-            fuBase hand
+    if shouldCountFu hand then
+        let
+            base =
+                fuBase hand
 
-        tsumoNotPinfu =
-            fuTsumoNotPinfu hand
+            tsumoNotPinfu =
+                fuTsumoNotPinfu hand
 
-        closedRon =
-            fuClosedRon hand
+            closedRon =
+                fuClosedRon hand
 
-        valuePair =
-            fuValuePair hand
+            valuePair =
+                fuValuePair hand
 
-        waitFu =
-            fuWaitType hand
+            waitFu =
+                fuWaitType hand
 
-        triplets =
-            fuTriplets hand
+            triplets =
+                fuTriplets hand
 
-        allFu =
-            List.concat [ [ Just base, tsumoNotPinfu, closedRon, valuePair, waitFu ], triplets ]
+            allFu =
+                List.concat [ [ Just base, tsumoNotPinfu, closedRon, valuePair, waitFu ], triplets ]
 
-        allValidFu =
-            List.filterMap identity allFu
+            allValidFu =
+                List.filterMap identity allFu
 
-        sumFu =
-            List.map .fu allValidFu
-                |> List.sum
+            sumFu =
+                List.map .fu allValidFu
+                    |> List.sum
 
-        roundedFu =
-            toFloat sumFu
-                / 10
-                |> ceiling
-                |> (*) 10
-    in
-    { hand | fuSources = allValidFu, fuCount = roundedFu, fuCountBeforeRounding = sumFu }
+            roundedFu =
+                toFloat sumFu
+                    / 10
+                    |> ceiling
+                    |> (*) 10
+        in
+        { hand | fuSources = allValidFu, fuCount = roundedFu, fuCountBeforeRounding = sumFu }
+
+    else
+        hand
 
 
 fuDescriptionToString : FuDescription -> String
@@ -954,3 +959,8 @@ randomWinningHand =
             { hand | groups = groups, winBy = winBy, seatWind = seatWind, roundWind = roundWind }
     in
     Random.map4 createHand randomWinningGroups randomWinBy randomWind randomWind
+
+
+shouldCountFu : Hand -> Bool
+shouldCountFu hand =
+    hand.hanCount < 5

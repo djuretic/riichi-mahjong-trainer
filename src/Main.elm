@@ -508,18 +508,22 @@ renderHanSource hanSource =
 
 renderFuDetails : Hand -> Html Msg
 renderFuDetails hand =
-    let
-        details =
-            List.concat [ List.map renderFuSource hand.fuSources ]
+    if Hand.shouldCountFu hand then
+        let
+            details =
+                List.concat [ List.map renderFuSource hand.fuSources ]
 
-        footer =
-            renderTotalFu hand
-    in
-    table [ class "table is-striped" ]
-        [ thead [] [ th [ colspan 3 ] [ text "Fu" ] ]
-        , tbody [] details
-        , tfoot [] footer
-        ]
+            footer =
+                renderTotalFu hand
+        in
+        table [ class "table is-striped" ]
+            [ thead [] [ th [ colspan 3 ] [ text "Fu" ] ]
+            , tbody [] details
+            , tfoot [] footer
+            ]
+
+    else
+        div [] []
 
 
 renderFuSource : FuSource -> Html Msg
@@ -609,9 +613,6 @@ renderGuessTab model =
                 _ ->
                     renderHanDetails model.hand
 
-        shouldCountFu =
-            model.hand.hanCount < 5
-
         fuButtonSection =
             let
                 buttons =
@@ -619,7 +620,7 @@ renderGuessTab model =
                         |> List.map ((*) 10)
                         |> List.map (guessFuButton model guessedFu)
             in
-            if shouldCountFu then
+            if Hand.shouldCountFu model.hand then
                 List.append [ text "Select fu count:" ] buttons
 
             else
