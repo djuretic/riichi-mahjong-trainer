@@ -118,6 +118,7 @@ type Yaku
     | SanshokuDoujun
     | Ittsu
     | Chanta
+    | Tsuuiisou
     | Toitoi
     | SanshokuDoukou
     | Honitsu
@@ -294,6 +295,9 @@ hanDescriptionToString hanSource =
 
         Chanta ->
             "Chanta"
+
+        Tsuuiisou ->
+            "Tsuuiisou"
 
         Toitoi ->
             "Toitoi"
@@ -713,8 +717,8 @@ checkIttsu hand =
         Nothing
 
 
-checkHonitsu : Hand -> Maybe HanSource
-checkHonitsu hand =
+checkHonitsuTsuuiisou : Hand -> Maybe HanSource
+checkHonitsuTsuuiisou hand =
     let
         suits =
             List.map .suit hand.groups
@@ -725,6 +729,9 @@ checkHonitsu hand =
             suitToString Tile.Honor
     in
     if Set.size suits == 1 && Set.member honor suits then
+        Just (HanSource 13 Tsuuiisou)
+
+    else if Set.size suits == 1 && not (Set.member honor suits) then
         Just (HanSource 5 Chinitsu |> incrementHanIfClosed hand)
 
     else if Set.size suits == 2 && Set.member honor suits then
@@ -839,7 +846,7 @@ yakuChecks =
     , checkIttsu
     , checkSanshokuDoukou
     , checkPinfu
-    , checkHonitsu
+    , checkHonitsuTsuuiisou
     ]
 
 
