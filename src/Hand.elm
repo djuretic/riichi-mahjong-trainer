@@ -101,6 +101,7 @@ type WaitType
 
 type Yaku
     = Chiitoitsu
+    | MenzenTsumo
     | Pinfu
     | Iipeikou
     | Ryanpeikou
@@ -255,6 +256,9 @@ hanDescriptionToString hanSource =
         Chiitoitsu ->
             "Chiitoitsu"
 
+        MenzenTsumo ->
+            "Menzen Tsumo"
+
         Pinfu ->
             "Pinfu"
 
@@ -404,6 +408,15 @@ fuDescriptionToString fuDescription =
 
         NoFu ->
             "?"
+
+
+checkMenzenTsumo : Hand -> Maybe HanSource
+checkMenzenTsumo hand =
+    if hand.winBy == Tsumo && handIsClosed hand then
+        Just (HanSource 1 MenzenTsumo)
+
+    else
+        Nothing
 
 
 checkTanyao : Hand -> Maybe HanSource
@@ -847,7 +860,8 @@ waitTypeToString waitType =
 
 yakuChecks : List (Hand -> Maybe HanSource)
 yakuChecks =
-    [ checkIipeikou
+    [ checkMenzenTsumo
+    , checkIipeikou
     , checkShousangen
     , checkDaisangen
     , checkSousuushi

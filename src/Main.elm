@@ -112,6 +112,7 @@ update msg model =
             in
             if newHand.hanCount > 0 then
                 ( { model | handString = Hand.getHandString newHand, hand = newHand, allGroups = allGroups, guessState = InitialGuess }, Cmd.none )
+
             else
                 update GenerateRandomHand model
 
@@ -148,7 +149,7 @@ update msg model =
                         Hand.Ron
 
                 newHand =
-                    { prevHand | winBy = newWinBy }
+                    Hand.count { prevHand | winBy = newWinBy }
             in
             ( { model | hand = newHand }, Cmd.none )
 
