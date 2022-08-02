@@ -3,14 +3,14 @@ module Group exposing
     , GroupType(..)
     , GroupsPerSuit
     , containsTerminal
-    , findGroups2
-    , groupIsPair
-    , groupIsRun
-    , groupIsTriplet
-    , groupToString
-    , groupToWind
+    , findGroups
     , isDragon
+    , isPair
+    , isRun
+    , isTriplet
+    , toString
     , toTiles
+    , toWind
     )
 
 import Array
@@ -44,8 +44,8 @@ type alias Counter =
     Array.Array Int
 
 
-groupToWind : Group -> Maybe Tile.Wind
-groupToWind group =
+toWind : Group -> Maybe Tile.Wind
+toWind group =
     let
         getWind g =
             if g.suit == Tile.Honor then
@@ -85,38 +85,13 @@ findGroups tiles =
         part =
             Tile.partitionBySuit tiles
 
-        findAllGroups =
-            \t withRuns ->
-                List.map .number t
-                    |> Tile.permutationsAndDedup
-                    |> List.map (\p -> findGroupsInSuit p withRuns)
-                    |> List.sortBy (\g -> List.map .tileNumber g)
-                    |> Tile.deduplicate
-                    |> List.filter (\g -> not (List.isEmpty g))
-
-        groupsPerSuit =
-            { sou = findAllGroups part.sou Tile.Sou
-            , man = findAllGroups part.man Tile.Man
-            , pin = findAllGroups part.pin Tile.Pin
-            , honor = findAllGroups part.honor Tile.Honor
-            }
-    in
-    groupsPerSuit
-
-
-findGroups2 : List Tile.Tile -> GroupsPerSuit
-findGroups2 tiles =
-    let
-        part =
-            Tile.partitionBySuit tiles
-
         findAllGroups : List Tile.Tile -> Tile.Suit -> List (List Group)
         findAllGroups =
             \t suit ->
                 List.map .number t
                     |> List.sort
                     |> toArrayCounter
-                    |> findGroupsInSuit2 suit 0 True
+                    |> findGroupsInSuit suit 0 True
                     |> Maybe.withDefault []
 
         groupsPerSuit =
@@ -148,8 +123,8 @@ getCount n counter =
         |> Maybe.withDefault 0
 
 
-findGroupsInSuit2 : Tile.Suit -> Int -> Bool -> Counter -> Maybe (List (List Group))
-findGroupsInSuit2 suit n shouldFindPair counter =
+findGroupsInSuit : Tile.Suit -> Int -> Bool -> Counter -> Maybe (List (List Group))
+findGroupsInSuit suit n shouldFindPair counter =
     let
         count =
             Array.get n counter
@@ -159,7 +134,7 @@ findGroupsInSuit2 suit n shouldFindPair counter =
         Just [ [] ]
 
     else if count == 0 then
-        findGroupsInSuit2 suit (n + 1) shouldFindPair counter
+        findGroupsInSuit suit (n + 1) shouldFindPair counter
 
     else
         let
@@ -168,7 +143,7 @@ findGroupsInSuit2 suit n shouldFindPair counter =
 
             triplet =
                 if foundTriplet then
-                    findGroupsInSuit2 suit n shouldFindPair (Array.set n (count - 3) counter)
+                    findGroupsInSuit suit n shouldFindPair (Array.set n (count - 3) counter)
                         |> addGroupToHead (Group Triplet (n + 1) suit)
 
                 else
@@ -179,7 +154,7 @@ findGroupsInSuit2 suit n shouldFindPair counter =
 
             pair =
                 if foundPair && shouldFindPair then
-                    findGroupsInSuit2 suit n False (Array.set n (count - 2) counter)
+                    findGroupsInSuit suit n False (Array.set n (count - 2) counter)
                         |> addGroupToHead (Group Pair (n + 1) suit)
 
                 else
@@ -203,7 +178,7 @@ findGroupsInSuit2 suit n shouldFindPair counter =
                                 |> Array.set (n + 1) (count2 - 1)
                                 |> Array.set (n + 2) (count3 - 1)
                     in
-                    findGroupsInSuit2 suit n shouldFindPair updatedCounter
+                    findGroupsInSuit suit n shouldFindPair updatedCounter
                         |> addGroupToHead (Group Run (n + 1) suit)
 
                 else
@@ -235,56 +210,8 @@ addGroupToHead group foundGroups =
     Maybe.map (\fg -> List.map ((::) group) fg) foundGroups
 
 
-findGroupsInSuit : List Tile.TileNumber -> Tile.Suit -> List Group
-findGroupsInSuit tiles suit =
-    case tiles of
-        x :: y :: z :: xs ->
-            let
-                candidate =
-                    [ x, y, z ]
-
-                emptyRemaining =
-                    List.isEmpty xs
-            in
-            if suit /= Tile.Honor && Tile.isRun candidate then
-                let
-                    rest =
-                        findGroupsInSuit xs suit
-                in
-                if List.isEmpty rest && not emptyRemaining then
-                    []
-
-                else
-                    Group Run x suit :: rest
-
-            else if Tile.isTriplet candidate then
-                let
-                    rest =
-                        findGroupsInSuit xs suit
-                in
-                if List.isEmpty rest && not emptyRemaining then
-                    []
-
-                else
-                    Group Triplet x suit :: rest
-
-            else
-                []
-
-        -- we only search for pairs at the end of the list
-        x :: [ y ] ->
-            if x == y then
-                [ Group Pair x suit ]
-
-            else
-                []
-
-        _ ->
-            []
-
-
-groupToString : Group -> String
-groupToString group =
+toString : Group -> String
+toString group =
     case group.type_ of
         Triplet ->
             String.repeat 3 (String.fromInt group.tileNumber) ++ Tile.suitToString group.suit
@@ -301,18 +228,18 @@ groupToString group =
                 ]
 
 
-groupIsTriplet : Group -> Bool
-groupIsTriplet group =
+isTriplet : Group -> Bool
+isTriplet group =
     group.type_ == Triplet
 
 
-groupIsPair : Group -> Bool
-groupIsPair group =
+isPair : Group -> Bool
+isPair group =
     group.type_ == Pair
 
 
-groupIsRun : Group -> Bool
-groupIsRun group =
+isRun : Group -> Bool
+isRun group =
     group.type_ == Run
 
 
@@ -320,7 +247,7 @@ isDragon : Group -> Bool
 isDragon group =
     let
         isTripletOrPair =
-            groupIsTriplet group || groupIsPair group
+            isTriplet group || isPair group
     in
     isTripletOrPair && group.suit == Tile.Honor && List.member group.tileNumber [ Tile.whiteDragonNumber, Tile.greenDragonNumber, Tile.redDragonNumber ]
 

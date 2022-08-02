@@ -169,7 +169,7 @@ fuValuePair hand =
         determineFu pair =
             let
                 possibleWind =
-                    Group.groupToWind pair
+                    Group.toWind pair
 
                 isRoundWind =
                     Just hand.roundWind == possibleWind
@@ -448,7 +448,7 @@ checkToitoi hand =
     let
         -- TODO kan
         triplets =
-            List.filter Group.groupIsTriplet hand.groups
+            List.filter Group.isTriplet hand.groups
     in
     if List.length triplets == 4 then
         Just (HanSource 2 Toitoi)
@@ -467,7 +467,7 @@ checkYakuhai hand =
             g == Group Triplet (Tile.windToTileNumber hand.seatWind) Tile.Honor
 
         triplets =
-            List.filter (\g -> Group.groupIsTriplet g && (Group.isDragon g || isRoundWind g || isSeatWind g)) hand.groups
+            List.filter (\g -> Group.isTriplet g && (Group.isDragon g || isRoundWind g || isSeatWind g)) hand.groups
     in
     if not (List.isEmpty triplets) then
         List.map
@@ -559,7 +559,7 @@ checkIipeikou hand =
     if handIsClosed hand then
         let
             runs =
-                List.filter Group.groupIsRun hand.groups
+                List.filter Group.isRun hand.groups
                     |> List.sortBy (\g -> ( suitToString g.suit, g.tileNumber ))
 
             res =
@@ -583,7 +583,7 @@ getPair : Hand -> Maybe Group
 getPair hand =
     let
         pairs =
-            List.filter Group.groupIsPair hand.groups
+            List.filter Group.isPair hand.groups
     in
     case pairs of
         [ x ] ->
@@ -598,7 +598,7 @@ checkPinfu hand =
     if handIsClosed hand then
         let
             runs =
-                List.filter Group.groupIsRun hand.groups
+                List.filter Group.isRun hand.groups
 
             pairIsValueLessPair =
                 fuValuePair hand == Nothing
@@ -682,7 +682,7 @@ checkSousuushi { groups } =
             List.map .tileNumber windGroups
 
         pairs =
-            List.filter Group.groupIsPair windGroups
+            List.filter Group.isPair windGroups
     in
     if
         List.length windGroups
@@ -995,4 +995,4 @@ shouldCountFu hand =
 
 getHandString : Hand -> String
 getHandString hand =
-    List.map Group.groupToString hand.groups |> String.join ""
+    List.map Group.toString hand.groups |> String.join ""

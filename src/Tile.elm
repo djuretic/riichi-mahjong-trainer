@@ -8,15 +8,12 @@ module Tile exposing
     , isRun
     , isTriplet
     , partitionBySuit
-    , permutationsAndDedup
     , redDragonNumber
     , suitToString
     , whiteDragonNumber
     , windToString
     , windToTileNumber
     )
-
-import List.Extra exposing (permutations)
 
 
 type Suit
@@ -126,19 +123,6 @@ deduplicate list =
 
         x :: xs ->
             x :: helper [] x xs
-
-
-permutationsAndDedup : List TileNumber -> List (List TileNumber)
-permutationsAndDedup tileNumbers =
-    let
-        perms =
-            permutations tileNumbers
-
-        -- TODO remove permutations of 3, abc def == def abc
-        sortedPerms =
-            List.sort perms
-    in
-    deduplicate sortedPerms
 
 
 windToString : Wind -> String

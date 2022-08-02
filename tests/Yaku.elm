@@ -27,7 +27,7 @@ testHandYaku hanSourceList handString =
                     Main.showParseResult handString
 
                 allGroups =
-                    Group.findGroups2 tiles
+                    Group.findGroups tiles
 
                 groups =
                     Main.findWinningHand allGroups

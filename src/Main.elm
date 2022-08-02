@@ -82,7 +82,7 @@ update msg model =
                     showParseResult handString
 
                 allGroups =
-                    Group.findGroups2 tiles
+                    Group.findGroups tiles
 
                 groups =
                     findWinningHand allGroups
@@ -108,13 +108,7 @@ update msg model =
                     Hand.count hand
 
                 allGroups =
-                    Group.findGroups2 newHand.tiles
-
-                _ =
-                    Debug.log "aaa" newHand
-
-                _ =
-                    Debug.log "hand" hand
+                    Group.findGroups newHand.tiles
             in
             ( { model | handString = Hand.getHandString newHand, hand = newHand, allGroups = allGroups, guessState = InitialGuess }, Cmd.none )
 
