@@ -118,7 +118,7 @@ update msg model =
                 newHand =
                     { prevHand | seatWind = cycleWind prevHand.seatWind }
             in
-            ( { model | hand = newHand }, Cmd.none )
+            ( { model | hand = Hand.count newHand }, Cmd.none )
 
         ChangeWinBy ->
             let

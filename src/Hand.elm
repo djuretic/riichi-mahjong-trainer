@@ -466,11 +466,25 @@ checkToitoi hand =
 checkYakuhai : Hand -> List HanSource
 checkYakuhai hand =
     let
+        isRoundWind g =
+            g == Group Triplet (Tile.windToTileNumber hand.roundWind) Tile.Honor
+
+        isSeatWind g =
+            g == Group Triplet (Tile.windToTileNumber hand.seatWind) Tile.Honor
+
         triplets =
-            List.filter (\g -> groupIsTriplet g && isDragon g) hand.groups
+            List.filter (\g -> groupIsTriplet g && (isDragon g || isRoundWind g || isSeatWind g)) hand.groups
     in
     if not (List.isEmpty triplets) then
-        List.map (\_ -> HanSource 1 Yakuhai) triplets
+        List.map
+            (\g ->
+                if isRoundWind g && isSeatWind g then
+                    HanSource 2 Yakuhai
+
+                else
+                    HanSource 1 Yakuhai
+            )
+            triplets
 
     else
         []

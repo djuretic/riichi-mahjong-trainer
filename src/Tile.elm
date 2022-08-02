@@ -19,6 +19,7 @@ module Tile exposing
     , suitToString
     , whiteDragonNumber
     , windToString
+    , windToTileNumber
     )
 
 import Array
@@ -519,3 +520,19 @@ containsTerminal group =
 
             Run ->
                 group.tileNumber == 1 || group.tileNumber == 7
+
+
+windToTileNumber : Wind -> TileNumber
+windToTileNumber wind =
+    case wind of
+        East ->
+            1
+
+        South ->
+            2
+
+        West ->
+            3
+
+        North ->
+            4
