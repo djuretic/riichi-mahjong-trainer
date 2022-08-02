@@ -1,10 +1,10 @@
 module Yaku exposing (..)
 
 import Expect
+import Group
 import Hand
 import Main
 import Test exposing (..)
-import Tile
 
 
 suite : Test
@@ -27,7 +27,7 @@ testHandYaku hanSourceList handString =
                     Main.showParseResult handString
 
                 allGroups =
-                    Tile.findGroups tiles
+                    Group.findGroups2 tiles
 
                 groups =
                     Main.findWinningHand allGroups

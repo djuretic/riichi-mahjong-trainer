@@ -7,6 +7,7 @@ module Hand exposing
     , Yaku(..)
     , count
     , fuDescriptionToString
+    , getHandString
     , hanDescriptionToString
     , init
     , randomWinningHand
@@ -15,21 +16,14 @@ module Hand exposing
     , winByToString
     )
 
+import Group exposing (Group, GroupType(..))
 import Random
 import Set
 import Tile
     exposing
-        ( Group
-        , GroupType(..)
-        , Tile
+        ( Tile
         , Wind
-        , containsTerminal
         , greenDragonNumber
-        , groupIsPair
-        , groupIsRun
-        , groupIsTriplet
-        , groupToWind
-        , isDragon
         , redDragonNumber
         , suitToString
         , whiteDragonNumber
@@ -175,7 +169,7 @@ fuValuePair hand =
         determineFu pair =
             let
                 possibleWind =
-                    groupToWind pair
+                    Group.groupToWind pair
 
                 isRoundWind =
                     Just hand.roundWind == possibleWind
@@ -454,7 +448,7 @@ checkToitoi hand =
     let
         -- TODO kan
         triplets =
-            List.filter groupIsTriplet hand.groups
+            List.filter Group.groupIsTriplet hand.groups
     in
     if List.length triplets == 4 then
         Just (HanSource 2 Toitoi)
@@ -473,7 +467,7 @@ checkYakuhai hand =
             g == Group Triplet (Tile.windToTileNumber hand.seatWind) Tile.Honor
 
         triplets =
-            List.filter (\g -> groupIsTriplet g && (isDragon g || isRoundWind g || isSeatWind g)) hand.groups
+            List.filter (\g -> Group.groupIsTriplet g && (Group.isDragon g || isRoundWind g || isSeatWind g)) hand.groups
     in
     if not (List.isEmpty triplets) then
         List.map
@@ -509,7 +503,7 @@ checkChanta : Hand -> Maybe HanSource
 checkChanta hand =
     let
         containsTerminalOrHonor g =
-            g.suit == Tile.Honor || containsTerminal g
+            g.suit == Tile.Honor || Group.containsTerminal g
     in
     if List.all containsTerminalOrHonor hand.groups then
         HanSource 1 Chanta
@@ -565,7 +559,7 @@ checkIipeikou hand =
     if handIsClosed hand then
         let
             runs =
-                List.filter groupIsRun hand.groups
+                List.filter Group.groupIsRun hand.groups
                     |> List.sortBy (\g -> ( suitToString g.suit, g.tileNumber ))
 
             res =
@@ -589,7 +583,7 @@ getPair : Hand -> Maybe Group
 getPair hand =
     let
         pairs =
-            List.filter groupIsPair hand.groups
+            List.filter Group.groupIsPair hand.groups
     in
     case pairs of
         [ x ] ->
@@ -604,7 +598,7 @@ checkPinfu hand =
     if handIsClosed hand then
         let
             runs =
-                List.filter groupIsRun hand.groups
+                List.filter Group.groupIsRun hand.groups
 
             pairIsValueLessPair =
                 fuValuePair hand == Nothing
@@ -630,7 +624,7 @@ checkShousangen hand =
             getPair hand
 
         isDragonPair =
-            Maybe.map isDragon pair
+            Maybe.map Group.isDragon pair
                 |> Maybe.withDefault False
 
         allDragons =
@@ -677,7 +671,7 @@ checkSousuushi { groups } =
         isWindTripletOrPair group =
             group.suit
                 == Tile.Honor
-                && (group.type_ == Tile.Triplet || group.type_ == Tile.Pair)
+                && (group.type_ == Group.Triplet || group.type_ == Group.Pair)
                 && group.tileNumber
                 <= 4
 
@@ -688,7 +682,7 @@ checkSousuushi { groups } =
             List.map .tileNumber windGroups
 
         pairs =
-            List.filter groupIsPair windGroups
+            List.filter Group.groupIsPair windGroups
     in
     if
         List.length windGroups
@@ -984,7 +978,12 @@ randomWinningHand =
             init
 
         createHand groups winBy seatWind roundWind =
-            { hand | groups = groups, winBy = winBy, seatWind = seatWind, roundWind = roundWind }
+            let
+                tiles =
+                    List.map Group.toTiles groups
+                        |> List.concat
+            in
+            { hand | tiles = tiles, groups = groups, winBy = winBy, seatWind = seatWind, roundWind = roundWind }
     in
     Random.map4 createHand randomWinningGroups randomWinBy randomWind randomWind
 
@@ -992,3 +991,8 @@ randomWinningHand =
 shouldCountFu : Hand -> Bool
 shouldCountFu hand =
     hand.hanCount < 5
+
+
+getHandString : Hand -> String
+getHandString hand =
+    List.map Group.groupToString hand.groups |> String.join ""

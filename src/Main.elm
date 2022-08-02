@@ -1,6 +1,7 @@
 module Main exposing (findWinningHand, main, showParseResult)
 
 import Browser
+import Group exposing (Group, GroupType(..), GroupsPerSuit)
 import Hand exposing (FuSource, Hand, Yaku(..), fuDescriptionToString)
 import Html exposing (Html, a, button, div, h1, input, li, node, p, table, tbody, td, text, tfoot, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, colspan, placeholder, style, type_, value)
@@ -8,7 +9,7 @@ import Html.Events exposing (onClick, onInput)
 import Maybe
 import Parser exposing ((|.), (|=), Parser, chompIf, chompWhile, getChompedString, loop, oneOf, succeed)
 import Random
-import Tile exposing (Group, GroupType(..), GroupsPerSuit, Suit(..), Tile, groupToString, suitToString, windToString)
+import Tile exposing (Suit(..), Tile, suitToString, windToString)
 
 
 main : Program () Model Msg
@@ -62,6 +63,7 @@ init _ =
 
 type Msg
     = HandStr String
+    | HandGenerated Hand
     | ChangeSeatWind
     | ChangeRoundWind
     | ChangeWinBy
@@ -80,7 +82,7 @@ update msg model =
                     showParseResult handString
 
                 allGroups =
-                    Tile.findGroups2 tiles
+                    Group.findGroups2 tiles
 
                 groups =
                     findWinningHand allGroups
@@ -99,6 +101,22 @@ update msg model =
                     }
             in
             ( { model | handString = handString, hand = Hand.count hand, allGroups = allGroups, guessState = InitialGuess }, Cmd.none )
+
+        HandGenerated hand ->
+            let
+                newHand =
+                    Hand.count hand
+
+                allGroups =
+                    Group.findGroups2 newHand.tiles
+
+                _ =
+                    Debug.log "aaa" newHand
+
+                _ =
+                    Debug.log "hand" hand
+            in
+            ( { model | handString = Hand.getHandString newHand, hand = newHand, allGroups = allGroups, guessState = InitialGuess }, Cmd.none )
 
         ChangeRoundWind ->
             let
@@ -141,10 +159,9 @@ update msg model =
             let
                 randomHand =
                     Hand.randomWinningHand
-                        |> Random.map (\lg -> List.map groupToString lg.groups |> String.join "")
             in
             ( model
-            , Random.generate HandStr randomHand
+            , Random.generate HandGenerated randomHand
             )
 
         ChangeTab tab ->
