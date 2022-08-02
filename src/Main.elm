@@ -110,7 +110,10 @@ update msg model =
                 allGroups =
                     Group.findGroups newHand.tiles
             in
-            ( { model | handString = Hand.getHandString newHand, hand = newHand, allGroups = allGroups, guessState = InitialGuess }, Cmd.none )
+            if newHand.hanCount > 0 then
+                ( { model | handString = Hand.getHandString newHand, hand = newHand, allGroups = allGroups, guessState = InitialGuess }, Cmd.none )
+            else
+                update GenerateRandomHand model
 
         ChangeRoundWind ->
             let
