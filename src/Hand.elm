@@ -877,6 +877,20 @@ checkAllYaku hand =
     in
     List.filterMap identity checks
         |> List.append (checkYakuhai hand)
+        |> keepYakumanIfPresent
+
+
+keepYakumanIfPresent : List HanSource -> List HanSource
+keepYakumanIfPresent hanSources =
+    let
+        yakuman =
+            List.filter (\h -> h.han >= 13) hanSources
+    in
+    if List.isEmpty yakuman then
+        hanSources
+
+    else
+        yakuman
 
 
 setHanSources : List HanSource -> Hand -> Hand
