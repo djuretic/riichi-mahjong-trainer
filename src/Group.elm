@@ -4,6 +4,7 @@ module Group exposing
     , GroupsPerSuit
     , containsTerminal
     , findGroups
+    , isClosed
     , isDragon
     , isPair
     , isRun
@@ -283,3 +284,9 @@ toTiles { type_, tileNumber, suit } =
             , Tile.Tile (tileNumber + 1) suit
             , Tile.Tile (tileNumber + 2) suit
             ]
+
+
+isClosed : Group -> Bool
+isClosed _ =
+    -- TODO
+    True

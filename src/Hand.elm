@@ -116,6 +116,8 @@ type Yaku
     | Chanta
     | Tsuuiisou
     | Toitoi
+    | Sanankou
+    | Suuankou
     | SanshokuDoukou
     | Honitsu
     | Chinitsu
@@ -300,6 +302,12 @@ hanDescriptionToString hanSource =
 
         Toitoi ->
             "Toitoi"
+
+        Sanankou ->
+            "Sanankou"
+
+        Suuankou ->
+            "Suuankou"
 
         SanshokuDoukou ->
             "Sanshoku Doukou"
@@ -767,6 +775,26 @@ checkHonitsuTsuuiisou hand =
         Nothing
 
 
+checkSanankouAndSuuankou : Hand -> Maybe HanSource
+checkSanankouAndSuuankou hand =
+    let
+        -- TODO filter out the group with the ron tile
+        triplets =
+            List.filter (\g -> Group.isTriplet g && Group.isClosed g) hand.groups
+
+        countTriplets =
+            List.length triplets
+    in
+    if countTriplets == 4 then
+        Just (HanSource 13 Suuankou)
+
+    else if countTriplets == 3 then
+        Just (HanSource 2 Sanankou)
+
+    else
+        Nothing
+
+
 winningTile : Hand -> Maybe Tile
 winningTile hand =
     List.reverse hand.tiles
@@ -868,6 +896,7 @@ yakuChecks =
     , checkDaisuushi
     , checkTanyao
     , checkToitoi
+    , checkSanankouAndSuuankou
     , checkChanta
     , checkSanshokuDoujun
     , checkIttsu
