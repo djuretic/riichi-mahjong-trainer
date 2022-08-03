@@ -6,6 +6,7 @@ module Group exposing
     , findGroups
     , isClosed
     , isDragon
+    , isHonor
     , isPair
     , isRun
     , isTriplet
@@ -251,6 +252,11 @@ isDragon group =
             isTriplet group || isPair group
     in
     isTripletOrPair && group.suit == Tile.Honor && List.member group.tileNumber [ Tile.whiteDragonNumber, Tile.greenDragonNumber, Tile.redDragonNumber ]
+
+
+isHonor : Group -> Bool
+isHonor group =
+    group.suit == Tile.Honor
 
 
 containsTerminal : Group -> Bool

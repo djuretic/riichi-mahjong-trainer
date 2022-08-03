@@ -114,6 +114,9 @@ type Yaku
     | SanshokuDoujun
     | Ittsu
     | Chanta
+    | Junchan
+    | Honroutou
+    | Chinroutou
     | Tsuuiisou
     | Toitoi
     | Sanankou
@@ -296,6 +299,15 @@ hanDescriptionToString hanSource =
 
         Chanta ->
             "Chanta"
+
+        Junchan ->
+            "Junchan"
+
+        Honroutou ->
+            "Honroutou"
+
+        Chinroutou ->
+            "Chinroutou"
 
         Tsuuiisou ->
             "Tsuuiisou"
@@ -525,11 +537,34 @@ checkChanta hand =
     let
         containsTerminalOrHonor g =
             g.suit == Tile.Honor || Group.containsTerminal g
+
+        numHonorGroups =
+            List.filter Group.isHonor hand.groups
+                |> List.length
+
+        triplets =
+            List.filter Group.isTriplet hand.groups
+
+        allTriplets =
+            List.length triplets == 4
     in
     if List.all containsTerminalOrHonor hand.groups then
-        HanSource 1 Chanta
-            |> incrementHanIfClosed hand
-            |> Just
+        if numHonorGroups == 0 then
+            if allTriplets then
+                Just (HanSource 13 Chinroutou)
+
+            else
+                HanSource 2 Junchan
+                    |> incrementHanIfClosed hand
+                    |> Just
+
+        else if allTriplets then
+            Just (HanSource 2 Honroutou)
+
+        else
+            HanSource 1 Chanta
+                |> incrementHanIfClosed hand
+                |> Just
 
     else
         Nothing
