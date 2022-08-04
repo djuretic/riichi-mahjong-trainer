@@ -16,6 +16,7 @@ module Group exposing
     )
 
 import Array
+import Counter
 import Tile
 
 
@@ -40,10 +41,6 @@ type alias GroupsPerSuit =
     , pin : List (List Group)
     , honor : List (List Group)
     }
-
-
-type alias Counter =
-    Array.Array Int
 
 
 toWind : Group -> Maybe Tile.Wind
@@ -92,7 +89,7 @@ findGroups tiles =
             \t suit ->
                 List.map .number t
                     |> List.sort
-                    |> toArrayCounter
+                    |> Tile.toArrayCounter
                     |> findGroupsInSuit suit 0 True
                     |> Maybe.withDefault []
 
@@ -106,26 +103,7 @@ findGroups tiles =
     groupsPerSuit
 
 
-toArrayCounter : List Tile.TileNumber -> Counter
-toArrayCounter tileNumbers =
-    let
-        counter =
-            Array.initialize 9 (always 0)
-
-        accum : Tile.TileNumber -> Array.Array Int -> Array.Array Int
-        accum n cnt =
-            Array.set (n - 1) (Maybe.withDefault 0 (Array.get (n - 1) cnt) + 1) cnt
-    in
-    List.foldl accum counter tileNumbers
-
-
-getCount : Int -> Counter -> Int
-getCount n counter =
-    Array.get n counter
-        |> Maybe.withDefault 0
-
-
-findGroupsInSuit : Tile.Suit -> Int -> Bool -> Counter -> Maybe (List (List Group))
+findGroupsInSuit : Tile.Suit -> Int -> Bool -> Counter.Counter -> Maybe (List (List Group))
 findGroupsInSuit suit n shouldFindPair counter =
     let
         count =
@@ -163,16 +141,16 @@ findGroupsInSuit suit n shouldFindPair counter =
                     Nothing
 
             foundRun =
-                suit /= Tile.Honor && n < 7 && count >= 1 && getCount (n + 1) counter > 0 && getCount (n + 2) counter > 0
+                suit /= Tile.Honor && n < 7 && count >= 1 && Counter.getCount (n + 1) counter > 0 && Counter.getCount (n + 2) counter > 0
 
             run =
                 if foundRun then
                     let
                         count2 =
-                            getCount (n + 1) counter
+                            Counter.getCount (n + 1) counter
 
                         count3 =
-                            getCount (n + 2) counter
+                            Counter.getCount (n + 2) counter
 
                         updatedCounter =
                             counter

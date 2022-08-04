@@ -104,13 +104,16 @@ update msg model =
 
         HandGenerated hand ->
             let
+                excessRepeatedTiles =
+                    Tile.hasMoreThan4Tiles hand.tiles
+
                 newHand =
                     Hand.count hand
 
                 allGroups =
                     Group.findGroups newHand.tiles
             in
-            if newHand.hanCount > 0 then
+            if newHand.hanCount > 0 && not excessRepeatedTiles then
                 ( { model | handString = Hand.getHandString newHand, hand = newHand, allGroups = allGroups, guessState = InitialGuess }, Cmd.none )
 
             else

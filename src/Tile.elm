@@ -5,15 +5,20 @@ module Tile exposing
     , Wind(..)
     , deduplicate
     , greenDragonNumber
+    , hasMoreThan4Tiles
     , isRun
     , isTriplet
     , partitionBySuit
     , redDragonNumber
     , suitToString
+    , toArrayCounter
     , whiteDragonNumber
     , windToString
     , windToTileNumber
     )
+
+import Array
+import Counter
 
 
 type Suit
@@ -171,3 +176,34 @@ windToTileNumber wind =
 
         North ->
             4
+
+
+toArrayCounter : List TileNumber -> Counter.Counter
+toArrayCounter tileNumbers =
+    let
+        counter =
+            Array.initialize 9 (always 0)
+
+        accum : TileNumber -> Array.Array Int -> Array.Array Int
+        accum n cnt =
+            Array.set (n - 1) (Maybe.withDefault 0 (Array.get (n - 1) cnt) + 1) cnt
+    in
+    List.foldl accum counter tileNumbers
+
+
+hasMoreThan4Tiles : List Tile -> Bool
+hasMoreThan4Tiles tiles =
+    let
+        tilesPerSuit =
+            partitionBySuit tiles
+
+        suitHasMoreThan4Tiles : List Tile -> Bool
+        suitHasMoreThan4Tiles suitTiles =
+            List.map .number suitTiles
+                |> toArrayCounter
+                |> Counter.hasCountGreaterThan 4
+    in
+    suitHasMoreThan4Tiles tilesPerSuit.man
+        || suitHasMoreThan4Tiles tilesPerSuit.pin
+        || suitHasMoreThan4Tiles tilesPerSuit.sou
+        || suitHasMoreThan4Tiles tilesPerSuit.honor
