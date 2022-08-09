@@ -2,3 +2,4 @@ img
 elm-stuff
 package-lock.json
 node_modules/
+*.md

@@ -16,6 +16,7 @@ module Hand exposing
     , winByToString
     )
 
+import Array
 import Group exposing (Group, GroupType(..))
 import Random
 import Set
@@ -1055,15 +1056,42 @@ randomWinningHand =
         hand =
             init
 
-        createHand groups winBy seatWind roundWind =
+        winningTilePosition =
+            Random.int 0 13
+
+        createHand groups winBy seatWind roundWind winTilePos =
             let
                 tiles =
                     List.map Group.toTiles groups
                         |> List.concat
+                        |> Array.fromList
+                        |> moveWinningTileToEnd winTilePos
+                        |> Array.toList
             in
             { hand | tiles = tiles, groups = groups, winBy = winBy, seatWind = seatWind, roundWind = roundWind }
     in
-    Random.map4 createHand randomWinningGroups randomWinBy randomWind randomWind
+    Random.map5 createHand randomWinningGroups randomWinBy randomWind randomWind winningTilePosition
+
+
+moveWinningTileToEnd : Int -> Array.Array Tile -> Array.Array Tile
+moveWinningTileToEnd pos array =
+    let
+        before =
+            Array.slice 0 pos array
+
+        tile =
+            Array.get pos array
+
+        after =
+            Array.slice (pos + 1) (Array.length array + 1) array
+    in
+    case tile of
+        Just t ->
+            Array.append before after
+                |> Array.push t
+
+        Nothing ->
+            array
 
 
 shouldCountFu : Hand -> Bool
