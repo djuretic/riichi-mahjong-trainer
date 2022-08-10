@@ -216,6 +216,7 @@ view model =
                         , clearFixDiv
                         , renderHanDetails model.hand
                         , renderFuDetails model.hand
+                        , renderScore model.hand
                         ]
     in
     div [ class "container" ]
@@ -583,6 +584,35 @@ renderWinds hand =
     div []
         [ p [ onClick ChangeSeatWind ] [ text ("Seat wind: " ++ windToString hand.seatWind) ]
         , p [ onClick ChangeRoundWind ] [ text ("Round wind: " ++ windToString hand.roundWind) ]
+        ]
+
+
+renderScore : Hand -> Html Msg
+renderScore hand =
+    let
+        score =
+            Hand.score hand
+    in
+    table [ class "table is-striped" ]
+        [ thead []
+            [ tr []
+                [ th [] []
+                , th [] [ text "Ron" ]
+                , th [] [ text "Tsumo" ]
+                ]
+            ]
+        , tbody []
+            [ tr []
+                [ th [] [ text "Dealer" ]
+                , td [] [ text (String.fromInt score.dealer.ron) ]
+                , td [] [ text (String.fromInt score.dealer.tsumo) ]
+                ]
+            , tr []
+                [ th [] [ text "Non-dealer" ]
+                , td [] [ text (String.fromInt score.nonDealer.ron) ]
+                , td [] [ text (String.fromInt score.nonDealer.tsumoDealer ++ " / " ++ String.fromInt score.nonDealer.tsumoNonDealer) ]
+                ]
+            ]
         ]
 
 

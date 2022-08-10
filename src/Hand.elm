@@ -11,6 +11,7 @@ module Hand exposing
     , hanDescriptionToString
     , init
     , randomWinningHand
+    , score
     , setHanSources
     , shouldCountFu
     , winByToString
@@ -19,6 +20,7 @@ module Hand exposing
 import Array
 import Group exposing (Group, GroupType(..))
 import Random
+import Score
 import Set
 import Tile
     exposing
@@ -1102,3 +1104,27 @@ shouldCountFu hand =
 getHandString : Hand -> String
 getHandString hand =
     List.map Group.toString hand.groups |> String.join ""
+
+
+type alias DealerScore =
+    { ron : Int
+    , tsumo : Int
+    }
+
+
+type alias NonDealerScore =
+    { ron : Int
+    , tsumoDealer : Int
+    , tsumoNonDealer : Int
+    }
+
+
+type alias Score =
+    { dealer : DealerScore
+    , nonDealer : NonDealerScore
+    }
+
+
+score : Hand -> Score
+score { hanCount, fuCount } =
+    Score.score hanCount fuCount
