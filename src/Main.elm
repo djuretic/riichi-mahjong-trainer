@@ -593,13 +593,19 @@ renderScore hand =
         score =
             Hand.score hand
 
+        hanStr =
+            String.fromInt hand.hanCount ++ " han "
+
         title =
-            String.join ""
-                [ String.fromInt hand.hanCount
-                , " han "
-                , String.fromInt hand.fuCount
-                , " fu"
-                ]
+            if hand.hanCount >= 5 then
+                hanStr
+
+            else
+                String.join ""
+                    [ hanStr
+                    , String.fromInt hand.fuCount
+                    , " fu"
+                    ]
     in
     table [ class "table is-striped" ]
         [ thead []

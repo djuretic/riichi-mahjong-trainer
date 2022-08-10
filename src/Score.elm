@@ -57,6 +57,9 @@ score hanCount fuCount =
             ( 3, 25 ) ->
                 Score (DealerScore 4800 1600) (NonDealerScore 3200 1600 800)
 
+            ( 3, 30 ) ->
+                Score (DealerScore 5800 2000) (NonDealerScore 3900 2000 1000)
+
             ( 4, 20 ) ->
                 Score (DealerScore 7700 2600) (NonDealerScore 5200 2600 1300)
 
