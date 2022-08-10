@@ -592,11 +592,19 @@ renderScore hand =
     let
         score =
             Hand.score hand
+
+        title =
+            String.join ""
+                [ String.fromInt hand.hanCount
+                , " han "
+                , String.fromInt hand.fuCount
+                , " fu"
+                ]
     in
     table [ class "table is-striped" ]
         [ thead []
             [ tr []
-                [ th [] []
+                [ th [] [ text title ]
                 , th [] [ text "Ron" ]
                 , th [] [ text "Tsumo" ]
                 ]

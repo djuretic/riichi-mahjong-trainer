@@ -45,17 +45,54 @@ score hanCount fuCount =
             ( 2, 20 ) ->
                 Score (DealerScore 2000 700) (NonDealerScore 1300 700 400)
 
-            ( 2, 40 ) ->
-                score 3 20
+            ( 2, 25 ) ->
+                Score (DealerScore 2400 800) (NonDealerScore 1600 800 400)
+
+            ( 2, 30 ) ->
+                Score (DealerScore 2900 1000) (NonDealerScore 2000 1000 500)
 
             ( 3, 20 ) ->
                 Score (DealerScore 3900 1300) (NonDealerScore 2600 1300 700)
 
-            ( 3, 40 ) ->
-                score 4 20
+            ( 3, 25 ) ->
+                Score (DealerScore 4800 1600) (NonDealerScore 3200 1600 800)
 
             ( 4, 20 ) ->
                 Score (DealerScore 7700 2600) (NonDealerScore 5200 2600 1300)
 
+            ( 4, 25 ) ->
+                Score (DealerScore 9600 3200) (NonDealerScore 6400 3200 1600)
+
+            ( 4, 30 ) ->
+                Score (DealerScore 11600 3900) (NonDealerScore 7700 3900 2000)
+
             _ ->
-                Score (DealerScore 0 0) (NonDealerScore 0 0 0)
+                if hanCount == 4 && fuCount > 30 then
+                    score 5 0
+
+                else if hanCount == 3 && fuCount > 60 then
+                    score 5 0
+
+                else if List.member fuCount [ 40, 50, 60 ] then
+                    score (hanCount + 1) (fuCount // 2)
+
+                else if fuCount > 60 then
+                    sumScores (score hanCount 50) (score hanCount (fuCount - 50))
+
+                else
+                    Score (DealerScore 0 0) (NonDealerScore 0 0 0)
+
+
+sumScores : Score -> Score -> Score
+sumScores s1 s2 =
+    Score (sumDealer s1.dealer s2.dealer) (sumNonDealer s1.nonDealer s2.nonDealer)
+
+
+sumDealer : DealerScore -> DealerScore -> DealerScore
+sumDealer s1 s2 =
+    DealerScore (s1.ron + s2.ron) (s1.tsumo + s2.tsumo)
+
+
+sumNonDealer : NonDealerScore -> NonDealerScore -> NonDealerScore
+sumNonDealer s1 s2 =
+    NonDealerScore (s1.ron + s2.ron) (s1.tsumoDealer + s2.tsumoDealer) (s1.tsumoNonDealer + s2.tsumoNonDealer)
