@@ -12,6 +12,7 @@ module Hand exposing
     , init
     , randomWinningHand
     , score
+    , scoreCell
     , setHanSources
     , shouldCountFu
     , winByToString
@@ -1125,6 +1126,38 @@ type alias Score =
     }
 
 
-score : Hand -> Score
-score { hanCount, fuCount } =
+scoreCell : Hand -> Score
+scoreCell { hanCount, fuCount } =
     Score.score hanCount fuCount
+
+
+score : Hand -> Int
+score hand =
+    let
+        cellScore =
+            scoreCell hand
+    in
+    if playerIsDealer hand then
+        case hand.winBy of
+            Ron ->
+                cellScore.dealer.ron
+
+            Tsumo ->
+                cellScore.dealer.tsumo
+
+    else
+        case hand.winBy of
+            Ron ->
+                cellScore.nonDealer.ron
+
+            Tsumo ->
+                if playerIsDealer hand then
+                    cellScore.nonDealer.tsumoDealer
+
+                else
+                    cellScore.nonDealer.tsumoNonDealer
+
+
+playerIsDealer : Hand -> Bool
+playerIsDealer hand =
+    hand.seatWind == Tile.East
