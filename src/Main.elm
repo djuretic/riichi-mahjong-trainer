@@ -634,6 +634,22 @@ renderScore hand =
                     , String.fromInt hand.fuCount
                     , " fu"
                     ]
+
+        isRon =
+            Hand.isRon hand
+
+        isTsumo =
+            Hand.isTsumo hand
+
+        isDealer =
+            Hand.isDealer hand
+
+        selectIf cond =
+            if cond then
+                class "is-selected"
+
+            else
+                class ""
     in
     table [ class "table is-striped" ]
         [ thead []
@@ -646,13 +662,13 @@ renderScore hand =
         , tbody []
             [ tr []
                 [ th [] [ text "Dealer" ]
-                , td [] [ text (String.fromInt scoreCell.dealer.ron) ]
-                , td [] [ text (String.fromInt scoreCell.dealer.tsumo) ]
+                , td [ selectIf (isRon && isDealer) ] [ text (String.fromInt scoreCell.dealer.ron) ]
+                , td [ selectIf (isTsumo && isDealer) ] [ text (String.fromInt scoreCell.dealer.tsumo ++ " all") ]
                 ]
             , tr []
                 [ th [] [ text "Non-dealer" ]
-                , td [] [ text (String.fromInt scoreCell.nonDealer.ron) ]
-                , td [] [ text (String.fromInt scoreCell.nonDealer.tsumoDealer ++ " / " ++ String.fromInt scoreCell.nonDealer.tsumoNonDealer) ]
+                , td [ selectIf (isRon && not isDealer) ] [ text (String.fromInt scoreCell.nonDealer.ron) ]
+                , td [ selectIf (isTsumo && not isDealer) ] [ text (String.fromInt scoreCell.nonDealer.tsumoDealer ++ " / " ++ String.fromInt scoreCell.nonDealer.tsumoNonDealer) ]
                 ]
             ]
         ]

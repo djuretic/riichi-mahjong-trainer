@@ -10,6 +10,9 @@ module Hand exposing
     , getHandString
     , hanDescriptionToString
     , init
+    , isDealer
+    , isRon
+    , isTsumo
     , randomWinningHand
     , score
     , scoreCell
@@ -1161,3 +1164,18 @@ score hand =
 playerIsDealer : Hand -> Bool
 playerIsDealer hand =
     hand.seatWind == Tile.East
+
+
+isRon : Hand -> Bool
+isRon { winBy } =
+    winBy == Ron
+
+
+isTsumo : Hand -> Bool
+isTsumo { winBy } =
+    winBy == Tsumo
+
+
+isDealer : Hand -> Bool
+isDealer { seatWind } =
+    seatWind == Tile.East
