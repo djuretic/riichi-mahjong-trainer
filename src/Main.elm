@@ -302,14 +302,22 @@ drawTile tile =
         text ""
 
     else
-        div
-            [ style "background-image" ("url(" ++ path ++ ")")
-            , style "background-position-x" "-10px"
-            , style "float" "left"
-            , style "height" "64px"
-            , style "width" "45px"
-            ]
-            []
+        div (tileCss path) []
+
+
+drawBackTile : Html Msg
+drawBackTile =
+    div (tileCss "/img/face-down-64px.png") []
+
+
+tileCss : String -> List (Html.Attribute msg)
+tileCss path =
+    [ style "background-image" ("url(" ++ path ++ ")")
+    , style "background-position-x" "-10px"
+    , style "float" "left"
+    , style "height" "64px"
+    , style "width" "45px"
+    ]
 
 
 pathHonorTile : Int -> String
@@ -347,7 +355,17 @@ clearFixDiv =
 
 renderTiles : List Tile -> Html Msg
 renderTiles tiles =
-    div [] (List.append (List.map drawTile tiles) [ clearFixDiv ])
+    let
+        renderedTiles =
+            List.map drawTile tiles
+
+        emptySpots =
+            List.repeat (14 - List.length renderedTiles) drawBackTile
+
+        allTiles =
+            List.append (List.append (List.map drawTile tiles) emptySpots) [ clearFixDiv ]
+    in
+    div [] allTiles
 
 
 toSuit : String -> Maybe Suit
