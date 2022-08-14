@@ -30,7 +30,7 @@ testHandYaku hanSourceList handString =
                     Group.findGroups tiles
 
                 groups =
-                    Main.findWinningHand allGroups
+                    Group.findWinningGroups allGroups
 
                 prevHand =
                     Hand.init

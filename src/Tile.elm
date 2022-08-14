@@ -3,6 +3,7 @@ module Tile exposing
     , Tile
     , TileNumber
     , Wind(..)
+    , allTiles
     , deduplicate
     , greenDragonNumber
     , hasMoreThan4Tiles
@@ -258,3 +259,22 @@ removeTileAtPos pos array =
 sort : List Tile -> List Tile
 sort tiles =
     List.sortBy toComparable tiles
+
+
+allSuitTiles : Suit -> List Tile
+allSuitTiles suit =
+    let
+        maxN =
+            if suit == Honor then
+                7
+
+            else
+                9
+    in
+    List.range 1 maxN
+        |> List.map (\n -> Tile n suit)
+
+
+allTiles : List Tile
+allTiles =
+    allSuitTiles Man ++ allSuitTiles Pin ++ allSuitTiles Sou ++ allSuitTiles Honor

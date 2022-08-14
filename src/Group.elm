@@ -4,6 +4,7 @@ module Group exposing
     , GroupsPerSuit
     , containsTerminal
     , findGroups
+    , findWinningGroups
     , isClosed
     , isDragon
     , isHonor
@@ -274,3 +275,37 @@ isClosed : Group -> Bool
 isClosed _ =
     -- TODO
     True
+
+
+findWinningGroups : GroupsPerSuit -> List Group
+findWinningGroups groups =
+    let
+        firstItem =
+            \g -> Maybe.withDefault [] (List.head g)
+
+        man =
+            firstItem groups.man
+
+        pin =
+            firstItem groups.pin
+
+        sou =
+            firstItem groups.sou
+
+        honor =
+            firstItem groups.honor
+
+        possibleGroups =
+            List.concat [ man, pin, sou, honor ]
+
+        numberPairs =
+            List.filter (\g -> g.type_ == Pair) possibleGroups |> List.length
+
+        groupSort g =
+            ( Tile.suitToString g.suit, g.tileNumber )
+    in
+    if List.length possibleGroups == 5 && numberPairs == 1 then
+        List.sortBy groupSort possibleGroups
+
+    else
+        []

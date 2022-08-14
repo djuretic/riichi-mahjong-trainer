@@ -13,6 +13,7 @@ module Hand exposing
     , isDealer
     , isRon
     , isTsumo
+    , isWinningHand
     , randomTenpaiHand
     , randomWinningHand
     , score
@@ -20,6 +21,7 @@ module Hand exposing
     , setHanSources
     , shouldCountFu
     , winByToString
+    , winningTiles
     )
 
 import Array
@@ -33,7 +35,6 @@ import Tile
         , Wind
         , greenDragonNumber
         , redDragonNumber
-        , suitToString
         , whiteDragonNumber
         )
 
@@ -624,7 +625,7 @@ checkIipeikou hand =
         let
             runs =
                 List.filter Group.isRun hand.groups
-                    |> List.sortBy (\g -> ( suitToString g.suit, g.tileNumber ))
+                    |> List.sortBy (\g -> ( Tile.suitToString g.suit, g.tileNumber ))
 
             res =
                 List.map2 (\g1 g2 -> g1 == g2) runs (List.tail runs |> Maybe.withDefault [])
@@ -799,11 +800,11 @@ checkHonitsuTsuuiisou hand =
     let
         suits =
             List.map .suit hand.groups
-                |> List.map suitToString
+                |> List.map Tile.suitToString
                 |> Set.fromList
 
         honor =
-            suitToString Tile.Honor
+            Tile.suitToString Tile.Honor
     in
     if Set.size suits == 1 && Set.member honor suits then
         Just (HanSource 13 Tsuuiisou)
@@ -1178,3 +1179,24 @@ isTsumo { winBy } =
 isDealer : Hand -> Bool
 isDealer { seatWind } =
     seatWind == Tile.East
+
+
+winningTiles : Hand -> List Tile
+winningTiles hand =
+    if List.length hand.tiles == 13 then
+        let
+            generateHand ( tile, tiles ) =
+                ( tile, count { hand | tiles = tiles, groups = Group.findWinningGroups (Group.findGroups tiles), hanCount = 0 } )
+        in
+        List.map (\t -> ( t, t :: hand.tiles )) Tile.allTiles
+            |> List.map generateHand
+            |> List.filter (\( _, h ) -> isWinningHand h)
+            |> List.map Tuple.first
+
+    else
+        []
+
+
+isWinningHand : Hand -> Bool
+isWinningHand hand =
+    List.length hand.tiles == 14 && List.length hand.groups == 5 && hand.hanCount > 0 && not (Tile.hasMoreThan4Tiles hand.tiles)

@@ -1,4 +1,4 @@
-module Main exposing (findWinningHand, main, showParseResult)
+module Main exposing (main, showParseResult)
 
 import Browser
 import Group exposing (Group, GroupType(..), GroupsPerSuit)
@@ -9,7 +9,7 @@ import Html.Events exposing (onClick, onInput)
 import Maybe
 import Parser exposing ((|.), (|=), Parser, chompIf, chompWhile, getChompedString, loop, oneOf, succeed)
 import Random
-import Tile exposing (Suit(..), Tile, suitToString, windToString)
+import Tile exposing (Suit(..), Tile, windToString)
 
 
 main : Program () Model Msg
@@ -53,13 +53,13 @@ type alias GuessValue =
 
 type ActiveTab
     = GuessTab
-    | CountSummaryTab
+    | SummaryTab
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( Model "" Hand.init (GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ]) GuessTab guessValueInit
-    , Random.generate HandGenerated Hand.randomWinningHand
+    , Random.generate WinningHandGenerated Hand.randomWinningHand
     )
 
 
@@ -74,11 +74,13 @@ guessValueInit =
 
 type Msg
     = HandStr String
-    | HandGenerated Hand
+    | WinningHandGenerated Hand
+    | TenpaiHandGenerated Hand
     | ChangeSeatWind
     | ChangeRoundWind
     | ChangeWinBy
-    | GenerateRandomHand
+    | GenerateRandomWinningHand
+    | GenerateRandomTenpaiHand
     | ChangeTab ActiveTab
     | SetGuessedHan Int
     | SetGuessedFu Int
@@ -98,7 +100,7 @@ update msg model =
                     Group.findGroups tiles
 
                 groups =
-                    findWinningHand allGroups
+                    Group.findWinningGroups allGroups
 
                 prevHand =
                     model.hand
@@ -115,22 +117,29 @@ update msg model =
             in
             ( { model | handString = handString, hand = Hand.count hand, allGroups = allGroups, guessedValue = guessValueInit }, Cmd.none )
 
-        HandGenerated hand ->
+        WinningHandGenerated hand ->
             let
-                excessRepeatedTiles =
-                    Tile.hasMoreThan4Tiles hand.tiles
-
                 newHand =
                     Hand.count hand
 
                 allGroups =
                     Group.findGroups newHand.tiles
             in
-            if newHand.hanCount > 0 && not excessRepeatedTiles then
+            if Hand.isWinningHand newHand then
                 ( { model | handString = Hand.getHandString newHand, hand = newHand, allGroups = allGroups, guessedValue = guessValueInit }, Cmd.none )
 
             else
-                update GenerateRandomHand model
+                update GenerateRandomWinningHand model
+
+        TenpaiHandGenerated hand ->
+            let
+                newHand =
+                    Hand.count hand
+
+                allGroups =
+                    Group.findGroups newHand.tiles
+            in
+            ( { model | handString = Hand.getHandString newHand, hand = newHand, allGroups = allGroups, guessedValue = guessValueInit }, Cmd.none )
 
         ChangeRoundWind ->
             let
@@ -169,9 +178,14 @@ update msg model =
             in
             ( { model | hand = newHand }, Cmd.none )
 
-        GenerateRandomHand ->
+        GenerateRandomWinningHand ->
             ( model
-            , Random.generate HandGenerated Hand.randomWinningHand
+            , Random.generate WinningHandGenerated Hand.randomWinningHand
+            )
+
+        GenerateRandomTenpaiHand ->
+            ( model
+            , Random.generate TenpaiHandGenerated Hand.randomTenpaiHand
             )
 
         ChangeTab tab ->
@@ -225,39 +239,45 @@ view model =
 
             else
                 [ onClick (ChangeTab tab) ]
-
-        renderTabContent : ActiveTab -> Html Msg
-        renderTabContent tab =
-            case tab of
-                GuessTab ->
-                    renderGuessTab model
-
-                CountSummaryTab ->
-                    div []
-                        [ debugGroups model.allGroups
-                        , drawGroups model.hand.groups
-                        , clearFixDiv
-                        , renderHanDetails model.hand
-                        , renderFuDetails model.hand
-                        , renderScore model.hand
-                        ]
     in
     div [ class "container" ]
         [ stylesheet
         , h1 [ class "title" ] [ text "Riichi mahjong trainer" ]
         , input [ class "input", type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
-        , button [ class "button is-primary", onClick GenerateRandomHand ] [ text "Random" ]
+        , button [ class "button is-primary", onClick GenerateRandomWinningHand ] [ text "Random winning hand" ]
+        , button [ class "button is-primary", onClick GenerateRandomTenpaiHand ] [ text "Random tenpai hand" ]
         , p [] [ renderTiles model.hand.tiles ]
         , renderWinBy model.hand
         , renderWinds model.hand
         , div [ class "tabs" ]
             [ ul []
-                [ li (tabAttrs GuessTab model.activeTab) [ a [] [ text "Score" ] ]
-                , li (tabAttrs CountSummaryTab model.activeTab) [ a [] [ text "Count summary" ] ]
+                [ li (tabAttrs GuessTab model.activeTab) [ a [] [ text "Guess" ] ]
+                , li (tabAttrs SummaryTab model.activeTab) [ a [] [ text "Summary" ] ]
                 ]
             ]
-        , renderTabContent model.activeTab
+        , renderTabContent model
         ]
+
+
+renderTabContent : Model -> Html Msg
+renderTabContent model =
+    case model.activeTab of
+        GuessTab ->
+            renderGuessTab model
+
+        SummaryTab ->
+            if List.length model.hand.tiles == 13 then
+                div [] [ text (Debug.toString (Hand.winningTiles model.hand)) ]
+
+            else
+                div []
+                    [ debugGroups model.allGroups
+                    , drawGroups model.hand.groups
+                    , clearFixDiv
+                    , renderHanDetails model.hand
+                    , renderFuDetails model.hand
+                    , renderScore model.hand
+                    ]
 
 
 drawTile : Tile -> Html Msg
@@ -439,40 +459,6 @@ showParseResult input =
 
         Err _ ->
             []
-
-
-findWinningHand : GroupsPerSuit -> List Group
-findWinningHand groups =
-    let
-        firstItem =
-            \g -> Maybe.withDefault [] (List.head g)
-
-        man =
-            firstItem groups.man
-
-        pin =
-            firstItem groups.pin
-
-        sou =
-            firstItem groups.sou
-
-        honor =
-            firstItem groups.honor
-
-        possibleGroups =
-            List.concat [ man, pin, sou, honor ]
-
-        numberPairs =
-            List.filter (\g -> g.type_ == Pair) possibleGroups |> List.length
-
-        groupSort g =
-            ( suitToString g.suit, g.tileNumber )
-    in
-    if List.length possibleGroups == 5 && numberPairs == 1 then
-        List.sortBy groupSort possibleGroups
-
-    else
-        []
 
 
 drawGroup : Group -> Html Msg
