@@ -13,6 +13,7 @@ module Hand exposing
     , isDealer
     , isRon
     , isTsumo
+    , randomTenpaiHand
     , randomWinningHand
     , score
     , scoreCell
@@ -1071,7 +1072,7 @@ randomWinningHand =
                     List.map Group.toTiles groups
                         |> List.concat
                         |> Array.fromList
-                        |> moveWinningTileToEnd winTilePos
+                        |> Tile.moveWinningTileToEnd winTilePos
                         |> Array.toList
             in
             { hand | tiles = tiles, groups = groups, winBy = winBy, seatWind = seatWind, roundWind = roundWind }
@@ -1079,25 +1080,23 @@ randomWinningHand =
     Random.map5 createHand randomWinningGroups randomWinBy randomWind randomWind winningTilePosition
 
 
-moveWinningTileToEnd : Int -> Array.Array Tile -> Array.Array Tile
-moveWinningTileToEnd pos array =
+randomTenpaiHand : Random.Generator Hand
+randomTenpaiHand =
     let
-        before =
-            Array.slice 0 pos array
+        tileToRemovePosition =
+            Random.int 0 13
 
-        tile =
-            Array.get pos array
-
-        after =
-            Array.slice (pos + 1) (Array.length array + 1) array
+        toTenpai hand pos =
+            let
+                tiles =
+                    Array.fromList hand.tiles
+                        |> Tile.removeTileAtPos pos
+                        |> Array.toList
+                        |> Tile.sort
+            in
+            { hand | tiles = tiles, groups = [] }
     in
-    case tile of
-        Just t ->
-            Array.append before after
-                |> Array.push t
-
-        Nothing ->
-            array
+    Random.map2 toTenpai randomWinningHand tileToRemovePosition
 
 
 shouldCountFu : Hand -> Bool

@@ -8,10 +8,14 @@ module Tile exposing
     , hasMoreThan4Tiles
     , isRun
     , isTriplet
+    , moveWinningTileToEnd
     , partitionBySuit
     , redDragonNumber
+    , removeTileAtPos
+    , sort
     , suitToString
     , toArrayCounter
+    , toComparable
     , whiteDragonNumber
     , windToString
     , windToTileNumber
@@ -45,6 +49,10 @@ type alias Tile =
     }
 
 
+type alias ComparableTile =
+    ( String, TileNumber )
+
+
 redDragonNumber : TileNumber
 redDragonNumber =
     5
@@ -66,6 +74,11 @@ type alias TilesPerSuit =
     , pin : List Tile
     , honor : List Tile
     }
+
+
+toComparable : Tile -> ComparableTile
+toComparable tile =
+    ( suitToString tile.suit, tile.number )
 
 
 partitionBySuit : List Tile -> TilesPerSuit
@@ -207,3 +220,41 @@ hasMoreThan4Tiles tiles =
         || suitHasMoreThan4Tiles tilesPerSuit.pin
         || suitHasMoreThan4Tiles tilesPerSuit.sou
         || suitHasMoreThan4Tiles tilesPerSuit.honor
+
+
+moveWinningTileToEnd : Int -> Array.Array Tile -> Array.Array Tile
+moveWinningTileToEnd pos array =
+    let
+        before =
+            Array.slice 0 pos array
+
+        tile =
+            Array.get pos array
+
+        after =
+            Array.slice (pos + 1) (Array.length array + 1) array
+    in
+    case tile of
+        Just t ->
+            Array.append before after
+                |> Array.push t
+
+        Nothing ->
+            array
+
+
+removeTileAtPos : Int -> Array.Array Tile -> Array.Array Tile
+removeTileAtPos pos array =
+    let
+        before =
+            Array.slice 0 pos array
+
+        after =
+            Array.slice (pos + 1) (Array.length array + 1) array
+    in
+    Array.append before after
+
+
+sort : List Tile -> List Tile
+sort tiles =
+    List.sortBy toComparable tiles
