@@ -39,8 +39,15 @@ type alias Model =
     , hand : Hand
     , allGroups : GroupsPerSuit
     , activeTab : ActiveTab
-    , guessState : GuessState
-    , inputGuessScore : String
+    , guessedValue : GuessValue
+    }
+
+
+type alias GuessValue =
+    { han : Maybe Int
+    , fu : Maybe Int
+    , score : Maybe Int
+    , inputScore : String
     }
 
 
@@ -49,18 +56,20 @@ type ActiveTab
     | CountSummaryTab
 
 
-type GuessState
-    = InitialGuess
-    | SelectedHanCount Int
-    | SelectedHanAndFuCount Int Int
-    | SelectedHanFuCountAndScore Int Int Int
-
-
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model "" Hand.init (GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ]) GuessTab InitialGuess ""
+    ( Model "" Hand.init (GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ]) GuessTab guessValueInit
     , Random.generate HandGenerated Hand.randomWinningHand
     )
+
+
+guessValueInit : GuessValue
+guessValueInit =
+    { han = Nothing
+    , fu = Nothing
+    , score = Nothing
+    , inputScore = ""
+    }
 
 
 type Msg
@@ -104,7 +113,7 @@ update msg model =
                         , fuSources = []
                     }
             in
-            ( { model | handString = handString, hand = Hand.count hand, allGroups = allGroups, guessState = InitialGuess }, Cmd.none )
+            ( { model | handString = handString, hand = Hand.count hand, allGroups = allGroups, guessedValue = guessValueInit }, Cmd.none )
 
         HandGenerated hand ->
             let
@@ -118,7 +127,7 @@ update msg model =
                     Group.findGroups newHand.tiles
             in
             if newHand.hanCount > 0 && not excessRepeatedTiles then
-                ( { model | handString = Hand.getHandString newHand, hand = newHand, allGroups = allGroups, guessState = InitialGuess }, Cmd.none )
+                ( { model | handString = Hand.getHandString newHand, hand = newHand, allGroups = allGroups, guessedValue = guessValueInit }, Cmd.none )
 
             else
                 update GenerateRandomHand model
@@ -169,50 +178,36 @@ update msg model =
             ( { model | activeTab = tab }, Cmd.none )
 
         SetGuessedHan han ->
-            ( { model | guessState = SelectedHanCount han }, Cmd.none )
+            let
+                value =
+                    model.guessedValue
+            in
+            ( { model | guessedValue = { value | han = Just han } }, Cmd.none )
 
         SetGuessedFu fu ->
             let
-                nextState =
-                    case model.guessState of
-                        InitialGuess ->
-                            InitialGuess
-
-                        SelectedHanCount han ->
-                            SelectedHanAndFuCount han fu
-
-                        SelectedHanAndFuCount han _ ->
-                            SelectedHanAndFuCount han fu
-
-                        SelectedHanFuCountAndScore han _ score ->
-                            SelectedHanFuCountAndScore han fu score
+                value =
+                    model.guessedValue
             in
-            ( { model | guessState = nextState }, Cmd.none )
+            ( { model | guessedValue = { value | fu = Just fu } }, Cmd.none )
 
         GuessedScoreString str ->
-            ( { model | inputGuessScore = str }, Cmd.none )
+            let
+                value =
+                    model.guessedValue
+            in
+            ( { model | guessedValue = { value | inputScore = str } }, Cmd.none )
 
         SetGuessedScore ->
             let
                 score =
-                    String.toInt model.inputGuessScore
+                    String.toInt model.guessedValue.inputScore
                         |> Maybe.withDefault 0
 
-                nextState =
-                    case model.guessState of
-                        InitialGuess ->
-                            InitialGuess
-
-                        SelectedHanCount _ ->
-                            model.guessState
-
-                        SelectedHanAndFuCount han fu ->
-                            SelectedHanFuCountAndScore han fu score
-
-                        SelectedHanFuCountAndScore han fu _ ->
-                            SelectedHanFuCountAndScore han fu score
+                value =
+                    model.guessedValue
             in
-            ( { model | guessState = nextState }, Cmd.none )
+            ( { model | guessedValue = { value | score = Just score } }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -693,29 +688,15 @@ cycleWind wind =
 renderGuessTab : Model -> Html Msg
 renderGuessTab model =
     let
-        ( guessedHan, guessedFu, guessedScore ) =
-            case model.guessState of
-                InitialGuess ->
-                    ( Nothing, Nothing, Nothing )
-
-                SelectedHanCount han ->
-                    ( Just han, Nothing, Nothing )
-
-                SelectedHanAndFuCount han fu ->
-                    ( Just han, Just fu, Nothing )
-
-                SelectedHanFuCountAndScore han fu score ->
-                    ( Just han, Just fu, Just score )
-
         hanButtons =
             List.range 1 13
-                |> List.map (guessHanButton model guessedHan)
+                |> List.map (guessHanButton model model.guessedValue.han)
 
         hanButtonSection =
             List.append [ text "Select han count:" ] hanButtons
 
         hanSummary =
-            if isHanGuessed model.guessState then
+            if isHanGuessed model.guessedValue then
                 renderHanDetails model.hand
 
             else
@@ -726,7 +707,7 @@ renderGuessTab model =
                 buttons =
                     List.range 2 7
                         |> List.map ((*) 10)
-                        |> List.map (guessFuButton model guessedFu)
+                        |> List.map (guessFuButton model model.guessedValue.fu)
             in
             if Hand.shouldCountFu model.hand then
                 List.append [ text "Select fu count:" ] buttons
@@ -735,7 +716,7 @@ renderGuessTab model =
                 []
 
         fuSummary =
-            if isFuGuessed model.guessState then
+            if isFuGuessed model.guessedValue then
                 renderFuDetails model.hand
 
             else
@@ -747,8 +728,8 @@ renderGuessTab model =
                     Hand.score model.hand
 
                 inputClass =
-                    if isScoreGuessed model.guessState then
-                        if realScore == Maybe.withDefault 0 guessedScore then
+                    if isScoreGuessed model.guessedValue then
+                        if realScore == Maybe.withDefault 0 model.guessedValue.score then
                             "is-success"
 
                         else
@@ -763,7 +744,7 @@ renderGuessTab model =
                 ]
 
         scoreSummary =
-            if isScoreGuessed model.guessState then
+            if isScoreGuessed model.guessedValue then
                 renderScore model.hand
 
             else
@@ -773,37 +754,19 @@ renderGuessTab model =
         ((hanButtonSection ++ [ hanSummary ]) ++ fuButtonSection ++ [ fuSummary, scoreInput, scoreSummary ])
 
 
-isHanGuessed : GuessState -> Bool
-isHanGuessed guessState =
-    case guessState of
-        InitialGuess ->
-            False
-
-        _ ->
-            True
+isHanGuessed : GuessValue -> Bool
+isHanGuessed value =
+    value.han /= Nothing
 
 
-isFuGuessed : GuessState -> Bool
-isFuGuessed guessState =
-    case guessState of
-        SelectedHanAndFuCount _ _ ->
-            True
-
-        SelectedHanFuCountAndScore _ _ _ ->
-            True
-
-        _ ->
-            False
+isFuGuessed : GuessValue -> Bool
+isFuGuessed value =
+    value.fu /= Nothing
 
 
-isScoreGuessed : GuessState -> Bool
-isScoreGuessed guessState =
-    case guessState of
-        SelectedHanFuCountAndScore _ _ _ ->
-            True
-
-        _ ->
-            False
+isScoreGuessed : GuessValue -> Bool
+isScoreGuessed value =
+    value.score /= Nothing
 
 
 guessButtonCss : Int -> Int -> Int -> Maybe String
