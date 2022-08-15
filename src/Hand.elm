@@ -1081,7 +1081,7 @@ randomWinningHand =
     Random.map5 createHand randomWinningGroups randomWinBy randomWind randomWind winningTilePosition
         |> Random.andThen
             (\h ->
-                if Tile.hasMoreThan4Tiles hand.tiles then
+                if Tile.hasMoreThan4Tiles h.tiles then
                     randomWinningHand
 
                 else
