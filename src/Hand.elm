@@ -1079,6 +1079,14 @@ randomWinningHand =
             { hand | tiles = tiles, groups = groups, winBy = winBy, seatWind = seatWind, roundWind = roundWind }
     in
     Random.map5 createHand randomWinningGroups randomWinBy randomWind randomWind winningTilePosition
+        |> Random.andThen
+            (\h ->
+                if Tile.hasMoreThan4Tiles hand.tiles then
+                    randomWinningHand
+
+                else
+                    Random.constant h
+            )
 
 
 randomTenpaiHand : Random.Generator Hand
