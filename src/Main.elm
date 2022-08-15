@@ -246,7 +246,7 @@ view model =
         , input [ class "input", type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
         , button [ class "button is-primary", onClick GenerateRandomWinningHand ] [ text "Random winning hand" ]
         , button [ class "button is-primary", onClick GenerateRandomTenpaiHand ] [ text "Random tenpai hand" ]
-        , p [] [ renderTiles model.hand.tiles ]
+        , p [] [ renderTiles True model.hand.tiles ]
         , renderWinBy model.hand
         , renderWinds model.hand
         , div [ class "tabs" ]
@@ -267,7 +267,7 @@ renderTabContent model =
 
         SummaryTab ->
             if List.length model.hand.tiles == 13 then
-                div [] [ text (Debug.toString (Hand.winningTiles model.hand)) ]
+                div [] [ renderTiles False (Hand.winningTiles model.hand) ]
 
             else
                 div []
@@ -373,14 +373,18 @@ clearFixDiv =
     div [ style "clear" "both" ] []
 
 
-renderTiles : List Tile -> Html Msg
-renderTiles tiles =
+renderTiles : Bool -> List Tile -> Html Msg
+renderTiles addEmptySpots tiles =
     let
         renderedTiles =
             List.map drawTile tiles
 
         emptySpots =
-            List.repeat (14 - List.length renderedTiles) drawBackTile
+            if addEmptySpots then
+                List.repeat (14 - List.length renderedTiles) drawBackTile
+
+            else
+                []
 
         allTiles =
             List.append (List.append (List.map drawTile tiles) emptySpots) [ clearFixDiv ]

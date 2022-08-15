@@ -1107,7 +1107,11 @@ shouldCountFu hand =
 
 getHandString : Hand -> String
 getHandString hand =
-    List.map Group.toString hand.groups |> String.join ""
+    if List.length hand.tiles == 13 then
+        List.map Tile.toString hand.tiles |> String.join ""
+
+    else
+        List.map Group.toString hand.groups |> String.join ""
 
 
 type alias DealerScore =
@@ -1188,7 +1192,7 @@ winningTiles hand =
             generateHand ( tile, tiles ) =
                 ( tile, count { hand | tiles = tiles, groups = Group.findWinningGroups (Group.findGroups tiles), hanCount = 0 } )
         in
-        List.map (\t -> ( t, t :: hand.tiles )) Tile.allTiles
+        List.map (\t -> ( t, Tile.push t hand.tiles )) Tile.allTiles
             |> List.map generateHand
             |> List.filter (\( _, h ) -> isWinningHand h)
             |> List.map Tuple.first

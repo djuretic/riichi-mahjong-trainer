@@ -11,12 +11,14 @@ module Tile exposing
     , isTriplet
     , moveWinningTileToEnd
     , partitionBySuit
+    , push
     , redDragonNumber
     , removeTileAtPos
     , sort
     , suitToString
     , toArrayCounter
     , toComparable
+    , toString
     , whiteDragonNumber
     , windToString
     , windToTileNumber
@@ -278,3 +280,15 @@ allSuitTiles suit =
 allTiles : List Tile
 allTiles =
     allSuitTiles Man ++ allSuitTiles Pin ++ allSuitTiles Sou ++ allSuitTiles Honor
+
+
+push : Tile -> List Tile -> List Tile
+push tile tiles =
+    Array.fromList tiles
+        |> Array.push tile
+        |> Array.toList
+
+
+toString : Tile -> String
+toString tile =
+    String.fromInt tile.number ++ suitToString tile.suit
