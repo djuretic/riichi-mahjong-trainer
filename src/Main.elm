@@ -288,7 +288,6 @@ renderTabContent model =
                 div []
                     [ debugGroups model.allGroups
                     , drawGroups model.hand.groups
-                    , clearFixDiv
                     , renderHanDetails model.hand
                     , renderFuDetails model.hand
                     , renderScore model.hand
@@ -349,7 +348,6 @@ tileCss : String -> List (Html.Attribute msg)
 tileCss path =
     [ style "background-image" ("url(" ++ path ++ ")")
     , style "background-position-x" "-10px"
-    , style "float" "left"
     , style "height" "64px"
     , style "width" "45px"
     ]
@@ -383,11 +381,6 @@ pathHonorTile n =
             ""
 
 
-clearFixDiv : Html msg
-clearFixDiv =
-    div [ style "clear" "both" ] []
-
-
 renderTiles : Bool -> List Tile -> Html Msg
 renderTiles addEmptySpots tiles =
     let
@@ -402,9 +395,9 @@ renderTiles addEmptySpots tiles =
                 []
 
         allTiles =
-            List.append (List.append (List.map drawTile tiles) emptySpots) [ clearFixDiv ]
+            List.append (List.map drawTile tiles) emptySpots
     in
-    div [] allTiles
+    div [ class "is-flex is-flex-direction-row" ] allTiles
 
 
 toSuit : String -> Maybe Suit
@@ -482,7 +475,7 @@ showParseResult input =
 
 drawGroup : Group -> Html Msg
 drawGroup group =
-    div []
+    div [ class "is-flex is-flex-direction-row", style "padding-right" "10px" ]
         (List.map drawTile (groupToTiles group))
 
 
@@ -504,7 +497,7 @@ groupToTiles group =
 
 drawGroups : List Group -> Html Msg
 drawGroups groups =
-    div [] (List.map drawGroup groups)
+    div [ class "is-flex is-flex-direction-row" ] (List.map drawGroup groups)
 
 
 debugGroup : List Group -> Html Msg
