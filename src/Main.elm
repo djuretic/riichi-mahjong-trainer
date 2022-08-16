@@ -267,7 +267,22 @@ renderTabContent model =
 
         SummaryTab ->
             if List.length model.hand.tiles == 13 then
-                div [] [ renderTiles False (Hand.winningTiles model.hand) ]
+                let
+                    winningTiles =
+                        Hand.winningTiles model.hand
+                in
+                table [ class "table is-striped is-fullwidth" ]
+                    [ tbody []
+                        (List.map
+                            (\( t, g ) ->
+                                tr []
+                                    [ td [] [ renderTiles False [ t ] ]
+                                    , td [] [ drawGroups g ]
+                                    ]
+                            )
+                            winningTiles
+                        )
+                    ]
 
             else
                 div []

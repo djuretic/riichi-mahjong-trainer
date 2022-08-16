@@ -1193,7 +1193,7 @@ isDealer { seatWind } =
     seatWind == Tile.East
 
 
-winningTiles : Hand -> List Tile
+winningTiles : Hand -> List ( Tile, List Group )
 winningTiles hand =
     if List.length hand.tiles == 13 then
         let
@@ -1203,7 +1203,7 @@ winningTiles hand =
         List.map (\t -> ( t, Tile.push t hand.tiles )) Tile.allTiles
             |> List.map generateHand
             |> List.filter (\( _, h ) -> isWinningHand h)
-            |> List.map Tuple.first
+            |> List.map (\( t, h ) -> ( t, h.groups ))
 
     else
         []
