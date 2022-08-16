@@ -497,7 +497,7 @@ groupToTiles group =
 
 drawGroups : List Group -> Html Msg
 drawGroups groups =
-    div [ class "is-flex is-flex-direction-row" ] (List.map drawGroup groups)
+    div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap" ] (List.map drawGroup groups)
 
 
 debugGroup : List Group -> Html Msg
