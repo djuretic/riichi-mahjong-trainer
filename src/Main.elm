@@ -6,6 +6,7 @@ import Hand exposing (FuSource, Hand, Yaku(..), fuDescriptionToString)
 import Html exposing (Html, a, button, div, h1, input, li, node, p, table, tbody, td, text, tfoot, th, thead, tr, ul)
 import Html.Attributes exposing (attribute, class, colspan, placeholder, style, type_, value)
 import Html.Events exposing (onClick, onInput)
+import List.Extra
 import Maybe
 import Parser exposing ((|.), (|=), Parser, chompIf, chompWhile, getChompedString, loop, oneOf, succeed)
 import Random
@@ -280,7 +281,7 @@ renderTabContent model =
                             (\( t, g ) ->
                                 tr []
                                     [ td [] [ renderTiles False [ t ] ]
-                                    , td [] [ drawGroups g ]
+                                    , td [] [ drawGroups commonGroups g ]
                                     ]
                             )
                             winningTiles
@@ -290,7 +291,7 @@ renderTabContent model =
             else
                 div []
                     [ debugGroups model.allGroups
-                    , drawGroups model.hand.groups
+                    , drawGroupsSimple model.hand.groups
                     , renderHanDetails model.hand
                     , renderFuDetails model.hand
                     , renderScore model.hand
@@ -476,9 +477,9 @@ showParseResult input =
             []
 
 
-drawGroup : Group -> Html Msg
-drawGroup group =
-    div [ class "is-flex is-flex-direction-row", style "padding-right" "10px" ]
+drawGroup : List (Html.Attribute Msg) -> Group -> Html Msg
+drawGroup attrs group =
+    div (List.append [ class "is-flex is-flex-direction-row", style "padding-right" "10px" ] attrs)
         (List.map drawTile (groupToTiles group))
 
 
@@ -498,9 +499,38 @@ groupToTiles group =
             ]
 
 
-drawGroups : List Group -> Html Msg
-drawGroups groups =
-    div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap" ] (List.map drawGroup groups)
+drawGroups : List Group -> List Group -> Html Msg
+drawGroups specialGroups groups =
+    let
+        addGroupIsRepeatedData sg lg =
+            case lg of
+                [] ->
+                    []
+
+                x :: xs ->
+                    if List.Extra.find (\e -> e == x) sg /= Nothing then
+                        ( x, True ) :: addGroupIsRepeatedData (List.Extra.remove x sg) xs
+
+                    else
+                        ( x, False ) :: addGroupIsRepeatedData sg xs
+
+        groupsWithRepeatedInfo =
+            addGroupIsRepeatedData specialGroups groups
+
+        css isRepeated =
+            if isRepeated then
+                style "opacity" "0.5"
+
+            else
+                class ""
+    in
+    div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap" ]
+        (List.map (\( g, isRepeated ) -> drawGroup [ css isRepeated ] g) groupsWithRepeatedInfo)
+
+
+drawGroupsSimple : List Group -> Html Msg
+drawGroupsSimple groups =
+    div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap" ] (List.map (drawGroup []) groups)
 
 
 debugGroup : List Group -> Html Msg
@@ -596,7 +626,7 @@ renderFuSource fuSource =
     tr []
         [ td [] [ text explanation ]
         , td [] [ text (String.fromInt fuSource.fu ++ " fu") ]
-        , td [] [ drawGroups fuSource.groups ]
+        , td [] [ drawGroupsSimple fuSource.groups ]
         ]
 
 
