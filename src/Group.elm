@@ -319,8 +319,8 @@ commonGroups listGroups =
         [] ->
             []
 
-        [ x ] ->
-            x
+        [ _ ] ->
+            []
 
         x :: xs ->
             commonGroupsHelper x xs []
