@@ -2,6 +2,7 @@ module Group exposing
     ( Group
     , GroupType(..)
     , GroupsPerSuit
+    , commonGroups
     , containsTerminal
     , findGroups
     , findWinningGroups
@@ -18,6 +19,7 @@ module Group exposing
 
 import Array
 import Counter
+import List.Extra
 import Tile
 
 
@@ -309,3 +311,35 @@ findWinningGroups groups =
 
     else
         []
+
+
+commonGroups : List (List Group) -> List Group
+commonGroups listGroups =
+    case listGroups of
+        [] ->
+            []
+
+        [ x ] ->
+            x
+
+        x :: xs ->
+            commonGroupsHelper x xs []
+
+
+commonGroupsHelper : List Group -> List (List Group) -> List Group -> List Group
+commonGroupsHelper baseGroups listGroups res =
+    case baseGroups of
+        [] ->
+            res
+
+        x :: xs ->
+            let
+                isPresent : Group -> List Group -> Bool
+                isPresent elem list =
+                    List.Extra.find (\e -> e == elem) list /= Nothing
+            in
+            if List.all identity (List.map (isPresent x) listGroups) then
+                commonGroupsHelper xs (List.map (List.Extra.remove x) listGroups) (x :: res)
+
+            else
+                commonGroupsHelper xs listGroups res

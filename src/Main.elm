@@ -270,6 +270,9 @@ renderTabContent model =
                 let
                     winningTiles =
                         Hand.winningTiles model.hand
+
+                    commonGroups =
+                        Group.commonGroups (List.map Tuple.second winningTiles)
                 in
                 table [ class "table is-striped is-fullwidth" ]
                     [ tbody []
