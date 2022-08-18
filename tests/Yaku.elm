@@ -3,7 +3,7 @@ module Yaku exposing (..)
 import Expect
 import Group
 import Hand
-import Main
+import Page.Scoring
 import Test exposing (..)
 
 
@@ -24,7 +24,7 @@ testHandYaku hanSourceList handString =
         \_ ->
             let
                 tiles =
-                    Main.showParseResult handString
+                    Page.Scoring.showParseResult handString
 
                 allGroups =
                     Group.findGroups tiles
