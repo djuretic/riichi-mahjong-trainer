@@ -423,7 +423,7 @@ randomCompleteGroups numNonPairs =
         otherGroups suit =
             Random.list numNonPairs (randomTripletOrRunOf suit)
     in
-    Tile.randomSuit
+    Tile.randomNonHonorSuit
         |> Random.andThen (\s -> Random.pair (randomPairOf s) (otherGroups s))
         |> Random.map (\( p, g ) -> p :: g)
         |> Random.andThen

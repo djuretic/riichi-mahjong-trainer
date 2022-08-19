@@ -15,6 +15,7 @@ module Tile exposing
     , moveWinningTileToEnd
     , partitionBySuit
     , push
+    , randomNonHonorSuit
     , randomSuit
     , randomWind
     , redDragonNumber
@@ -311,6 +312,11 @@ toString tile =
 randomSuit : Random.Generator Suit
 randomSuit =
     Random.uniform Man [ Pin, Sou, Honor ]
+
+
+randomNonHonorSuit : Random.Generator Suit
+randomNonHonorSuit =
+    Random.uniform Man [ Pin, Sou ]
 
 
 randomWind : Random.Generator Wind
