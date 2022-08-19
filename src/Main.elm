@@ -1,12 +1,11 @@
 module Main exposing (main)
 
 import Browser
-import Group exposing (GroupType(..))
-import Hand exposing (Yaku(..))
 import Html
-import Html.Attributes exposing (attribute)
+import Html.Attributes exposing (attribute, class)
+import Html.Events exposing (onClick)
 import Page.Scoring
-import Tile exposing (Suit(..))
+import Page.Waits
 
 
 main : Program () Model Msg
@@ -34,6 +33,7 @@ stylesheet =
 type alias Model =
     { page : Page
     , scoring : Page.Scoring.Model
+    , waits : Page.Waits.Model
     }
 
 
@@ -47,26 +47,30 @@ init _ =
     let
         ( scoring, scoringCmd ) =
             Page.Scoring.init
+
+        ( waits, waitsCmd ) =
+            Page.Waits.init
     in
     ( { page = ScoringPage
       , scoring = scoring
+      , waits = waits
       }
-    , Cmd.map ScoringMsg scoringCmd
+    , Cmd.batch [ Cmd.map ScoringMsg scoringCmd, Cmd.map WaitsMsg waitsCmd ]
     )
 
 
 type Msg
-    = ScoringMsg Page.Scoring.Msg
-
-
-
--- | TenpaiHandGenerated Hand
--- | GenerateRandomTenpaiHand
+    = SetPage Page
+    | ScoringMsg Page.Scoring.Msg
+    | WaitsMsg Page.Waits.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        SetPage page ->
+            ( { model | page = page }, Cmd.none )
+
         ScoringMsg smsg ->
             let
                 ( scoring, scoringCmd ) =
@@ -74,20 +78,12 @@ update msg model =
             in
             ( { model | scoring = scoring }, Cmd.map ScoringMsg scoringCmd )
 
-
-
--- TenpaiHandGenerated hand ->
---     let
---         newHand =
---             Hand.count hand
---         allGroups =
---             Group.findGroups newHand.tiles
---     in
---     ( { model | handString = Hand.getHandString newHand, hand = newHand, allGroups = allGroups, guessedValue = guessValueInit }, Cmd.none )
--- GenerateRandomTenpaiHand ->
---     ( model
---     , Random.generate TenpaiHandGenerated Hand.randomTenpaiHand
---     )
+        WaitsMsg wmsg ->
+            let
+                ( waits, waitsCmd ) =
+                    Page.Waits.update wmsg model.waits
+            in
+            ( { model | waits = waits }, Cmd.map WaitsMsg waitsCmd )
 
 
 subscriptions : Model -> Sub Msg
@@ -104,10 +100,27 @@ view model =
                     Html.map ScoringMsg (Page.Scoring.view model.scoring)
 
                 WaitsPage ->
-                    Html.div [] []
+                    Html.map WaitsMsg (Page.Waits.view model.waits)
+
+        isActive targetPage =
+            if model.page == targetPage then
+                class "is-active"
+
+            else
+                class ""
     in
-    Html.div [ Html.Attributes.class "container" ]
+    Html.div [ class "container" ]
         [ stylesheet
-        , Html.h1 [ Html.Attributes.class "title" ] [ Html.text "Riichi mahjong trainer" ]
+        , Html.nav [ class "navbar" ]
+            [ Html.div [ class "navbar-menu" ]
+                [ Html.div [ class "navbar-brand" ]
+                    [ Html.a [ class "navbar-item" ] [ Html.text "Mahjong" ] ]
+                , Html.div [ class "navbar-start" ]
+                    [ Html.a [ class "navbar-item", onClick (SetPage ScoringPage), isActive ScoringPage ] [ Html.text "Scoring" ]
+                    , Html.a [ class "navbar-item", onClick (SetPage WaitsPage), isActive WaitsPage ] [ Html.text "Waits" ]
+                    ]
+                ]
+            ]
+        , Html.h1 [ class "title" ] [ Html.text "Riichi mahjong trainer" ]
         , content
         ]
