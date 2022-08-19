@@ -16,6 +16,7 @@ type alias Model =
     , waits : List ( Tile, List Group )
     , numberOfNonPairs : Int
     , selectedWaits : Set Tile.ComparableTile
+    , confirmedSelected : Bool
     }
 
 
@@ -24,11 +25,12 @@ type Msg
     | SetNumberNonPairs Int
     | TilesGenerated (List Tile)
     | ToggleWaitTile Tile
+    | ConfirmSelected
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { tiles = [], waits = [], numberOfNonPairs = 1, selectedWaits = Set.empty }
+    ( { tiles = [], waits = [], numberOfNonPairs = 1, selectedWaits = Set.empty, confirmedSelected = False }
     , Random.generate TilesGenerated (Group.randomTenpaiGroups 1)
     )
 
@@ -43,7 +45,7 @@ update msg model =
             ( { model | numberOfNonPairs = num }, Cmd.none )
 
         TilesGenerated tiles ->
-            ( { model | tiles = tiles, selectedWaits = Set.empty }, Cmd.none )
+            ( { model | tiles = tiles, selectedWaits = Set.empty, confirmedSelected = False }, Cmd.none )
 
         ToggleWaitTile tile ->
             let
@@ -56,17 +58,24 @@ update msg model =
             else
                 ( { model | selectedWaits = Set.insert compTile model.selectedWaits }, Cmd.none )
 
+        ConfirmSelected ->
+            ( { model | confirmedSelected = True }, Cmd.none )
+
 
 view : Model -> Html Msg
 view model =
     div []
         [ renderNumberTilesSelector model
-        , button [ class "button is-primary", onClick GenerateTiles ] [ Html.text "Generate " ]
+        , button [ class "button is-primary", onClick GenerateTiles ] [ Html.text "Generate" ]
         , UI.renderTiles False model.tiles
         , p [] [ Html.text "Select wait tiles:" ]
         , renderWaitButtons model
+        , button [ class "button", onClick ConfirmSelected ] [ Html.text "Confirm" ]
+        , if model.confirmedSelected then
+            renderWinningTiles model
 
-        -- , renderWinningTiles model
+          else
+            Html.text ""
         ]
 
 
