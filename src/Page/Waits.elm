@@ -46,6 +46,7 @@ view model =
         [ renderNumberTilesSelector model
         , Html.button [ class "button is-primary", onClick GenerateTiles ] [ Html.text "Generate " ]
         , UI.renderTiles False model.tiles
+        , renderWinningTiles model
         ]
 
 
@@ -65,4 +66,27 @@ renderNumberTilesSelector model =
         , createRadioButton "7" 2
         , createRadioButton "10" 3
         , createRadioButton "13" 4
+        ]
+
+
+renderWinningTiles : Model -> Html.Html Msg
+renderWinningTiles model =
+    let
+        winningTiles =
+            Group.winningTiles model.tiles
+
+        commonGroups =
+            Group.commonGroups (List.map Tuple.second winningTiles)
+    in
+    Html.table [ class "table is-striped is-fullwidth" ]
+        [ Html.tbody []
+            (List.map
+                (\( t, g ) ->
+                    Html.tr []
+                        [ Html.td [] [ UI.renderTiles False [ t ] ]
+                        , Html.td [] [ UI.drawGroups commonGroups g ]
+                        ]
+                )
+                winningTiles
+            )
         ]

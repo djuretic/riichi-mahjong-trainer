@@ -3,9 +3,8 @@ module Page.Scoring exposing (Model, Msg, init, showParseResult, update, view)
 import Group exposing (Group)
 import Hand exposing (Hand)
 import Html exposing (Html, a, button, div, input, li, p, table, tbody, td, text, tfoot, th, thead, tr, ul)
-import Html.Attributes exposing (class, colspan, placeholder, style, type_, value)
+import Html.Attributes exposing (class, colspan, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
-import List.Extra
 import Parser exposing ((|.), (|=))
 import Random
 import Tile exposing (Suit(..), Tile)
@@ -251,7 +250,7 @@ renderTabContent model =
                             (\( t, g ) ->
                                 tr []
                                     [ td [] [ UI.renderTiles False [ t ] ]
-                                    , td [] [ drawGroups commonGroups g ]
+                                    , td [] [ UI.drawGroups commonGroups g ]
                                     ]
                             )
                             winningTiles
@@ -261,7 +260,7 @@ renderTabContent model =
             else
                 div []
                     [ debugGroups model.allGroups
-                    , drawGroupsSimple model.hand.groups
+                    , UI.drawGroupsSimple model.hand.groups
                     , renderHanDetails model.hand
                     , renderFuDetails model.hand
                     , renderScore model.hand
@@ -339,62 +338,6 @@ showParseResult input =
 
         Err _ ->
             []
-
-
-drawGroup : List (Html.Attribute Msg) -> Group -> Html Msg
-drawGroup attrs group =
-    div (List.append [ class "is-flex is-flex-direction-row", style "padding-right" "10px" ] attrs)
-        (List.map UI.drawTile (groupToTiles group))
-
-
-groupToTiles : Group -> List Tile
-groupToTiles group =
-    case group.type_ of
-        Group.Pair ->
-            List.repeat 2 (Tile group.tileNumber group.suit)
-
-        Group.Triplet ->
-            List.repeat 3 (Tile group.tileNumber group.suit)
-
-        Group.Run ->
-            [ Tile group.tileNumber group.suit
-            , Tile (group.tileNumber + 1) group.suit
-            , Tile (group.tileNumber + 2) group.suit
-            ]
-
-
-drawGroups : List Group -> List Group -> Html Msg
-drawGroups specialGroups groups =
-    let
-        addGroupIsRepeatedData sg lg =
-            case lg of
-                [] ->
-                    []
-
-                x :: xs ->
-                    if List.Extra.find (\e -> e == x) sg /= Nothing then
-                        ( x, True ) :: addGroupIsRepeatedData (List.Extra.remove x sg) xs
-
-                    else
-                        ( x, False ) :: addGroupIsRepeatedData sg xs
-
-        groupsWithRepeatedInfo =
-            addGroupIsRepeatedData specialGroups groups
-
-        css isRepeated =
-            if isRepeated then
-                style "opacity" "0.5"
-
-            else
-                class ""
-    in
-    div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap" ]
-        (List.map (\( g, isRepeated ) -> drawGroup [ css isRepeated ] g) groupsWithRepeatedInfo)
-
-
-drawGroupsSimple : List Group -> Html Msg
-drawGroupsSimple groups =
-    div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap" ] (List.map (drawGroup []) groups)
 
 
 debugGroup : List Group -> Html Msg
@@ -490,7 +433,7 @@ renderFuSource fuSource =
     tr []
         [ td [] [ text explanation ]
         , td [] [ text (String.fromInt fuSource.fu ++ " fu") ]
-        , td [] [ drawGroupsSimple fuSource.groups ]
+        , td [] [ UI.drawGroupsSimple fuSource.groups ]
         ]
 
 

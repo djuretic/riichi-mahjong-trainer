@@ -1,7 +1,9 @@
-module UI exposing (drawTile, renderTiles)
+module UI exposing (drawGroups, drawGroupsSimple, drawTile, renderTiles)
 
+import Group
 import Html
 import Html.Attributes exposing (class, style)
+import List.Extra
 import Tile
 
 
@@ -109,3 +111,43 @@ pathHonorTile n =
 
         _ ->
             ""
+
+
+drawGroups : List Group.Group -> List Group.Group -> Html.Html msg
+drawGroups specialGroups groups =
+    let
+        addGroupIsRepeatedData sg lg =
+            case lg of
+                [] ->
+                    []
+
+                x :: xs ->
+                    if List.Extra.find (\e -> e == x) sg /= Nothing then
+                        ( x, True ) :: addGroupIsRepeatedData (List.Extra.remove x sg) xs
+
+                    else
+                        ( x, False ) :: addGroupIsRepeatedData sg xs
+
+        groupsWithRepeatedInfo =
+            addGroupIsRepeatedData specialGroups groups
+
+        css isRepeated =
+            if isRepeated then
+                style "opacity" "0.5"
+
+            else
+                class ""
+    in
+    Html.div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap" ]
+        (List.map (\( g, isRepeated ) -> drawGroup [ css isRepeated ] g) groupsWithRepeatedInfo)
+
+
+drawGroup : List (Html.Attribute msg) -> Group.Group -> Html.Html msg
+drawGroup attrs group =
+    Html.div (List.append [ class "is-flex is-flex-direction-row", style "padding-right" "10px" ] attrs)
+        (List.map drawTile (Group.toTiles group))
+
+
+drawGroupsSimple : List Group.Group -> Html.Html msg
+drawGroupsSimple groups =
+    Html.div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap" ] (List.map (drawGroup []) groups)

@@ -1150,4 +1150,4 @@ winningTiles hand =
 
 isWinningHand : Hand -> Bool
 isWinningHand hand =
-    List.length hand.tiles == 14 && List.length hand.groups == 5 && hand.hanCount > 0 && not (Tile.hasMoreThan4Tiles hand.tiles)
+    Group.isWinningHand hand.tiles hand.groups && hand.hanCount > 0

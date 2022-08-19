@@ -5,6 +5,7 @@ module Group exposing
     , commonGroups
     , containsTerminal
     , findGroups
+    , findGroupsInSuit
     , findWinningGroups
     , isClosed
     , isDragon
@@ -12,12 +13,14 @@ module Group exposing
     , isPair
     , isRun
     , isTriplet
+    , isWinningHand
     , randomCompleteGroups
     , randomTenpaiGroups
     , randomWinningGroups
     , toString
     , toTiles
     , toWind
+    , winningTiles
     )
 
 import Array
@@ -90,28 +93,25 @@ findGroups tiles =
     let
         part =
             Tile.partitionBySuit tiles
-
-        findAllGroups : List Tile.Tile -> Tile.Suit -> List (List Group)
-        findAllGroups =
-            \t suit ->
-                List.map .number t
-                    |> List.sort
-                    |> Tile.toArrayCounter
-                    |> findGroupsInSuit suit 0 True
-                    |> Maybe.withDefault []
-
-        groupsPerSuit =
-            { sou = findAllGroups part.sou Tile.Sou
-            , man = findAllGroups part.man Tile.Man
-            , pin = findAllGroups part.pin Tile.Pin
-            , honor = findAllGroups part.honor Tile.Honor
-            }
     in
-    groupsPerSuit
+    { sou = findGroupsInSuit Tile.Sou part.sou
+    , man = findGroupsInSuit Tile.Man part.man
+    , pin = findGroupsInSuit Tile.Pin part.pin
+    , honor = findGroupsInSuit Tile.Honor part.honor
+    }
 
 
-findGroupsInSuit : Tile.Suit -> Int -> Bool -> Counter.Counter -> Maybe (List (List Group))
-findGroupsInSuit suit n shouldFindPair counter =
+findGroupsInSuit : Tile.Suit -> List Tile.Tile -> List (List Group)
+findGroupsInSuit suit tiles =
+    List.map .number tiles
+        |> List.sort
+        |> Tile.toArrayCounter
+        |> findGroupsInSuitHelper suit 0 True
+        |> Maybe.withDefault []
+
+
+findGroupsInSuitHelper : Tile.Suit -> Int -> Bool -> Counter.Counter -> Maybe (List (List Group))
+findGroupsInSuitHelper suit n shouldFindPair counter =
     let
         count =
             Array.get n counter
@@ -121,7 +121,7 @@ findGroupsInSuit suit n shouldFindPair counter =
         Just [ [] ]
 
     else if count == 0 then
-        findGroupsInSuit suit (n + 1) shouldFindPair counter
+        findGroupsInSuitHelper suit (n + 1) shouldFindPair counter
 
     else
         let
@@ -130,7 +130,7 @@ findGroupsInSuit suit n shouldFindPair counter =
 
             triplet =
                 if foundTriplet then
-                    findGroupsInSuit suit n shouldFindPair (Array.set n (count - 3) counter)
+                    findGroupsInSuitHelper suit n shouldFindPair (Array.set n (count - 3) counter)
                         |> addGroupToHead (Group Triplet (n + 1) suit)
 
                 else
@@ -141,7 +141,7 @@ findGroupsInSuit suit n shouldFindPair counter =
 
             pair =
                 if foundPair && shouldFindPair then
-                    findGroupsInSuit suit n False (Array.set n (count - 2) counter)
+                    findGroupsInSuitHelper suit n False (Array.set n (count - 2) counter)
                         |> addGroupToHead (Group Pair (n + 1) suit)
 
                 else
@@ -165,7 +165,7 @@ findGroupsInSuit suit n shouldFindPair counter =
                                 |> Array.set (n + 1) (count2 - 1)
                                 |> Array.set (n + 2) (count3 - 1)
                     in
-                    findGroupsInSuit suit n shouldFindPair updatedCounter
+                    findGroupsInSuitHelper suit n shouldFindPair updatedCounter
                         |> addGroupToHead (Group Run (n + 1) suit)
 
                 else
@@ -310,7 +310,7 @@ findWinningGroups groups =
         groupSort g =
             ( Tile.suitToString g.suit, g.tileNumber )
     in
-    if List.length possibleGroups == 5 && numberPairs == 1 then
+    if numberPairs == 1 then
         List.sortBy groupSort possibleGroups
 
     else
@@ -456,3 +456,35 @@ randomTenpaiGroups numNonPairs =
                     |> Tile.sort
             )
             posToRemove
+
+
+winningTiles : List Tile.Tile -> List ( Tile.Tile, List Group )
+winningTiles tiles =
+    if List.member (List.length tiles) [ 4, 7, 10, 13 ] then
+        let
+            generateHand : ( Tile.Tile, List Tile.Tile ) -> ( Tile.Tile, List Tile.Tile, List Group )
+            generateHand ( tile, listTiles ) =
+                ( tile, listTiles, findWinningGroups (findGroups listTiles) )
+        in
+        List.map (\t -> ( t, Tile.push t tiles )) Tile.allTiles
+            |> List.map generateHand
+            |> List.filter (\( _, tt, gg ) -> isWinningHand tt gg)
+            |> List.map (\( t, _, gg ) -> ( t, gg ))
+
+    else
+        []
+
+
+isWinningHand : List Tile.Tile -> List Group -> Bool
+isWinningHand tiles groups =
+    let
+        numTiles =
+            List.length tiles
+
+        enoughTiles =
+            List.member numTiles [ 5, 8, 11, 14 ]
+
+        enoughGroups =
+            List.length groups == (numTiles + 1) // 3
+    in
+    enoughTiles && enoughGroups && not (Tile.hasMoreThan4Tiles tiles)

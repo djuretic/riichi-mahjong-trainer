@@ -3,6 +3,7 @@ module Tile exposing
     , Tile
     , TileNumber
     , Wind(..)
+    , allSuitTiles
     , allTiles
     , deduplicate
     , greenDragonNumber
