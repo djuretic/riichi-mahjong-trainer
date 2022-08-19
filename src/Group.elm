@@ -426,6 +426,19 @@ randomCompleteGroups numNonPairs =
     Tile.randomSuit
         |> Random.andThen (\s -> Random.pair (randomPairOf s) (otherGroups s))
         |> Random.map (\( p, g ) -> p :: g)
+        |> Random.andThen
+            (\g ->
+                let
+                    tiles =
+                        List.map toTiles g
+                            |> List.concat
+                in
+                if Tile.hasMoreThan4Tiles tiles then
+                    randomCompleteGroups numNonPairs
+
+                else
+                    Random.constant g
+            )
 
 
 randomTenpaiGroups : Int -> Random.Generator (List Tile.Tile)
