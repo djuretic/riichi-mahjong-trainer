@@ -9,9 +9,12 @@ module Tile exposing
     , hasMoreThan4Tiles
     , isRun
     , isTriplet
+    , maxRange
     , moveWinningTileToEnd
     , partitionBySuit
     , push
+    , randomSuit
+    , randomWind
     , redDragonNumber
     , removeTileAtPos
     , sort
@@ -26,6 +29,7 @@ module Tile exposing
 
 import Array
 import Counter
+import Random
 
 
 type Suit
@@ -292,3 +296,22 @@ push tile tiles =
 toString : Tile -> String
 toString tile =
     String.fromInt tile.number ++ suitToString tile.suit
+
+
+randomSuit : Random.Generator Suit
+randomSuit =
+    Random.uniform Man [ Pin, Sou, Honor ]
+
+
+randomWind : Random.Generator Wind
+randomWind =
+    Random.uniform East [ South, West, North ]
+
+
+maxRange : Suit -> Int
+maxRange suit =
+    if suit == Honor then
+        7
+
+    else
+        9

@@ -12,6 +12,8 @@ module Group exposing
     , isPair
     , isRun
     , isTriplet
+    , randomTenpaiGroups
+    , randomWinningGroups
     , toString
     , toTiles
     , toWind
@@ -20,6 +22,7 @@ module Group exposing
 import Array
 import Counter
 import List.Extra
+import Random
 import Tile
 
 
@@ -343,3 +346,82 @@ commonGroupsHelper baseGroups listGroups res =
 
             else
                 commonGroupsHelper xs listGroups res
+
+
+randomPair : Random.Generator Group
+randomPair =
+    Random.uniform Tile.Man [ Tile.Pin, Tile.Sou, Tile.Honor ]
+        |> Random.andThen (\s -> Random.pair (Random.int 1 (Tile.maxRange s)) (Random.constant s))
+        |> Random.map (\( n, suit ) -> Group Pair n suit)
+
+
+randomPairOf : Tile.Suit -> Random.Generator Group
+randomPairOf suit =
+    Random.int 1 (Tile.maxRange suit)
+        |> Random.map (\n -> Group Pair n suit)
+
+
+randomTripletOrRun : Random.Generator Group
+randomTripletOrRun =
+    let
+        maxRange suit =
+            if suit == Tile.Honor then
+                7
+
+            else
+                9 + 7
+    in
+    Tile.randomSuit
+        |> Random.andThen (\s -> Random.pair (Random.constant s) (Random.int 1 (maxRange s)))
+        |> Random.map
+            (\( suit, n ) ->
+                if n < 10 then
+                    Group Triplet n suit
+
+                else
+                    Group Run (n - 9) suit
+            )
+
+
+randomTripletOrRunOf : Tile.Suit -> Random.Generator Group
+randomTripletOrRunOf suit =
+    let
+        maxRange =
+            if suit == Tile.Honor then
+                7
+
+            else
+                9 + 7
+    in
+    Random.int 1 maxRange
+        |> Random.map
+            (\n ->
+                if n < 10 then
+                    Group Triplet n suit
+
+                else
+                    Group Run (n - 9) suit
+            )
+
+
+randomWinningGroups : Random.Generator (List Group)
+randomWinningGroups =
+    let
+        groups =
+            Random.list 4 randomTripletOrRun
+
+        pair =
+            randomPair
+    in
+    Random.map2 (\g p -> List.append g [ p ]) groups pair
+
+
+randomTenpaiGroups : Int -> Random.Generator (List Group)
+randomTenpaiGroups numNonPairs =
+    let
+        otherGroups suit =
+            Random.list numNonPairs (randomTripletOrRunOf suit)
+    in
+    Tile.randomSuit
+        |> Random.andThen (\s -> Random.pair (randomPairOf s) (otherGroups s))
+        |> Random.map (\( p, g ) -> p :: g)

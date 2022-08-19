@@ -994,68 +994,9 @@ count hand =
         |> countFu
 
 
-randomSuit : Random.Generator Tile.Suit
-randomSuit =
-    Random.uniform Tile.Man [ Tile.Pin, Tile.Sou, Tile.Honor ]
-
-
-randomWind : Random.Generator Wind
-randomWind =
-    Random.uniform Tile.East [ Tile.South, Tile.West, Tile.North ]
-
-
 randomWinBy : Random.Generator WinBy
 randomWinBy =
     Random.uniform Ron [ Tsumo ]
-
-
-randomTripletOrRun : Random.Generator Group
-randomTripletOrRun =
-    let
-        maxRange suit =
-            if suit == Tile.Honor then
-                7
-
-            else
-                9 + 7
-    in
-    randomSuit
-        |> Random.andThen (\s -> Random.pair (Random.constant s) (Random.int 1 (maxRange s)))
-        |> Random.map
-            (\( suit, n ) ->
-                if n < 10 then
-                    Group Triplet n suit
-
-                else
-                    Group Run (n - 9) suit
-            )
-
-
-randomPair : Random.Generator Group
-randomPair =
-    let
-        maxRange suit =
-            if suit == Tile.Honor then
-                7
-
-            else
-                9
-    in
-    Random.uniform Tile.Man [ Tile.Pin, Tile.Sou, Tile.Honor ]
-        |> Random.andThen (\s -> Random.pair (Random.int 1 (maxRange s)) (Random.constant s))
-        |> Random.map (\( n, suit ) -> Group Pair n suit)
-
-
-randomWinningGroups : Random.Generator (List Group)
-randomWinningGroups =
-    let
-        groups =
-            Random.list 4 randomTripletOrRun
-
-        pair =
-            randomPair
-    in
-    Random.map2 (\g p -> List.append g [ p ]) groups pair
 
 
 randomWinningHand : Random.Generator Hand
@@ -1078,7 +1019,7 @@ randomWinningHand =
             in
             { hand | tiles = tiles, groups = groups, winBy = winBy, seatWind = seatWind, roundWind = roundWind }
     in
-    Random.map5 createHand randomWinningGroups randomWinBy randomWind randomWind winningTilePosition
+    Random.map5 createHand Group.randomWinningGroups randomWinBy Tile.randomWind Tile.randomWind winningTilePosition
         |> Random.andThen
             (\h ->
                 if Tile.hasMoreThan4Tiles h.tiles then
