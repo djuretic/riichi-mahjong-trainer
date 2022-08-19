@@ -9,6 +9,7 @@ import List.Extra
 import Parser exposing ((|.), (|=))
 import Random
 import Tile exposing (Suit(..), Tile)
+import UI
 
 
 type alias Model =
@@ -216,7 +217,7 @@ view model =
         [ input [ class "input", type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
         , button [ class "button is-primary", onClick GenerateRandomWinningHand ] [ text "Random winning hand" ]
         , button [ class "button is-primary", onClick GenerateRandomTenpaiHand ] [ text "Random tenpai hand" ]
-        , p [] [ renderTiles True model.hand.tiles ]
+        , p [] [ UI.renderTiles True model.hand.tiles ]
         , renderWinBy model.hand
         , renderWinds model.hand
         , div [ class "tabs" ]
@@ -249,7 +250,7 @@ renderTabContent model =
                         (List.map
                             (\( t, g ) ->
                                 tr []
-                                    [ td [] [ renderTiles False [ t ] ]
+                                    [ td [] [ UI.renderTiles False [ t ] ]
                                     , td [] [ drawGroups commonGroups g ]
                                     ]
                             )
@@ -265,112 +266,6 @@ renderTabContent model =
                     , renderFuDetails model.hand
                     , renderScore model.hand
                     ]
-
-
-drawTile : Tile -> Html Msg
-drawTile tile =
-    let
-        n =
-            String.fromInt tile.number
-
-        isRedDora =
-            tile.number == 0
-
-        path =
-            if isRedDora then
-                case tile.suit of
-                    Sou ->
-                        "/img/red-doras/red-dora-bamboo5.png"
-
-                    Pin ->
-                        "/img/red-doras/red-dora-pin5.png"
-
-                    Man ->
-                        "/img/red-doras/red-dora-man5.png"
-
-                    Honor ->
-                        ""
-
-            else
-                case tile.suit of
-                    Sou ->
-                        "/img/bamboo/bamboo" ++ n ++ ".png"
-
-                    Pin ->
-                        "/img/pin/pin" ++ n ++ ".png"
-
-                    Man ->
-                        "/img/man/man" ++ n ++ ".png"
-
-                    Honor ->
-                        pathHonorTile tile.number
-    in
-    if String.isEmpty path then
-        text ""
-
-    else
-        div (tileCss path) []
-
-
-drawBackTile : Html Msg
-drawBackTile =
-    div (tileCss "/img/face-down-64px.png") []
-
-
-tileCss : String -> List (Html.Attribute msg)
-tileCss path =
-    [ style "background-image" ("url(" ++ path ++ ")")
-    , style "background-position-x" "-10px"
-    , style "height" "64px"
-    , style "width" "45px"
-    ]
-
-
-pathHonorTile : Int -> String
-pathHonorTile n =
-    case n of
-        1 ->
-            "/img/winds/wind-east.png"
-
-        2 ->
-            "/img/winds/wind-south.png"
-
-        3 ->
-            "/img/winds/wind-west.png"
-
-        4 ->
-            "/img/winds/wind-north.png"
-
-        5 ->
-            "/img/dragons/dragon-haku.png"
-
-        6 ->
-            "/img/dragons/dragon-green.png"
-
-        7 ->
-            "/img/dragons/dragon-chun.png"
-
-        _ ->
-            ""
-
-
-renderTiles : Bool -> List Tile -> Html Msg
-renderTiles addEmptySpots tiles =
-    let
-        renderedTiles =
-            List.map drawTile tiles
-
-        emptySpots =
-            if addEmptySpots then
-                List.repeat (14 - List.length renderedTiles) drawBackTile
-
-            else
-                []
-
-        allTiles =
-            List.append (List.map drawTile tiles) emptySpots
-    in
-    div [ class "is-flex is-flex-direction-row" ] allTiles
 
 
 toSuit : String -> Maybe Suit
@@ -449,7 +344,7 @@ showParseResult input =
 drawGroup : List (Html.Attribute Msg) -> Group -> Html Msg
 drawGroup attrs group =
     div (List.append [ class "is-flex is-flex-direction-row", style "padding-right" "10px" ] attrs)
-        (List.map drawTile (groupToTiles group))
+        (List.map UI.drawTile (groupToTiles group))
 
 
 groupToTiles : Group -> List Tile

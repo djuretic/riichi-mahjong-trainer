@@ -16,7 +16,8 @@ module Tile exposing
     , randomSuit
     , randomWind
     , redDragonNumber
-    , removeTileAtPos
+    , removeTileAtPosFromArray
+    , removeTileAtPosFromList
     , sort
     , suitToString
     , toArrayCounter
@@ -250,8 +251,8 @@ moveWinningTileToEnd pos array =
             array
 
 
-removeTileAtPos : Int -> Array.Array Tile -> Array.Array Tile
-removeTileAtPos pos array =
+removeTileAtPosFromArray : Int -> Array.Array Tile -> Array.Array Tile
+removeTileAtPosFromArray pos array =
     let
         before =
             Array.slice 0 pos array
@@ -260,6 +261,13 @@ removeTileAtPos pos array =
             Array.slice (pos + 1) (Array.length array + 1) array
     in
     Array.append before after
+
+
+removeTileAtPosFromList : Int -> List Tile -> List Tile
+removeTileAtPosFromList pos tiles =
+    Array.fromList tiles
+        |> removeTileAtPosFromArray pos
+        |> Array.toList
 
 
 sort : List Tile -> List Tile

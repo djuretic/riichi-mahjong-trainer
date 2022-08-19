@@ -1039,9 +1039,7 @@ randomTenpaiHand =
         toTenpai hand pos =
             let
                 tiles =
-                    Array.fromList hand.tiles
-                        |> Tile.removeTileAtPos pos
-                        |> Array.toList
+                    Tile.removeTileAtPosFromList pos hand.tiles
                         |> Tile.sort
             in
             { hand | tiles = tiles, groups = [] }

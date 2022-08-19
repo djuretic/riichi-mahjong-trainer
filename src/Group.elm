@@ -12,6 +12,7 @@ module Group exposing
     , isPair
     , isRun
     , isTriplet
+    , randomCompleteGroups
     , randomTenpaiGroups
     , randomWinningGroups
     , toString
@@ -416,8 +417,8 @@ randomWinningGroups =
     Random.map2 (\g p -> List.append g [ p ]) groups pair
 
 
-randomTenpaiGroups : Int -> Random.Generator (List Group)
-randomTenpaiGroups numNonPairs =
+randomCompleteGroups : Int -> Random.Generator (List Group)
+randomCompleteGroups numNonPairs =
     let
         otherGroups suit =
             Random.list numNonPairs (randomTripletOrRunOf suit)
@@ -425,3 +426,20 @@ randomTenpaiGroups numNonPairs =
     Tile.randomSuit
         |> Random.andThen (\s -> Random.pair (randomPairOf s) (otherGroups s))
         |> Random.map (\( p, g ) -> p :: g)
+
+
+randomTenpaiGroups : Int -> Random.Generator (List Tile.Tile)
+randomTenpaiGroups numNonPairs =
+    let
+        posToRemove =
+            Random.int 0 (2 + (numNonPairs * 3) - 1)
+    in
+    randomCompleteGroups numNonPairs
+        |> Random.map2
+            (\pos lg ->
+                List.map toTiles lg
+                    |> List.concat
+                    |> Tile.removeTileAtPosFromList pos
+                    |> Tile.sort
+            )
+            posToRemove

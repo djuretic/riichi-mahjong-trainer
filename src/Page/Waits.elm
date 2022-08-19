@@ -2,8 +2,11 @@ module Page.Waits exposing (Model, Msg, init, update, view)
 
 import Group exposing (Group)
 import Html
+import Html.Attributes exposing (class)
+import Html.Events exposing (onClick)
 import Random
 import Tile exposing (Tile)
+import UI
 
 
 type alias Model =
@@ -14,28 +17,27 @@ type alias Model =
 
 type Msg
     = GenerateTiles
-    | GroupsGenerated (List Group)
+    | TilesGenerated (List Tile)
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model [] [], Random.generate GroupsGenerated (Group.randomTenpaiGroups 1) )
+    ( Model [] [], Random.generate TilesGenerated (Group.randomTenpaiGroups 1) )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GenerateTiles ->
-            ( model, Random.generate GroupsGenerated (Group.randomTenpaiGroups 1) )
+            ( model, Random.generate TilesGenerated (Group.randomTenpaiGroups 1) )
 
-        GroupsGenerated groups ->
-            let
-                _ =
-                    Debug.log "aaa" groups
-            in
-            ( model, Cmd.none )
+        TilesGenerated tiles ->
+            ( { model | tiles = tiles }, Cmd.none )
 
 
 view : Model -> Html.Html Msg
 view model =
-    Html.div [] []
+    Html.div []
+        [ Html.button [ class "button is-primary", onClick GenerateTiles ] [ Html.text "Generate " ]
+        , UI.renderTiles False model.tiles
+        ]
