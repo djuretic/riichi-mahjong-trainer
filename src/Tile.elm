@@ -1,5 +1,6 @@
 module Tile exposing
-    ( Suit(..)
+    ( ComparableTile
+    , Suit(..)
     , Tile
     , TileNumber
     , Wind(..)

@@ -51,7 +51,7 @@ init _ =
         ( waits, waitsCmd ) =
             Page.Waits.init
     in
-    ( { page = ScoringPage
+    ( { page = WaitsPage
       , scoring = scoring
       , waits = waits
       }
