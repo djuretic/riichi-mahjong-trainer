@@ -1,7 +1,7 @@
 module Page.Waits exposing (Model, Msg, init, update, view)
 
 import Group exposing (Group)
-import Html exposing (Html, button, div, p, table, tbody, td, tr)
+import Html exposing (Html, button, div, label, p, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (class, name, style, type_)
 import Html.Events exposing (onClick)
 import List.Extra
@@ -65,30 +65,34 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ renderNumberTilesSelector model
-        , button [ class "button is-primary", onClick GenerateTiles ] [ Html.text "Generate" ]
+        [ div [ class "field" ]
+            [ label [ class "label" ] [ text "Number of tiles" ]
+            , renderNumberTilesSelector model
+            ]
+        , div [ class "field" ]
+            [ div [ class "control" ] [ button [ class "button is-primary", onClick GenerateTiles ] [ text "Generate" ] ] ]
         , UI.renderTiles False model.tiles
-        , p [] [ Html.text "Select wait tiles:" ]
+        , p [] [ text "Select wait tiles:" ]
         , renderWaitButtons model
-        , button [ class "button", onClick ConfirmSelected ] [ Html.text "Confirm" ]
+        , button [ class "button", onClick ConfirmSelected ] [ text "Confirm" ]
         , if model.confirmedSelected then
             renderWinningTiles model
 
           else
-            Html.text ""
+            text ""
         ]
 
 
 renderNumberTilesSelector : Model -> Html Msg
 renderNumberTilesSelector model =
     let
-        createRadioButton text numberOfNonPairs =
+        createRadioButton txt numberOfNonPairs =
             let
                 checked =
                     Html.Attributes.checked (model.numberOfNonPairs == numberOfNonPairs)
             in
             Html.label [ class "radio", onClick (SetNumberNonPairs numberOfNonPairs) ]
-                [ Html.input [ type_ "radio", name "numGroups", checked ] [], Html.text text ]
+                [ Html.input [ type_ "radio", name "numGroups", checked ] [], text txt ]
     in
     div [ class "control" ]
         [ createRadioButton "4" 1
@@ -141,7 +145,11 @@ renderWinningTiles model =
             Group.commonGroups (List.map Tuple.second winningTiles)
     in
     table [ class "table is-striped is-fullwidth" ]
-        [ tbody []
+        [ thead []
+            [ th [] [ text "Tile" ]
+            , th [] [ text "Groups" ]
+            ]
+        , tbody []
             (List.map
                 (\( t, g ) ->
                     tr []
