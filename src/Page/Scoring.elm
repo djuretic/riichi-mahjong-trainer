@@ -549,7 +549,9 @@ renderGuessTab model =
                 |> List.map (guessHanButton model model.guessedValue.han)
 
         hanButtonSection =
-            List.append [ text "Select han count:" ] hanButtons
+            [ text "Select han count:"
+            , div [ class "buttons has-addons" ] hanButtons
+            ]
 
         hanSummary =
             if isHanGuessed model.guessedValue then
@@ -565,11 +567,9 @@ renderGuessTab model =
                         |> List.map ((*) 10)
                         |> List.map (guessFuButton model model.guessedValue.fu)
             in
-            if Hand.shouldCountFu model.hand then
-                List.append [ text "Select fu count:" ] buttons
-
-            else
-                []
+            [ text "Select fu count:"
+            , div [ class "buttons has-addons" ] buttons
+            ]
 
         fuSummary =
             if isFuGuessed model.guessedValue then
@@ -594,9 +594,9 @@ renderGuessTab model =
                     else
                         ""
             in
-            div []
-                [ input [ class ("input " ++ inputClass), type_ "text", placeholder "Input score", onInput GuessedScoreString ] []
-                , button [ class "button is-primary", onClick SetGuessedScore ] [ text "Guess score" ]
+            div [ class "field has-addons" ]
+                [ div [ class "control" ] [ input [ class ("input " ++ inputClass), type_ "text", placeholder "Input score", onInput GuessedScoreString ] [] ]
+                , div [ class "control" ] [ button [ class "button is-primary", onClick SetGuessedScore ] [ text "Guess score" ] ]
                 ]
 
         scoreSummary =
