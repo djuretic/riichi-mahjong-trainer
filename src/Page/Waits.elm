@@ -2,7 +2,7 @@ module Page.Waits exposing (Model, Msg, init, update, view)
 
 import Group exposing (Group)
 import Html exposing (Html, button, div, label, p, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (class, name, style, type_)
+import Html.Attributes exposing (class, disabled, style)
 import Html.Events exposing (onClick)
 import List.Extra
 import Random
@@ -74,7 +74,7 @@ view model =
         , UI.renderTiles False model.tiles
         , p [] [ text "Select wait tiles:" ]
         , renderWaitButtons model
-        , button [ class "button", onClick ConfirmSelected ] [ text "Confirm" ]
+        , button [ class "button", onClick ConfirmSelected, disabled (Set.isEmpty model.selectedWaits) ] [ text "Confirm" ]
         , if model.confirmedSelected then
             renderWinningTiles model
 
@@ -86,19 +86,22 @@ view model =
 renderNumberTilesSelector : Model -> Html Msg
 renderNumberTilesSelector model =
     let
-        createRadioButton txt numberOfNonPairs =
+        createButton txt numberOfNonPairs =
             let
-                checked =
-                    Html.Attributes.checked (model.numberOfNonPairs == numberOfNonPairs)
+                cssClass =
+                    if model.numberOfNonPairs == numberOfNonPairs then
+                        class "button is-primary is-selected"
+
+                    else
+                        class "button"
             in
-            Html.label [ class "radio", onClick (SetNumberNonPairs numberOfNonPairs) ]
-                [ Html.input [ type_ "radio", name "numGroups", checked ] [], text txt ]
+            Html.button [ cssClass, onClick (SetNumberNonPairs numberOfNonPairs) ] [ text txt ]
     in
-    div [ class "control" ]
-        [ createRadioButton "4" 1
-        , createRadioButton "7" 2
-        , createRadioButton "10" 3
-        , createRadioButton "13" 4
+    div [ class "buttons has-addons" ]
+        [ createButton "4" 1
+        , createButton "7" 2
+        , createButton "10" 3
+        , createButton "13" 4
         ]
 
 
