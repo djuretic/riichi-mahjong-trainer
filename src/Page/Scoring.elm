@@ -57,7 +57,6 @@ type Msg
     | ChangeRoundWind
     | ChangeWinBy
     | GenerateRandomWinningHand
-    | GenerateRandomTenpaiHand
     | ChangeTab ActiveTab
     | SetGuessedHan Int
     | SetGuessedFu Int
@@ -160,11 +159,6 @@ update msg model =
             , Random.generate WinningHandGenerated Hand.randomWinningHand
             )
 
-        GenerateRandomTenpaiHand ->
-            ( model
-            , Random.generate TenpaiHandGenerated Hand.randomTenpaiHand
-            )
-
         ChangeTab tab ->
             ( { model | activeTab = tab }, Cmd.none )
 
@@ -215,7 +209,6 @@ view model =
     div []
         [ input [ class "input", type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
         , button [ class "button is-primary", onClick GenerateRandomWinningHand ] [ text "Random winning hand" ]
-        , button [ class "button is-primary", onClick GenerateRandomTenpaiHand ] [ text "Random tenpai hand" ]
         , p [] [ UI.renderTiles True model.hand.tiles ]
         , renderWinBy model.hand
         , renderWinds model.hand

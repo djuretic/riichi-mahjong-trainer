@@ -1,6 +1,7 @@
 module Page.Waits exposing (Model, Msg, init, update, view)
 
 import Group exposing (Group)
+import Hand
 import Html exposing (Html, button, div, label, p, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (class, disabled, style)
 import Html.Events exposing (onClick)
@@ -12,7 +13,8 @@ import UI
 
 
 type alias Model =
-    { tiles : List Tile
+    { handType : HandType
+    , tiles : List Tile
     , waits : List ( Tile, List Group )
     , numberOfNonPairs : Int
     , selectedWaits : Set Tile.ComparableTile
@@ -22,15 +24,22 @@ type alias Model =
 
 type Msg
     = GenerateTiles
+    | SetHandType HandType
     | SetNumberNonPairs Int
     | TilesGenerated (List Tile)
+    | NormalHandGenerated Hand.Hand
     | ToggleWaitTile Tile
     | ConfirmSelected
 
 
+type HandType
+    = NormalHand
+    | SingleSuitHand
+
+
 init : ( Model, Cmd Msg )
 init =
-    ( { tiles = [], waits = [], numberOfNonPairs = 1, selectedWaits = Set.empty, confirmedSelected = False }
+    ( { handType = SingleSuitHand, tiles = [], waits = [], numberOfNonPairs = 1, selectedWaits = Set.empty, confirmedSelected = False }
     , Random.generate TilesGenerated (Group.randomTenpaiGroups 1)
     )
 
@@ -39,13 +48,24 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GenerateTiles ->
-            ( model, Random.generate TilesGenerated (Group.randomTenpaiGroups model.numberOfNonPairs) )
+            case model.handType of
+                SingleSuitHand ->
+                    ( model, Random.generate TilesGenerated (Group.randomTenpaiGroups model.numberOfNonPairs) )
+
+                NormalHand ->
+                    ( model, Random.generate NormalHandGenerated Hand.randomTenpaiHand )
+
+        SetHandType handType ->
+            ( { model | handType = handType }, Cmd.none )
 
         SetNumberNonPairs num ->
             ( { model | numberOfNonPairs = num }, Cmd.none )
 
         TilesGenerated tiles ->
             ( { model | tiles = tiles, selectedWaits = Set.empty, confirmedSelected = False }, Cmd.none )
+
+        NormalHandGenerated hand ->
+            ( { model | tiles = hand.tiles, selectedWaits = Set.empty, confirmedSelected = False }, Cmd.none )
 
         ToggleWaitTile tile ->
             let
@@ -64,11 +84,25 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
+    let
+        renderLabel labelText content =
+            div [ class "field" ]
+                [ label [ class "label" ] [ text labelText ]
+                , content
+                ]
+
+        tilesSelector =
+            if model.handType == SingleSuitHand then
+                renderLabel "Number of tiles"
+                    (renderNumberTilesSelector model)
+
+            else
+                div [] []
+    in
     div []
-        [ div [ class "field" ]
-            [ label [ class "label" ] [ text "Number of tiles" ]
-            , renderNumberTilesSelector model
-            ]
+        [ renderLabel "Hand type"
+            (renderHandTypeSelector model)
+        , tilesSelector
         , div [ class "field" ]
             [ div [ class "control" ] [ button [ class "button is-primary", onClick GenerateTiles ] [ text "Generate" ] ] ]
         , UI.renderTiles False model.tiles
@@ -80,6 +114,22 @@ view model =
 
           else
             text ""
+        ]
+
+
+renderHandTypeSelector : Model -> Html Msg
+renderHandTypeSelector model =
+    let
+        cssClass handType =
+            if model.handType == handType then
+                class "button is-primary is-selected"
+
+            else
+                class "button"
+    in
+    div [ class "buttons has-addons" ]
+        [ button [ cssClass SingleSuitHand, onClick (SetHandType SingleSuitHand) ] [ text "Single suit" ]
+        , button [ cssClass NormalHand, onClick (SetHandType NormalHand) ] [ text "Normal" ]
         ]
 
 
@@ -95,7 +145,7 @@ renderNumberTilesSelector model =
                     else
                         class "button"
             in
-            Html.button [ cssClass, onClick (SetNumberNonPairs numberOfNonPairs) ] [ text txt ]
+            button [ cssClass, onClick (SetNumberNonPairs numberOfNonPairs) ] [ text txt ]
     in
     div [ class "buttons has-addons" ]
         [ createButton "4" 1
