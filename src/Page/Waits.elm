@@ -14,6 +14,7 @@ import UI
 
 type alias Model =
     { handType : HandType
+    , suitSelection : SuitSelection
     , tiles : List Tile
     , waits : List ( Tile, List Group )
     , numberOfNonPairs : Int
@@ -25,6 +26,7 @@ type alias Model =
 type Msg
     = GenerateTiles
     | SetHandType HandType
+    | SetSuitSelection SuitSelection
     | SetNumberNonPairs Int
     | TilesGenerated (List Tile)
     | NormalHandGenerated Hand.Hand
@@ -37,10 +39,24 @@ type HandType
     | SingleSuitHand
 
 
+type SuitSelection
+    = RandomSuit
+    | FixedSuitMan
+    | FixedSuitPin
+    | FixedSuitSou
+
+
 init : ( Model, Cmd Msg )
 init =
-    ( { handType = SingleSuitHand, tiles = [], waits = [], numberOfNonPairs = 1, selectedWaits = Set.empty, confirmedSelected = False }
-    , Random.generate TilesGenerated (Group.randomTenpaiGroups 1)
+    ( { handType = SingleSuitHand
+      , suitSelection = RandomSuit
+      , tiles = []
+      , waits = []
+      , numberOfNonPairs = 1
+      , selectedWaits = Set.empty
+      , confirmedSelected = False
+      }
+    , Random.generate TilesGenerated (Group.randomTenpaiGroups 1 Nothing)
     )
 
 
@@ -50,13 +66,16 @@ update msg model =
         GenerateTiles ->
             case model.handType of
                 SingleSuitHand ->
-                    ( model, Random.generate TilesGenerated (Group.randomTenpaiGroups model.numberOfNonPairs) )
+                    ( model, Random.generate TilesGenerated (Group.randomTenpaiGroups model.numberOfNonPairs (suitSelectionToSuit model.suitSelection)) )
 
                 NormalHand ->
                     ( model, Random.generate NormalHandGenerated Hand.randomTenpaiHand )
 
         SetHandType handType ->
             ( { model | handType = handType }, Cmd.none )
+
+        SetSuitSelection suitSelection ->
+            ( { model | suitSelection = suitSelection }, Cmd.none )
 
         SetNumberNonPairs num ->
             ( { model | numberOfNonPairs = num }, Cmd.none )
@@ -86,10 +105,18 @@ view : Model -> Html Msg
 view model =
     let
         renderLabel labelText content =
-            div [ class "field" ]
-                [ label [ class "label" ] [ text labelText ]
-                , content
+            div [ class "field is-horizontal" ]
+                [ div [ class "field-label" ] [ label [ class "label" ] [ text labelText ] ]
+                , div [ class "field-body" ] [ content ]
                 ]
+
+        suitSelector =
+            if model.handType == SingleSuitHand then
+                renderLabel "Suit"
+                    (renderSuitSelection model)
+
+            else
+                div [] []
 
         tilesSelector =
             if model.handType == SingleSuitHand then
@@ -102,9 +129,12 @@ view model =
     div []
         [ renderLabel "Hand type"
             (renderHandTypeSelector model)
+        , suitSelector
         , tilesSelector
-        , div [ class "field" ]
-            [ div [ class "control" ] [ button [ class "button is-primary", onClick GenerateTiles ] [ text "Generate" ] ] ]
+        , div [ class "field is-horizontal" ]
+            [ div [ class "field-label" ] []
+            , div [ class "field-body" ] [ div [ class "control" ] [ button [ class "button is-primary", onClick GenerateTiles ] [ text "Generate" ] ] ]
+            ]
         , UI.renderTiles False model.tiles
         , p [] [ text "Select wait tiles:" ]
         , renderWaitButtons model
@@ -130,6 +160,28 @@ renderHandTypeSelector model =
     div [ class "buttons has-addons" ]
         [ button [ cssClass SingleSuitHand, onClick (SetHandType SingleSuitHand) ] [ text "Single suit" ]
         , button [ cssClass NormalHand, onClick (SetHandType NormalHand) ] [ text "Normal" ]
+        ]
+
+
+renderSuitSelection : Model -> Html Msg
+renderSuitSelection model =
+    let
+        createButton txt suitSel =
+            let
+                cssClass =
+                    if model.suitSelection == suitSel then
+                        class "button is-primary is-selected"
+
+                    else
+                        class "button"
+            in
+            button [ cssClass, onClick (SetSuitSelection suitSel) ] [ text txt ]
+    in
+    div [ class "buttons has-addons" ]
+        [ createButton "Random" RandomSuit
+        , createButton "Man" FixedSuitMan
+        , createButton "Pin" FixedSuitPin
+        , createButton "Sou" FixedSuitSou
         ]
 
 
@@ -213,3 +265,19 @@ renderWinningTiles model =
                 winningTiles
             )
         ]
+
+
+suitSelectionToSuit : SuitSelection -> Maybe Tile.Suit
+suitSelectionToSuit suitSelection =
+    case suitSelection of
+        RandomSuit ->
+            Nothing
+
+        FixedSuitMan ->
+            Just Tile.Man
+
+        FixedSuitPin ->
+            Just Tile.Pin
+
+        FixedSuitSou ->
+            Just Tile.Sou

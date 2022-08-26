@@ -417,13 +417,21 @@ randomWinningGroups =
     Random.map2 (\g p -> List.append g [ p ]) groups pair
 
 
-randomCompleteGroups : Int -> Random.Generator (List Group)
-randomCompleteGroups numNonPairs =
+randomCompleteGroups : Int -> Maybe Tile.Suit -> Random.Generator (List Group)
+randomCompleteGroups numNonPairs wantedSuit =
     let
         otherGroups suit =
             Random.list numNonPairs (randomTripletOrRunOf suit)
+
+        baseSuit =
+            case wantedSuit of
+                Just s ->
+                    Random.constant s
+
+                Nothing ->
+                    Tile.randomNonHonorSuit
     in
-    Tile.randomNonHonorSuit
+    baseSuit
         |> Random.andThen (\s -> Random.pair (randomPairOf s) (otherGroups s))
         |> Random.map (\( p, g ) -> p :: g)
         |> Random.andThen
@@ -434,20 +442,20 @@ randomCompleteGroups numNonPairs =
                             |> List.concat
                 in
                 if Tile.hasMoreThan4Tiles tiles then
-                    randomCompleteGroups numNonPairs
+                    randomCompleteGroups numNonPairs wantedSuit
 
                 else
                     Random.constant g
             )
 
 
-randomTenpaiGroups : Int -> Random.Generator (List Tile.Tile)
-randomTenpaiGroups numNonPairs =
+randomTenpaiGroups : Int -> Maybe Tile.Suit -> Random.Generator (List Tile.Tile)
+randomTenpaiGroups numNonPairs wantedSuit =
     let
         posToRemove =
             Random.int 0 (2 + (numNonPairs * 3) - 1)
     in
-    randomCompleteGroups numNonPairs
+    randomCompleteGroups numNonPairs wantedSuit
         |> Random.map2
             (\pos lg ->
                 List.map toTiles lg
