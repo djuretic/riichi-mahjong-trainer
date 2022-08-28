@@ -1,7 +1,7 @@
 module Page.Waits exposing (Model, Msg, init, update, view)
 
 import Group exposing (Group)
-import Html exposing (Html, button, div, label, p, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, button, div, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (class, disabled, style)
 import Html.Events exposing (onClick)
 import List.Extra
