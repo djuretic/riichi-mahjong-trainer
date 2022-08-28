@@ -116,16 +116,17 @@ view model =
                 (renderMinWaitsSelector model)
     in
     div []
-        [ suitSelector
-        , tilesSelector
-        , minWaitsSelector
-        , div [ class "field is-horizontal" ]
-            [ div [ class "field-label" ] []
-            , div [ class "field-body" ] [ div [ class "control" ] [ button [ class "button is-primary", onClick GenerateTiles ] [ text "Generate" ] ] ]
+        [ div []
+            [ suitSelector
+            , tilesSelector
+            , minWaitsSelector
+            , div [ class "field is-horizontal" ]
+                [ div [ class "field-label" ] []
+                , div [ class "field-body" ] [ div [ class "control" ] [ button [ class "button is-primary", onClick GenerateTiles ] [ text "Generate" ] ] ]
+                ]
             ]
-        , UI.renderTiles False model.tiles
-        , p [] [ text "Select wait tiles:" ]
-        , renderWaitButtons model
+        , div [ class "block" ] [ UI.renderTiles False model.tiles ]
+        , div [ class "block" ] [ text "Select wait tiles:", renderWaitButtons model ]
         , button [ class "button", onClick ConfirmSelected, disabled (Set.isEmpty model.selectedWaits) ] [ text "Confirm" ]
         , if model.confirmedSelected then
             renderWinningTiles model
