@@ -1,7 +1,6 @@
 module Page.Waits exposing (Model, Msg, init, update, view)
 
 import Group exposing (Group)
-import Hand
 import Html exposing (Html, button, div, label, p, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (class, disabled, style)
 import Html.Events exposing (onClick)
@@ -13,11 +12,11 @@ import UI
 
 
 type alias Model =
-    { handType : HandType
-    , suitSelection : SuitSelection
+    { suitSelection : SuitSelection
     , tiles : List Tile
     , waits : List ( Tile, List Group )
     , numberOfNonPairs : Int
+    , minNumberOfWaits : Int
     , selectedWaits : Set Tile.ComparableTile
     , confirmedSelected : Bool
     }
@@ -25,18 +24,12 @@ type alias Model =
 
 type Msg
     = GenerateTiles
-    | SetHandType HandType
     | SetSuitSelection SuitSelection
     | SetNumberNonPairs Int
+    | SetNumberMinWaits Int
     | TilesGenerated (List Tile)
-    | NormalHandGenerated Hand.Hand
     | ToggleWaitTile Tile
     | ConfirmSelected
-
-
-type HandType
-    = NormalHand
-    | SingleSuitHand
 
 
 type SuitSelection
@@ -48,11 +41,11 @@ type SuitSelection
 
 init : ( Model, Cmd Msg )
 init =
-    ( { handType = SingleSuitHand
-      , suitSelection = RandomSuit
+    ( { suitSelection = RandomSuit
       , tiles = []
       , waits = []
       , numberOfNonPairs = 1
+      , minNumberOfWaits = 1
       , selectedWaits = Set.empty
       , confirmedSelected = False
       }
@@ -64,15 +57,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GenerateTiles ->
-            case model.handType of
-                SingleSuitHand ->
-                    ( model, Random.generate TilesGenerated (Group.randomTenpaiGroups model.numberOfNonPairs (suitSelectionToSuit model.suitSelection)) )
-
-                NormalHand ->
-                    ( model, Random.generate NormalHandGenerated Hand.randomTenpaiHand )
-
-        SetHandType handType ->
-            ( { model | handType = handType }, Cmd.none )
+            ( model, Random.generate TilesGenerated (Group.randomTenpaiGroups model.numberOfNonPairs (suitSelectionToSuit model.suitSelection)) )
 
         SetSuitSelection suitSelection ->
             ( { model | suitSelection = suitSelection }, Cmd.none )
@@ -80,11 +65,19 @@ update msg model =
         SetNumberNonPairs num ->
             ( { model | numberOfNonPairs = num }, Cmd.none )
 
-        TilesGenerated tiles ->
-            ( { model | tiles = tiles, selectedWaits = Set.empty, confirmedSelected = False }, Cmd.none )
+        SetNumberMinWaits num ->
+            ( { model | minNumberOfWaits = num }, Cmd.none )
 
-        NormalHandGenerated hand ->
-            ( { model | tiles = hand.tiles, selectedWaits = Set.empty, confirmedSelected = False }, Cmd.none )
+        TilesGenerated tiles ->
+            let
+                waits =
+                    Group.winningTiles tiles
+            in
+            if List.length waits < model.minNumberOfWaits then
+                update GenerateTiles model
+
+            else
+                ( { model | tiles = tiles, waits = waits, selectedWaits = Set.empty, confirmedSelected = False }, Cmd.none )
 
         ToggleWaitTile tile ->
             let
@@ -111,26 +104,21 @@ view model =
                 ]
 
         suitSelector =
-            if model.handType == SingleSuitHand then
-                renderLabel "Suit"
-                    (renderSuitSelection model)
-
-            else
-                div [] []
+            renderLabel "Suit"
+                (renderSuitSelection model)
 
         tilesSelector =
-            if model.handType == SingleSuitHand then
-                renderLabel "Number of tiles"
-                    (renderNumberTilesSelector model)
+            renderLabel "Number of tiles"
+                (renderNumberTilesSelector model)
 
-            else
-                div [] []
+        minWaitsSelector =
+            renderLabel "Min. number of waits"
+                (renderMinWaitsSelector model)
     in
     div []
-        [ renderLabel "Hand type"
-            (renderHandTypeSelector model)
-        , suitSelector
+        [ suitSelector
         , tilesSelector
+        , minWaitsSelector
         , div [ class "field is-horizontal" ]
             [ div [ class "field-label" ] []
             , div [ class "field-body" ] [ div [ class "control" ] [ button [ class "button is-primary", onClick GenerateTiles ] [ text "Generate" ] ] ]
@@ -144,22 +132,6 @@ view model =
 
           else
             text ""
-        ]
-
-
-renderHandTypeSelector : Model -> Html Msg
-renderHandTypeSelector model =
-    let
-        cssClass handType =
-            if model.handType == handType then
-                class "button is-primary is-selected"
-
-            else
-                class "button"
-    in
-    div [ class "buttons has-addons" ]
-        [ button [ cssClass SingleSuitHand, onClick (SetHandType SingleSuitHand) ] [ text "Single suit" ]
-        , button [ cssClass NormalHand, onClick (SetHandType NormalHand) ] [ text "Normal" ]
         ]
 
 
@@ -207,6 +179,27 @@ renderNumberTilesSelector model =
         ]
 
 
+renderMinWaitsSelector : Model -> Html Msg
+renderMinWaitsSelector model =
+    let
+        createButton txt minNumberOfWaits =
+            let
+                cssClass =
+                    if model.minNumberOfWaits == minNumberOfWaits then
+                        class "button is-primary is-selected"
+
+                    else
+                        class "button"
+            in
+            button [ cssClass, onClick (SetNumberMinWaits minNumberOfWaits) ] [ text txt ]
+    in
+    div [ class "buttons has-addons" ]
+        [ createButton "1" 1
+        , createButton "2" 2
+        , createButton "3" 3
+        ]
+
+
 renderWaitButtons : Model -> Html Msg
 renderWaitButtons model =
     let
@@ -243,11 +236,8 @@ renderWaitButtons model =
 renderWinningTiles : Model -> Html Msg
 renderWinningTiles model =
     let
-        winningTiles =
-            Group.winningTiles model.tiles
-
         commonGroups =
-            Group.commonGroups (List.map Tuple.second winningTiles)
+            Group.commonGroups (List.map Tuple.second model.waits)
     in
     table [ class "table is-striped is-fullwidth" ]
         [ thead []
@@ -262,7 +252,7 @@ renderWinningTiles model =
                         , td [] [ UI.drawGroups commonGroups g ]
                         ]
                 )
-                winningTiles
+                model.waits
             )
         ]
 
