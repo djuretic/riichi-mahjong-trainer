@@ -151,9 +151,9 @@ renderSuitSelection model =
     in
     div [ class "buttons has-addons" ]
         [ createButton "Random" RandomSuit
-        , createButton "Man" FixedSuitMan
-        , createButton "Pin" FixedSuitPin
-        , createButton "Sou" FixedSuitSou
+        , createButton "Characters" FixedSuitMan
+        , createButton "Circles" FixedSuitPin
+        , createButton "Bamboos" FixedSuitSou
         ]
 
 
