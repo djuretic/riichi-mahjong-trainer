@@ -1,4 +1,4 @@
-module UI exposing (drawGroups, drawGroupsSimple, drawTile, renderTiles)
+module UI exposing (drawGroups, drawGroupsSimple, drawTile, renderTiles, tilePath)
 
 import Group
 import Html
@@ -29,46 +29,52 @@ renderTiles addEmptySpots tiles =
 drawTile : Tile.Tile -> Html.Html msg
 drawTile tile =
     let
-        n =
-            String.fromInt tile.number
-
-        isRedDora =
-            tile.number == 0
-
         path =
-            if isRedDora then
-                case tile.suit of
-                    Tile.Sou ->
-                        "/img/red-doras/red-dora-bamboo5.png"
-
-                    Tile.Pin ->
-                        "/img/red-doras/red-dora-pin5.png"
-
-                    Tile.Man ->
-                        "/img/red-doras/red-dora-man5.png"
-
-                    Tile.Honor ->
-                        ""
-
-            else
-                case tile.suit of
-                    Tile.Sou ->
-                        "/img/bamboo/bamboo" ++ n ++ ".png"
-
-                    Tile.Pin ->
-                        "/img/pin/pin" ++ n ++ ".png"
-
-                    Tile.Man ->
-                        "/img/man/man" ++ n ++ ".png"
-
-                    Tile.Honor ->
-                        pathHonorTile tile.number
+            tilePath tile
     in
     if String.isEmpty path then
         Html.text ""
 
     else
         Html.div (tileCss path) []
+
+
+tilePath : Tile.Tile -> String
+tilePath { number, suit } =
+    let
+        n =
+            String.fromInt number
+
+        isRedDora =
+            number == 0
+    in
+    if isRedDora then
+        case suit of
+            Tile.Sou ->
+                "/img/red-doras/red-dora-bamboo5.png"
+
+            Tile.Pin ->
+                "/img/red-doras/red-dora-pin5.png"
+
+            Tile.Man ->
+                "/img/red-doras/red-dora-man5.png"
+
+            Tile.Honor ->
+                ""
+
+    else
+        case suit of
+            Tile.Sou ->
+                "/img/bamboo/bamboo" ++ n ++ ".png"
+
+            Tile.Pin ->
+                "/img/pin/pin" ++ n ++ ".png"
+
+            Tile.Man ->
+                "/img/man/man" ++ n ++ ".png"
+
+            Tile.Honor ->
+                pathHonorTile number
 
 
 drawBackTile : Html.Html msg

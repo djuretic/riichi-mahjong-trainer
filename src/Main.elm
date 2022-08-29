@@ -87,8 +87,12 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Sub.none
+subscriptions model =
+    if model.page == WaitsPage then
+        Sub.map WaitsMsg (Page.Waits.subscriptions model.waits)
+
+    else
+        Sub.none
 
 
 view : Model -> Html.Html Msg

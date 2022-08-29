@@ -1,5 +1,6 @@
-module Page.Waits exposing (Model, Msg, init, update, view)
+module Page.Waits exposing (Model, Msg, init, subscriptions, update, view)
 
+import Browser.Events
 import Group exposing (Group)
 import Html exposing (Html, button, div, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (class, disabled, style)
@@ -7,7 +8,10 @@ import Html.Events exposing (onClick)
 import List.Extra
 import Random
 import Set exposing (Set)
+import Svg exposing (image, svg)
+import Svg.Attributes exposing (height, viewBox, width, x, xlinkHref)
 import Tile exposing (Tile)
+import Time
 import UI
 
 
@@ -19,6 +23,8 @@ type alias Model =
     , minNumberOfWaits : Int
     , selectedWaits : Set Tile.ComparableTile
     , confirmedSelected : Bool
+    , lastTick : Int
+    , tileX : Int
     }
 
 
@@ -30,6 +36,7 @@ type Msg
     | TilesGenerated (List Tile)
     | ToggleWaitTile Tile
     | ConfirmSelected
+    | Tick Time.Posix
 
 
 type SuitSelection
@@ -48,9 +55,20 @@ init =
       , minNumberOfWaits = 1
       , selectedWaits = Set.empty
       , confirmedSelected = False
+      , lastTick = 0
+      , tileX = 0
       }
     , Random.generate TilesGenerated (Group.randomTenpaiGroups 1 Nothing)
     )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    if model.confirmedSelected then
+        Browser.Events.onAnimationFrame Tick
+
+    else
+        Sub.none
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -91,7 +109,30 @@ update msg model =
                 ( { model | selectedWaits = Set.insert compTile model.selectedWaits }, Cmd.none )
 
         ConfirmSelected ->
-            ( { model | confirmedSelected = True }, Cmd.none )
+            ( { model | confirmedSelected = True, tileX = 0 }, Cmd.none )
+
+        Tick tickTime ->
+            let
+                fps =
+                    30
+
+                fpsInterval =
+                    1000 / fps
+
+                now =
+                    Time.posixToMillis tickTime
+
+                elapsed =
+                    now - model.lastTick
+            in
+            if model.lastTick == 0 then
+                ( { model | lastTick = now }, Cmd.none )
+
+            else if toFloat elapsed > fpsInterval then
+                ( { model | lastTick = now - remainderBy (round fpsInterval) elapsed, tileX = model.tileX + 1 }, Cmd.none )
+
+            else
+                ( model, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -240,21 +281,26 @@ renderWinningTiles model =
         commonGroups =
             Group.commonGroups (List.map Tuple.second model.waits)
     in
-    table [ class "table is-striped is-fullwidth" ]
-        [ thead []
-            [ th [] [ text "Tile" ]
-            , th [] [ text "Groups" ]
-            ]
-        , tbody []
-            (List.map
-                (\( t, g ) ->
-                    tr []
-                        [ td [] [ UI.renderTiles False [ t ] ]
-                        , td [] [ UI.drawGroups commonGroups g ]
-                        ]
+    div []
+        [ table [ class "table is-striped is-fullwidth" ]
+            [ thead []
+                [ th [] [ text "Tile" ]
+                , th [] [ text "Groups" ]
+                ]
+            , tbody []
+                (List.map
+                    (\( t, g ) ->
+                        tr []
+                            [ td [] [ UI.renderTiles False [ t ] ]
+                            , td [] [ UI.drawGroups commonGroups g ]
+                            ]
+                    )
+                    model.waits
                 )
-                model.waits
-            )
+            ]
+        , svg [ width "500", height "120", viewBox "0 0 500 120" ]
+            [ image [ xlinkHref (UI.tilePath (Tile.Tile 1 Tile.Man)), x (String.fromInt model.tileX) ] []
+            ]
         ]
 
 
