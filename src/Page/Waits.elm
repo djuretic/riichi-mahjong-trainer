@@ -24,7 +24,7 @@ type alias Model =
     , selectedWaits : Set Tile.ComparableTile
     , confirmedSelected : Bool
     , lastTick : Int
-    , tileX : Int
+    , animatedTiles : List AnimatedTile
     }
 
 
@@ -46,6 +46,13 @@ type SuitSelection
     | FixedSuitSou
 
 
+type alias AnimatedTile =
+    { tile : Tile
+    , isWinningTile : Bool
+    , x : Int
+    }
+
+
 init : ( Model, Cmd Msg )
 init =
     ( { suitSelection = RandomSuit
@@ -56,7 +63,7 @@ init =
       , selectedWaits = Set.empty
       , confirmedSelected = False
       , lastTick = 0
-      , tileX = 0
+      , animatedTiles = []
       }
     , Random.generate TilesGenerated (Group.randomTenpaiGroups 1 Nothing)
     )
@@ -95,7 +102,7 @@ update msg model =
                 update GenerateTiles model
 
             else
-                ( { model | tiles = tiles, waits = waits, selectedWaits = Set.empty, confirmedSelected = False }, Cmd.none )
+                ( { model | tiles = tiles, waits = waits, selectedWaits = Set.empty, confirmedSelected = False, animatedTiles = initAnimatedTiles model }, Cmd.none )
 
         ToggleWaitTile tile ->
             let
@@ -109,7 +116,7 @@ update msg model =
                 ( { model | selectedWaits = Set.insert compTile model.selectedWaits }, Cmd.none )
 
         ConfirmSelected ->
-            ( { model | confirmedSelected = True, tileX = 0 }, Cmd.none )
+            ( { model | confirmedSelected = True, animatedTiles = initAnimatedTiles model }, Cmd.none )
 
         Tick tickTime ->
             let
@@ -129,7 +136,7 @@ update msg model =
                 ( { model | lastTick = now }, Cmd.none )
 
             else if toFloat elapsed > fpsInterval then
-                ( { model | lastTick = now - remainderBy (round fpsInterval) elapsed, tileX = model.tileX + 1 }, Cmd.none )
+                ( { model | lastTick = now - remainderBy (round fpsInterval) elapsed, animatedTiles = doAnimation model.animatedTiles }, Cmd.none )
 
             else
                 ( model, Cmd.none )
@@ -298,9 +305,8 @@ renderWinningTiles model =
                     model.waits
                 )
             ]
-        , svg [ width "500", height "120", viewBox "0 0 500 120" ]
-            [ image [ xlinkHref (UI.tilePath (Tile.Tile 1 Tile.Man)), x (String.fromInt model.tileX) ] []
-            ]
+        , svg [ width "1000", height "120", viewBox "0 0 1000 120" ]
+            (List.map (\at -> image [ xlinkHref (UI.tilePath at.tile), x (String.fromInt at.x) ] []) model.animatedTiles)
         ]
 
 
@@ -318,3 +324,21 @@ suitSelectionToSuit suitSelection =
 
         FixedSuitSou ->
             Just Tile.Sou
+
+
+initAnimatedTiles : Model -> List AnimatedTile
+initAnimatedTiles { tiles, waits } =
+    let
+        baseTiles =
+            List.indexedMap (\n t -> { tile = t, isWinningTile = False, x = n * 45 }) tiles
+
+        waitTiles =
+            List.map Tuple.first waits
+                |> List.map (\t -> { tile = t, isWinningTile = True, x = -100 })
+    in
+    List.append baseTiles waitTiles
+
+
+doAnimation : List AnimatedTile -> List AnimatedTile
+doAnimation tiles =
+    tiles
