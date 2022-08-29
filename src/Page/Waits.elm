@@ -36,6 +36,7 @@ type Msg
     | TilesGenerated (List Tile)
     | ToggleWaitTile Tile
     | ConfirmSelected
+    | StartWaitsAnimation ( Tile, List Group )
     | Tick Time.Posix
 
 
@@ -50,6 +51,7 @@ type alias AnimatedTile =
     { tile : Tile
     , isWinningTile : Bool
     , x : Int
+    , next : List Int
     }
 
 
@@ -102,7 +104,7 @@ update msg model =
                 update GenerateTiles model
 
             else
-                ( { model | tiles = tiles, waits = waits, selectedWaits = Set.empty, confirmedSelected = False, animatedTiles = initAnimatedTiles model }, Cmd.none )
+                ( initAnimatedTiles { model | tiles = tiles, waits = waits, selectedWaits = Set.empty, confirmedSelected = False }, Cmd.none )
 
         ToggleWaitTile tile ->
             let
@@ -116,7 +118,10 @@ update msg model =
                 ( { model | selectedWaits = Set.insert compTile model.selectedWaits }, Cmd.none )
 
         ConfirmSelected ->
-            ( { model | confirmedSelected = True, animatedTiles = initAnimatedTiles model }, Cmd.none )
+            ( { model | confirmedSelected = True }, Cmd.none )
+
+        StartWaitsAnimation ( tile, groups ) ->
+            ( { model | animatedTiles = setupAnimation model tile groups }, Cmd.none )
 
         Tick tickTime ->
             let
@@ -298,7 +303,7 @@ renderWinningTiles model =
                 (List.map
                     (\( t, g ) ->
                         tr []
-                            [ td [] [ UI.renderTiles False [ t ] ]
+                            [ td [ onClick (StartWaitsAnimation ( t, g )) ] [ UI.renderTiles False [ t ] ]
                             , td [] [ UI.drawGroups commonGroups g ]
                             ]
                     )
@@ -326,19 +331,70 @@ suitSelectionToSuit suitSelection =
             Just Tile.Sou
 
 
-initAnimatedTiles : Model -> List AnimatedTile
-initAnimatedTiles { tiles, waits } =
+tileWidth : Int
+tileWidth =
+    45
+
+
+initAnimatedTiles : Model -> Model
+initAnimatedTiles ({ tiles, waits } as model) =
     let
         baseTiles =
-            List.indexedMap (\n t -> { tile = t, isWinningTile = False, x = n * 45 }) tiles
+            List.indexedMap (\n t -> { tile = t, isWinningTile = False, x = n * tileWidth, next = [] }) tiles
 
         waitTiles =
             List.map Tuple.first waits
-                |> List.map (\t -> { tile = t, isWinningTile = True, x = -100 })
+                |> List.map (\t -> { tile = t, isWinningTile = True, x = -100, next = [] })
     in
-    List.append baseTiles waitTiles
+    { model | animatedTiles = List.append baseTiles waitTiles }
+
+
+setupAnimation : Model -> Tile -> List Group -> List AnimatedTile
+setupAnimation model tile groups =
+    let
+        --tiles = List.filter (\t -> not (.isWinningTile t) || (t.isWinningTile && t.tile == tile)) model.animatedTiles
+        dummyTile =
+            Tile 0 Tile.Man
+
+        groupTiles =
+            List.map Group.toTiles groups
+                |> List.intersperse [ dummyTile ]
+                |> List.concat
+
+        animTiles =
+            resetNextMovements model.animatedTiles
+
+        updateAnimTile : Tile -> Int -> List AnimatedTile -> List AnimatedTile
+        updateAnimTile currentTile offset listAnimTiles =
+            let
+                tileIndex =
+                    List.Extra.findIndex (\t -> t.tile == currentTile && List.isEmpty t.next) listAnimTiles
+            in
+            case tileIndex of
+                Just i ->
+                    List.Extra.updateAt i (\t -> { t | next = [ offset ] }) listAnimTiles
+
+                Nothing ->
+                    listAnimTiles
+    in
+    List.foldl
+        (\t ( offset, acc ) ->
+            if t == dummyTile then
+                ( offset + 5, acc )
+
+            else
+                ( offset + tileWidth, updateAnimTile t offset acc )
+        )
+        ( 0, animTiles )
+        groupTiles
+        |> Tuple.second
 
 
 doAnimation : List AnimatedTile -> List AnimatedTile
 doAnimation tiles =
     tiles
+
+
+resetNextMovements : List AnimatedTile -> List AnimatedTile
+resetNextMovements tiles =
+    List.map (\t -> { t | next = [] }) tiles
