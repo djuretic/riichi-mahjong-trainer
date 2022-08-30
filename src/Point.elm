@@ -16,7 +16,7 @@ easing : Point -> Point -> List Point
 easing initial final =
     let
         ratios =
-            List.map (\ii -> Ease.outSine (toFloat ii / toFloat easingSteps)) (List.range 0 easingSteps)
+            List.map (\ii -> Ease.outCubic (toFloat ii / toFloat easingSteps)) (List.range 0 easingSteps)
     in
     List.map
         (\r ->

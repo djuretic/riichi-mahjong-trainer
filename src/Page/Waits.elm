@@ -402,14 +402,17 @@ updateAnimTile currentTile offsetX listAnimTiles =
         Just i ->
             List.Extra.updateAt i
                 (\t ->
-                    { t
-                        | next = Point.easing t.pos ( offsetX, 0 )
-                        , pos =
+                    let
+                        pos =
                             if t.isWinningTile then
                                 Point.setX offsetX t.pos
 
                             else
                                 t.pos
+                    in
+                    { t
+                        | next = Point.easing pos ( offsetX, 0 )
+                        , pos = pos
                     }
                 )
                 listAnimTiles
