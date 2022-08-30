@@ -352,7 +352,6 @@ initAnimatedTiles ({ tiles, waits } as model) =
 setupAnimation : Model -> Tile -> List Group -> List AnimatedTile
 setupAnimation model tile groups =
     let
-        --tiles = List.filter (\t -> not (.isWinningTile t) || (t.isWinningTile && t.tile == tile)) model.animatedTiles
         dummyTile =
             Tile 0 Tile.Man
 
@@ -388,13 +387,36 @@ setupAnimation model tile groups =
         ( 0, animTiles )
         groupTiles
         |> Tuple.second
+        |> hideUnusedAnimatedTiles
 
 
 doAnimation : List AnimatedTile -> List AnimatedTile
 doAnimation tiles =
-    tiles
+    List.map
+        (\t ->
+            case t.next of
+                [] ->
+                    t
+
+                x :: xs ->
+                    { t | x = x, next = xs }
+        )
+        tiles
 
 
 resetNextMovements : List AnimatedTile -> List AnimatedTile
 resetNextMovements tiles =
     List.map (\t -> { t | next = [] }) tiles
+
+
+hideUnusedAnimatedTiles : List AnimatedTile -> List AnimatedTile
+hideUnusedAnimatedTiles tiles =
+    List.map
+        (\t ->
+            if List.isEmpty t.next && t.isWinningTile then
+                { t | x = -100 }
+
+            else
+                t
+        )
+        tiles
