@@ -121,8 +121,8 @@ update msg model =
         ConfirmSelected ->
             ( { model | confirmedSelected = True }, Cmd.none )
 
-        StartWaitsAnimation ( tile, groups ) ->
-            ( { model | animatedTiles = setupAnimation model tile groups }, Cmd.none )
+        StartWaitsAnimation ( _, groups ) ->
+            ( { model | animatedTiles = setupAnimation model groups }, Cmd.none )
 
         Tick tickTime ->
             let
@@ -364,8 +364,8 @@ initAnimatedTiles ({ tiles, waits } as model) =
     { model | animatedTiles = List.append baseTiles waitTiles }
 
 
-setupAnimation : Model -> Tile -> List Group -> List AnimatedTile
-setupAnimation model tile groups =
+setupAnimation : Model -> List Group -> List AnimatedTile
+setupAnimation model groups =
     let
         dummyTile =
             Tile 0 Tile.Man
