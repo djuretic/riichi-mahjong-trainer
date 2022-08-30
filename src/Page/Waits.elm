@@ -1,16 +1,16 @@
 module Page.Waits exposing (Model, Msg, init, subscriptions, update, view)
 
 import Browser.Events
-import Ease
 import Group exposing (Group)
 import Html exposing (Html, button, div, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (class, disabled, style)
 import Html.Events exposing (onClick)
 import List.Extra
+import Point
 import Random
 import Set exposing (Set)
 import Svg exposing (image, svg)
-import Svg.Attributes exposing (height, viewBox, width, x, xlinkHref)
+import Svg.Attributes exposing (height, viewBox, width, x, xlinkHref, y)
 import Tile exposing (Tile)
 import Time
 import UI
@@ -51,8 +51,8 @@ type SuitSelection
 type alias AnimatedTile =
     { tile : Tile
     , isWinningTile : Bool
-    , x : Int
-    , next : List Int
+    , pos : Point.Point
+    , next : List Point.Point
     }
 
 
@@ -312,7 +312,16 @@ renderWinningTiles model =
                 )
             ]
         , svg [ width "1000", height "120", viewBox "0 0 1000 120" ]
-            (List.map (\at -> image [ xlinkHref (UI.tilePath at.tile), x (String.fromInt at.x) ] []) model.animatedTiles)
+            (List.map
+                (\at ->
+                    let
+                        ( posX, posY ) =
+                            at.pos
+                    in
+                    image [ xlinkHref (UI.tilePath at.tile), x (String.fromInt posX), y (String.fromInt posY) ] []
+                )
+                model.animatedTiles
+            )
         ]
 
 
@@ -337,15 +346,20 @@ tileWidth =
     45
 
 
+tileHeight : Int
+tileHeight =
+    64
+
+
 initAnimatedTiles : Model -> Model
 initAnimatedTiles ({ tiles, waits } as model) =
     let
         baseTiles =
-            List.indexedMap (\n t -> { tile = t, isWinningTile = False, x = n * tileWidth, next = [] }) tiles
+            List.indexedMap (\n t -> { tile = t, isWinningTile = False, pos = ( n * tileWidth, 0 ), next = [] }) tiles
 
         waitTiles =
             List.map Tuple.first waits
-                |> List.map (\t -> { tile = t, isWinningTile = True, x = -100, next = [] })
+                |> List.map (\t -> { tile = t, isWinningTile = True, pos = ( 0, -tileHeight ), next = [] })
     in
     { model | animatedTiles = List.append baseTiles waitTiles }
 
@@ -363,30 +377,6 @@ setupAnimation model tile groups =
 
         animTiles =
             resetNextMovements model.animatedTiles
-
-        updateAnimTile : Tile -> Int -> List AnimatedTile -> List AnimatedTile
-        updateAnimTile currentTile offset listAnimTiles =
-            let
-                tileIndex =
-                    List.Extra.findIndex (\t -> t.tile == currentTile && List.isEmpty t.next) listAnimTiles
-            in
-            case tileIndex of
-                Just i ->
-                    let
-                        n =
-                            20
-
-                        ratios =
-                            List.map (\ii -> Ease.outSine (toFloat ii / n)) (List.range 0 n)
-
-                        positions : AnimatedTile -> List Int
-                        positions t =
-                            List.map (\r -> (1 - r) * toFloat t.x + r * toFloat offset |> round) ratios
-                    in
-                    List.Extra.updateAt i (\t -> { t | next = positions t }) listAnimTiles
-
-                Nothing ->
-                    listAnimTiles
     in
     List.foldl
         (\t ( offset, acc ) ->
@@ -402,18 +392,44 @@ setupAnimation model tile groups =
         |> hideUnusedAnimatedTiles
 
 
+updateAnimTile : Tile -> Int -> List AnimatedTile -> List AnimatedTile
+updateAnimTile currentTile offsetX listAnimTiles =
+    let
+        tileIndex =
+            List.Extra.findIndex (\t -> t.tile == currentTile && List.isEmpty t.next) listAnimTiles
+    in
+    case tileIndex of
+        Just i ->
+            List.Extra.updateAt i
+                (\t ->
+                    { t
+                        | next = Point.easing t.pos ( offsetX, 0 )
+                        , pos =
+                            if t.isWinningTile then
+                                Point.setX offsetX t.pos
+
+                            else
+                                t.pos
+                    }
+                )
+                listAnimTiles
+
+        Nothing ->
+            listAnimTiles
+
+
 doAnimation : List AnimatedTile -> List AnimatedTile
 doAnimation tiles =
-    List.map
-        (\t ->
+    let
+        process t =
             case t.next of
                 [] ->
                     t
 
-                x :: xs ->
-                    { t | x = x, next = xs }
-        )
-        tiles
+                pos :: xs ->
+                    { t | pos = pos, next = xs }
+    in
+    List.map process tiles
 
 
 resetNextMovements : List AnimatedTile -> List AnimatedTile
@@ -426,7 +442,7 @@ hideUnusedAnimatedTiles tiles =
     List.map
         (\t ->
             if List.isEmpty t.next && t.isWinningTile then
-                { t | x = -100 }
+                { t | next = Point.easing t.pos ( Tuple.first t.pos, -tileHeight ) }
 
             else
                 t
