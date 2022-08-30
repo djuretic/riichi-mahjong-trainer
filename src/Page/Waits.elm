@@ -1,6 +1,7 @@
 module Page.Waits exposing (Model, Msg, init, subscriptions, update, view)
 
 import Browser.Events
+import Ease
 import Group exposing (Group)
 import Html exposing (Html, button, div, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (class, disabled, style)
@@ -371,7 +372,18 @@ setupAnimation model tile groups =
             in
             case tileIndex of
                 Just i ->
-                    List.Extra.updateAt i (\t -> { t | next = [ offset ] }) listAnimTiles
+                    let
+                        n =
+                            20
+
+                        ratios =
+                            List.map (\ii -> Ease.outSine (toFloat ii / n)) (List.range 0 n)
+
+                        positions : AnimatedTile -> List Int
+                        positions t =
+                            List.map (\r -> (1 - r) * toFloat t.x + r * toFloat offset |> round) ratios
+                    in
+                    List.Extra.updateAt i (\t -> { t | next = positions t }) listAnimTiles
 
                 Nothing ->
                     listAnimTiles
@@ -379,7 +391,7 @@ setupAnimation model tile groups =
     List.foldl
         (\t ( offset, acc ) ->
             if t == dummyTile then
-                ( offset + 5, acc )
+                ( offset + 10, acc )
 
             else
                 ( offset + tileWidth, updateAnimTile t offset acc )
