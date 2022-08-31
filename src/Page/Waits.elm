@@ -10,7 +10,7 @@ import Point
 import Random
 import Set exposing (Set)
 import Svg exposing (image, svg)
-import Svg.Attributes exposing (height, viewBox, width, x, xlinkHref, y)
+import Svg.Attributes exposing (filter, height, viewBox, width, x, xlinkHref, y)
 import Tile exposing (Tile)
 import Time
 import UI
@@ -317,8 +317,15 @@ renderWinningTiles model =
                     let
                         ( posX, posY ) =
                             at.pos
+
+                        cssClasses =
+                            if at.isWinningTile then
+                                filter "sepia(50%)"
+
+                            else
+                                filter ""
                     in
-                    image [ xlinkHref (UI.tilePath at.tile), x (String.fromInt posX), y (String.fromInt posY) ] []
+                    image [ cssClasses, xlinkHref (UI.tilePath at.tile), x (String.fromInt posX), y (String.fromInt posY) ] []
                 )
                 model.animatedTiles
             )
