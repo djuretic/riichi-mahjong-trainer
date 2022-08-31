@@ -381,7 +381,7 @@ setupAnimation model groups =
     List.foldl
         (\t ( offset, acc ) ->
             if t == dummyTile then
-                ( offset + 10, acc )
+                ( offset + 15, acc )
 
             else
                 ( offset + tileWidth, updateAnimTile t offset acc )

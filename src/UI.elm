@@ -85,7 +85,7 @@ drawBackTile =
 tileCss : String -> List (Html.Attribute msg)
 tileCss path =
     [ style "background-image" ("url(" ++ path ++ ")")
-    , style "background-position-x" "-10px"
+    , style "background-position-x" "-11px"
     , style "height" "64px"
     , style "width" "45px"
     ]
