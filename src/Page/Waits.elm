@@ -10,7 +10,7 @@ import Point
 import Random
 import Set exposing (Set)
 import Svg exposing (image, svg)
-import Svg.Attributes exposing (filter, height, viewBox, width, x, xlinkHref, y)
+import Svg.Attributes exposing (filter, height, opacity, viewBox, width, x, xlinkHref, y)
 import Tile exposing (Tile)
 import Time
 import UI
@@ -50,10 +50,16 @@ type SuitSelection
 
 type alias AnimatedTile =
     { tile : Tile
-    , isWinningTile : Bool
+    , state : AnimState
     , pos : Point.Point
     , next : List Point.Point
     }
+
+
+type AnimState
+    = TileInHand
+    | WinningTileEnter
+    | WinningTileExit
 
 
 init : ( Model, Cmd Msg )
@@ -319,13 +325,22 @@ renderWinningTiles model =
                             at.pos
 
                         cssClasses =
-                            if at.isWinningTile then
+                            if List.member at.state [ WinningTileEnter, WinningTileExit ] then
                                 filter "sepia(50%)"
 
                             else
                                 filter ""
+
+                        opacityNumber =
+                            if at.state == WinningTileExit then
+                                toFloat (posY + tileHeight)
+                                    / toFloat tileHeight
+                                    |> String.fromFloat
+
+                            else
+                                "1"
                     in
-                    image [ cssClasses, xlinkHref (UI.tilePath at.tile), x (String.fromInt posX), y (String.fromInt posY) ] []
+                    image [ cssClasses, xlinkHref (UI.tilePath at.tile), x (String.fromInt posX), y (String.fromInt posY), opacity opacityNumber ] []
                 )
                 model.animatedTiles
             )
@@ -362,11 +377,11 @@ initAnimatedTiles : Model -> Model
 initAnimatedTiles ({ tiles, waits } as model) =
     let
         baseTiles =
-            List.indexedMap (\n t -> { tile = t, isWinningTile = False, pos = ( n * tileWidth, 0 ), next = [] }) tiles
+            List.indexedMap (\n t -> { tile = t, pos = ( n * tileWidth, 0 ), next = [], state = TileInHand }) tiles
 
         waitTiles =
             List.map Tuple.first waits
-                |> List.map (\t -> { tile = t, isWinningTile = True, pos = ( 0, -tileHeight ), next = [] })
+                |> List.map (\t -> { tile = t, pos = ( 0, -tileHeight ), next = [], state = WinningTileExit })
     in
     { model | animatedTiles = List.append baseTiles waitTiles }
 
@@ -411,7 +426,7 @@ updateAnimTile currentTile offsetX listAnimTiles =
                 (\t ->
                     let
                         pos =
-                            if t.isWinningTile then
+                            if t.state == WinningTileEnter || t.state == WinningTileExit then
                                 Point.setX offsetX t.pos
 
                             else
@@ -420,6 +435,12 @@ updateAnimTile currentTile offsetX listAnimTiles =
                     { t
                         | next = Point.easing pos ( offsetX, 0 )
                         , pos = pos
+                        , state =
+                            if t.state == WinningTileExit then
+                                WinningTileEnter
+
+                            else
+                                t.state
                     }
                 )
                 listAnimTiles
@@ -451,8 +472,8 @@ hideUnusedAnimatedTiles : List AnimatedTile -> List AnimatedTile
 hideUnusedAnimatedTiles tiles =
     List.map
         (\t ->
-            if List.isEmpty t.next && t.isWinningTile then
-                { t | next = Point.easing t.pos ( Tuple.first t.pos, -tileHeight ) }
+            if List.isEmpty t.next && List.member t.state [ WinningTileEnter, WinningTileExit ] then
+                { t | next = Point.easing t.pos ( Tuple.first t.pos, -tileHeight ), state = WinningTileExit }
 
             else
                 t
