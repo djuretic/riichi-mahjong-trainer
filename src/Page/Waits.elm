@@ -301,23 +301,23 @@ renderWinningTiles model =
             [ text "Wait tiles:"
             , renderTiles False (List.map Tuple.first model.waits)
             ]
-        , table [ class "table is-striped is-fullwidth " ]
+        , table [ class "table is-striped" ]
             [ thead []
-                [ th [] [ text "Tile" ]
-                , th [] [ text "Groups" ]
+                [ th [] [ text "Groups" ]
                 ]
             , tbody []
                 (List.map
                     (\( t, g ) ->
                         tr []
-                            [ td [ onClick (StartWaitsAnimation ( t, g )) ] [ UI.renderTiles False [ t ] ]
-                            , td [] [ UI.drawGroups commonGroups t g ]
+                            [ td [] [ UI.drawGroups commonGroups t g ]
                             ]
                     )
                     model.waits
                 )
             ]
-        , svg [ width "1000", height "120", viewBox "0 0 1000 120" ]
+        , div [ class "block is-flex is-flex-direction-row" ]
+            (List.map (\( t, g ) -> UI.drawTile [ onClick (StartWaitsAnimation ( t, g )), class "is-clickable" ] t) model.waits)
+        , svg [ width "1000", height "120", viewBox "11 0 1000 120" ]
             (List.map
                 (\at ->
                     let
