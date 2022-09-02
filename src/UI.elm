@@ -106,8 +106,9 @@ tileHeight =
 
 tileCss : String -> List (Html.Attribute msg)
 tileCss path =
-    [ style "background-image" ("url(" ++ path ++ ")")
-    , style "background-position-x" "-10px"
+    [ style "background-image" ("url(" ++ path ++ "), url(/img/placeholder.png)")
+    , style "background-position-x" "-11px, 0px"
+    , style "background-repeat" "no-repeat, no-repeat"
     , style "height" (String.fromInt tileHeight ++ "px")
     , style "width" (String.fromInt tileWidth ++ "px")
     , style "padding-right" "1px"

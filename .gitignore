@@ -1,4 +1,5 @@
-img
+img/*
+!img/placeholder.png
 elm-stuff
 package-lock.json
 node_modules/
