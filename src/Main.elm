@@ -18,6 +18,7 @@ main =
         }
 
 
+linkStylesheetNode : String -> Html.Html msg
 linkStylesheetNode path =
     let
         attrs =

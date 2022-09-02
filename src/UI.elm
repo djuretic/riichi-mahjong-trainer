@@ -1,4 +1,4 @@
-module UI exposing (drawGroups, drawGroupsSimple, drawTile, drawTileSimple, renderTiles, tilePath)
+module UI exposing (drawGroups, drawGroupsSimple, drawTile, drawTileSimple, renderTiles, tileHeight, tilePath, tileWidth)
 
 import Group
 import Html
@@ -94,12 +94,23 @@ drawBackTile =
     Html.div (tileCss "/img/face-down-64px.png") []
 
 
+tileWidth : Int
+tileWidth =
+    44
+
+
+tileHeight : Int
+tileHeight =
+    64
+
+
 tileCss : String -> List (Html.Attribute msg)
 tileCss path =
     [ style "background-image" ("url(" ++ path ++ ")")
-    , style "background-position-x" "-11px"
-    , style "height" "64px"
-    , style "width" "45px"
+    , style "background-position-x" "-10px"
+    , style "height" (String.fromInt tileHeight ++ "px")
+    , style "width" (String.fromInt tileWidth ++ "px")
+    , style "padding-right" "1px"
     ]
 
 

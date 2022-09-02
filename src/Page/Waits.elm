@@ -333,8 +333,8 @@ renderWinningTiles model =
 
                         opacityNumber =
                             if at.state == WinningTileExit then
-                                toFloat (posY + tileHeight)
-                                    / toFloat tileHeight
+                                toFloat (posY + UI.tileHeight)
+                                    / toFloat UI.tileHeight
                                     |> String.fromFloat
 
                             else
@@ -363,25 +363,15 @@ suitSelectionToSuit suitSelection =
             Just Tile.Sou
 
 
-tileWidth : Int
-tileWidth =
-    45
-
-
-tileHeight : Int
-tileHeight =
-    64
-
-
 initAnimatedTiles : Model -> Model
 initAnimatedTiles ({ tiles, waits } as model) =
     let
         baseTiles =
-            List.indexedMap (\n t -> { tile = t, pos = ( n * tileWidth, 0 ), next = [], state = TileInHand }) tiles
+            List.indexedMap (\n t -> { tile = t, pos = ( n * UI.tileWidth, 0 ), next = [], state = TileInHand }) tiles
 
         waitTiles =
             List.map Tuple.first waits
-                |> List.map (\t -> { tile = t, pos = ( 0, -tileHeight ), next = [], state = WinningTileExit })
+                |> List.map (\t -> { tile = t, pos = ( 0, -UI.tileHeight ), next = [], state = WinningTileExit })
     in
     { model | animatedTiles = List.append baseTiles waitTiles }
 
@@ -406,7 +396,7 @@ setupAnimation model groups =
                 ( offset + 15, acc )
 
             else
-                ( offset + tileWidth, updateAnimTile t offset acc )
+                ( offset + UI.tileWidth, updateAnimTile t offset acc )
         )
         ( 0, animTiles )
         groupTiles
@@ -473,7 +463,7 @@ hideUnusedAnimatedTiles tiles =
     List.map
         (\t ->
             if List.isEmpty t.next && List.member t.state [ WinningTileEnter, WinningTileExit ] then
-                { t | next = Point.easing t.pos ( Tuple.first t.pos, -tileHeight ), state = WinningTileExit }
+                { t | next = Point.easing t.pos ( Tuple.first t.pos, -UI.tileHeight ), state = WinningTileExit }
 
             else
                 t
