@@ -210,5 +210,6 @@ drawGroupsSimple groups =
     Html.div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap" ] (List.map (drawGroup [] Nothing) groups)
 
 
+winningTileCss : Html.Attribute msg
 winningTileCss =
     Html.Attributes.style "filter" "sepia(50%)"
