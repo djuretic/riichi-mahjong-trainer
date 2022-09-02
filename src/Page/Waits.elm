@@ -13,7 +13,7 @@ import Svg exposing (image, svg)
 import Svg.Attributes exposing (filter, height, opacity, viewBox, width, x, xlinkHref, y)
 import Tile exposing (Tile)
 import Time
-import UI
+import UI exposing (renderTiles)
 
 
 type alias Model =
@@ -285,7 +285,7 @@ renderWaitButtons model =
                             , selectedCss t
                             , style "cursor" "pointer"
                             ]
-                            [ UI.drawTile t ]
+                            [ UI.drawTileSimple t ]
                     )
                     tiles
                 )
@@ -301,7 +301,11 @@ renderWinningTiles model =
             Group.commonGroups (List.map Tuple.second model.waits)
     in
     div []
-        [ table [ class "table is-striped is-fullwidth" ]
+        [ div [ class "block" ]
+            [ text "Wait tiles:"
+            , renderTiles False (List.map Tuple.first model.waits)
+            ]
+        , table [ class "table is-striped is-fullwidth" ]
             [ thead []
                 [ th [] [ text "Tile" ]
                 , th [] [ text "Groups" ]
@@ -311,7 +315,7 @@ renderWinningTiles model =
                     (\( t, g ) ->
                         tr []
                             [ td [ onClick (StartWaitsAnimation ( t, g )) ] [ UI.renderTiles False [ t ] ]
-                            , td [] [ UI.drawGroups commonGroups g ]
+                            , td [] [ UI.drawGroups commonGroups t g ]
                             ]
                     )
                     model.waits

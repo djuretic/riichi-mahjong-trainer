@@ -243,7 +243,7 @@ renderTabContent model =
                             (\( t, g ) ->
                                 tr []
                                     [ td [] [ UI.renderTiles False [ t ] ]
-                                    , td [] [ UI.drawGroups commonGroups g ]
+                                    , td [] [ UI.drawGroups commonGroups t g ]
                                     ]
                             )
                             winningTiles

@@ -1,4 +1,4 @@
-module UI exposing (drawGroups, drawGroupsSimple, drawTile, renderTiles, tilePath)
+module UI exposing (drawGroups, drawGroupsSimple, drawTile, drawTileSimple, renderTiles, tilePath)
 
 import Group
 import Html
@@ -7,11 +7,18 @@ import List.Extra
 import Tile
 
 
+type alias GroupData =
+    { group : Group.Group
+    , isRepeated : Bool
+    , winningTile : Maybe Tile.Tile
+    }
+
+
 renderTiles : Bool -> List Tile.Tile -> Html.Html msg
 renderTiles addEmptySpots tiles =
     let
         renderedTiles =
-            List.map drawTile tiles
+            List.map drawTileSimple tiles
 
         emptySpots =
             if addEmptySpots then
@@ -21,13 +28,13 @@ renderTiles addEmptySpots tiles =
                 []
 
         allTiles =
-            List.append (List.map drawTile tiles) emptySpots
+            List.append (List.map drawTileSimple tiles) emptySpots
     in
     Html.div [ class "is-flex is-flex-direction-row" ] allTiles
 
 
-drawTile : Tile.Tile -> Html.Html msg
-drawTile tile =
+drawTile : List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg
+drawTile attrs tile =
     let
         path =
             tilePath tile
@@ -36,7 +43,12 @@ drawTile tile =
         Html.text ""
 
     else
-        Html.div (tileCss path) []
+        Html.div (tileCss path |> List.append attrs) []
+
+
+drawTileSimple : Tile.Tile -> Html.Html msg
+drawTileSimple tile =
+    drawTile [] tile
 
 
 tilePath : Tile.Tile -> String
@@ -119,8 +131,8 @@ pathHonorTile n =
             ""
 
 
-drawGroups : List Group.Group -> List Group.Group -> Html.Html msg
-drawGroups specialGroups groups =
+drawGroups : List Group.Group -> Tile.Tile -> List Group.Group -> Html.Html msg
+drawGroups specialGroups winTile groups =
     let
         addGroupIsRepeatedData sg lg =
             case lg of
@@ -129,13 +141,28 @@ drawGroups specialGroups groups =
 
                 x :: xs ->
                     if List.Extra.find (\e -> e == x) sg /= Nothing then
-                        ( x, True ) :: addGroupIsRepeatedData (List.Extra.remove x sg) xs
+                        { group = x, isRepeated = True, winningTile = Nothing } :: addGroupIsRepeatedData (List.Extra.remove x sg) xs
 
                     else
-                        ( x, False ) :: addGroupIsRepeatedData sg xs
+                        { group = x, isRepeated = False, winningTile = Nothing } :: addGroupIsRepeatedData sg xs
+
+        addCointainsWinningTile : List GroupData -> List GroupData
+        addCointainsWinningTile groupsData =
+            let
+                pos =
+                    List.Extra.findIndices (\g -> Group.member winTile g.group) groupsData
+                        |> List.Extra.last
+            in
+            case pos of
+                Just i ->
+                    List.Extra.updateAt i (\g -> { g | winningTile = Just winTile }) groupsData
+
+                Nothing ->
+                    groupsData
 
         groupsWithRepeatedInfo =
             addGroupIsRepeatedData specialGroups groups
+                |> addCointainsWinningTile
 
         css isRepeated =
             if isRepeated then
@@ -145,15 +172,43 @@ drawGroups specialGroups groups =
                 class ""
     in
     Html.div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap" ]
-        (List.map (\( g, isRepeated ) -> drawGroup [ css isRepeated ] g) groupsWithRepeatedInfo)
+        (List.map (\{ group, isRepeated, winningTile } -> drawGroup [ css isRepeated ] winningTile group) groupsWithRepeatedInfo)
 
 
-drawGroup : List (Html.Attribute msg) -> Group.Group -> Html.Html msg
-drawGroup attrs group =
+drawGroup : List (Html.Attribute msg) -> Maybe Tile.Tile -> Group.Group -> Html.Html msg
+drawGroup attrs winningTile group =
+    let
+        tiles : List ( Tile.Tile, List (Html.Attribute msg) )
+        tiles =
+            Group.toTiles group
+                |> List.map (\t -> ( t, [] ))
+
+        tilesWithWinInfo =
+            case winningTile of
+                Just winTile ->
+                    let
+                        pos =
+                            List.Extra.elemIndices ( winTile, [] ) tiles
+                                |> List.Extra.last
+                    in
+                    case pos of
+                        Just i ->
+                            List.Extra.updateAt i (\( t, _ ) -> ( t, [ winningTileCss ] )) tiles
+
+                        Nothing ->
+                            tiles
+
+                Nothing ->
+                    tiles
+    in
     Html.div (List.append [ class "is-flex is-flex-direction-row", style "padding-right" "10px" ] attrs)
-        (List.map drawTile (Group.toTiles group))
+        (List.map (\( t, atts ) -> drawTile atts t) tilesWithWinInfo)
 
 
 drawGroupsSimple : List Group.Group -> Html.Html msg
 drawGroupsSimple groups =
-    Html.div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap" ] (List.map (drawGroup []) groups)
+    Html.div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap" ] (List.map (drawGroup [] Nothing) groups)
+
+
+winningTileCss =
+    Html.Attributes.style "filter" "sepia(50%)"

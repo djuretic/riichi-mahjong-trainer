@@ -14,6 +14,7 @@ module Group exposing
     , isRun
     , isTriplet
     , isWinningHand
+    , member
     , randomCompleteGroups
     , randomTenpaiGroups
     , randomWinningGroups
@@ -496,3 +497,8 @@ isWinningHand tiles groups =
             List.length groups == (numTiles + 1) // 3
     in
     enoughTiles && enoughGroups && not (Tile.hasMoreThan4Tiles tiles)
+
+
+member : Tile.Tile -> Group -> Bool
+member tile group =
+    List.member tile (toTiles group)
