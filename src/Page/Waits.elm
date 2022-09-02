@@ -94,13 +94,13 @@ update msg model =
             ( model, Random.generate TilesGenerated (Group.randomTenpaiGroups model.numberOfNonPairs (suitSelectionToSuit model.suitSelection)) )
 
         SetSuitSelection suitSelection ->
-            ( { model | suitSelection = suitSelection }, Cmd.none )
+            update GenerateTiles { model | suitSelection = suitSelection }
 
         SetNumberNonPairs num ->
-            ( { model | numberOfNonPairs = num }, Cmd.none )
+            update GenerateTiles { model | numberOfNonPairs = num }
 
         SetNumberMinWaits num ->
-            ( { model | minNumberOfWaits = num }, Cmd.none )
+            update GenerateTiles { model | minNumberOfWaits = num }
 
         TilesGenerated tiles ->
             let
@@ -176,18 +176,14 @@ view model =
                 (renderMinWaitsSelector model)
     in
     div []
-        [ div []
+        [ div [ class "block" ]
             [ suitSelector
             , tilesSelector
             , minWaitsSelector
-            , div [ class "field is-horizontal" ]
-                [ div [ class "field-label" ] []
-                , div [ class "field-body" ] [ div [ class "control" ] [ button [ class "button is-primary", onClick GenerateTiles ] [ text "Generate" ] ] ]
-                ]
             ]
         , div [ class "block" ] [ UI.renderTiles False model.tiles ]
         , div [ class "block" ] [ text "Select wait tiles:", renderWaitButtons model ]
-        , button [ class "button", onClick ConfirmSelected, disabled (Set.isEmpty model.selectedWaits) ] [ text "Confirm" ]
+        , button [ class "button block", onClick ConfirmSelected, disabled (Set.isEmpty model.selectedWaits) ] [ text "Confirm" ]
         , if model.confirmedSelected then
             renderWinningTiles model
 
@@ -300,12 +296,12 @@ renderWinningTiles model =
         commonGroups =
             Group.commonGroups (List.map Tuple.second model.waits)
     in
-    div []
+    div [ class "block" ]
         [ div [ class "block" ]
             [ text "Wait tiles:"
             , renderTiles False (List.map Tuple.first model.waits)
             ]
-        , table [ class "table is-striped is-fullwidth" ]
+        , table [ class "table is-striped is-fullwidth " ]
             [ thead []
                 [ th [] [ text "Tile" ]
                 , th [] [ text "Groups" ]
