@@ -1,4 +1,15 @@
-module UI exposing (drawGroups, drawGroupsSimple, drawTile, drawTileSimple, renderTiles, tileHeight, tilePath, tileWidth)
+module UI exposing
+    ( drawGroups
+    , drawGroupsSimple
+    , drawTile
+    , drawTileSimple
+    , renderTiles
+    , tileGap
+    , tileGapCss
+    , tileHeight
+    , tilePath
+    , tileWidth
+    )
 
 import Group
 import Html
@@ -30,7 +41,7 @@ renderTiles addEmptySpots tiles =
         allTiles =
             List.append (List.map drawTileSimple tiles) emptySpots
     in
-    Html.div [ class "is-flex is-flex-direction-row" ] allTiles
+    Html.div [ class "is-flex is-flex-direction-row", tileGapCss ] allTiles
 
 
 drawTile : List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg
@@ -96,12 +107,32 @@ drawBackTile =
 
 tileWidth : Int
 tileWidth =
-    44
+    42
 
 
 tileHeight : Int
 tileHeight =
     64
+
+
+tileGap : Int
+tileGap =
+    2
+
+
+tileGapCss : Html.Attribute msg
+tileGapCss =
+    Html.Attributes.style "gap" (String.fromInt tileGap ++ "px")
+
+
+groupGap : Int
+groupGap =
+    10
+
+
+groupGapCss : Html.Attribute msg
+groupGapCss =
+    Html.Attributes.style "gap" (String.fromInt groupGap ++ "px")
 
 
 tileCss : String -> List (Html.Attribute msg)
@@ -111,7 +142,6 @@ tileCss path =
     , style "background-repeat" "no-repeat, no-repeat"
     , style "height" (String.fromInt tileHeight ++ "px")
     , style "width" (String.fromInt tileWidth ++ "px")
-    , style "padding-right" "1px"
     ]
 
 
@@ -183,7 +213,7 @@ drawGroups specialGroups winTile groups =
             else
                 class ""
     in
-    Html.div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap" ]
+    Html.div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap", tileGapCss ]
         (List.map (\{ group, isRepeated, winningTile } -> drawGroup [ css isRepeated ] winningTile group) groupsWithRepeatedInfo)
 
 
@@ -213,13 +243,13 @@ drawGroup attrs winningTile group =
                 Nothing ->
                     tiles
     in
-    Html.div (List.append [ class "is-flex is-flex-direction-row", style "padding-right" "10px" ] attrs)
+    Html.div (List.append [ class "is-flex is-flex-direction-row", groupGapCss ] attrs)
         (List.map (\( t, atts ) -> drawTile atts t) tilesWithWinInfo)
 
 
 drawGroupsSimple : List Group.Group -> Html.Html msg
 drawGroupsSimple groups =
-    Html.div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap" ] (List.map (drawGroup [] Nothing) groups)
+    Html.div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap", groupGapCss ] (List.map (drawGroup [] Nothing) groups)
 
 
 winningTileCss : Html.Attribute msg

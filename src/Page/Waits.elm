@@ -13,7 +13,7 @@ import Svg exposing (image, svg)
 import Svg.Attributes exposing (filter, height, opacity, viewBox, width, x, xlinkHref, y)
 import Tile exposing (Tile)
 import Time
-import UI exposing (renderTiles)
+import UI
 
 
 type alias Model =
@@ -273,7 +273,7 @@ renderWaitButtons model =
                 style "opacity" "0.5"
 
         renderRow tiles =
-            div [ class "is-flex is-flex-direction-row" ]
+            div [ class "is-flex is-flex-direction-row", UI.tileGapCss ]
                 (List.map
                     (\t ->
                         div
@@ -299,7 +299,7 @@ renderWinningTiles model =
     div [ class "block" ]
         [ div [ class "block" ]
             [ text "Wait tiles:"
-            , renderTiles False (List.map Tuple.first model.waits)
+            , UI.renderTiles False (List.map Tuple.first model.waits)
             ]
         , table [ class "table is-striped" ]
             [ thead []
@@ -315,7 +315,7 @@ renderWinningTiles model =
                     model.waits
                 )
             ]
-        , div [ class "block is-flex is-flex-direction-row" ]
+        , div [ class "block is-flex is-flex-direction-row", UI.tileGapCss ]
             (List.map (\( t, g ) -> UI.drawTile [ onClick (StartWaitsAnimation ( t, g )), class "is-clickable" ] t) model.waits)
         , svg [ width "1000", height "120", viewBox "11 0 1000 120" ]
             (List.map
@@ -367,7 +367,7 @@ initAnimatedTiles : Model -> Model
 initAnimatedTiles ({ tiles, waits } as model) =
     let
         baseTiles =
-            List.indexedMap (\n t -> { tile = t, pos = ( n * UI.tileWidth, 0 ), next = [], state = TileInHand }) tiles
+            List.indexedMap (\n t -> { tile = t, pos = ( n * (UI.tileWidth + UI.tileGap), 0 ), next = [], state = TileInHand }) tiles
 
         waitTiles =
             List.map Tuple.first waits
@@ -396,7 +396,7 @@ setupAnimation model groups =
                 ( offset + 15, acc )
 
             else
-                ( offset + UI.tileWidth, updateAnimTile t offset acc )
+                ( offset + UI.tileWidth + UI.tileGap, updateAnimTile t offset acc )
         )
         ( 0, animTiles )
         groupTiles
