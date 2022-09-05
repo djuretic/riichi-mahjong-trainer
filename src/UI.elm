@@ -213,7 +213,7 @@ drawGroups specialGroups winTile groups =
             else
                 class ""
     in
-    Html.div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap", tileGapCss ]
+    Html.div [ class "groups is-flex is-flex-direction-row is-flex-wrap-wrap", groupGapCss ]
         (List.map (\{ group, isRepeated, winningTile } -> drawGroup [ css isRepeated ] winningTile group) groupsWithRepeatedInfo)
 
 
@@ -243,13 +243,13 @@ drawGroup attrs winningTile group =
                 Nothing ->
                     tiles
     in
-    Html.div (List.append [ class "is-flex is-flex-direction-row", groupGapCss ] attrs)
+    Html.div (List.append [ class "group is-flex is-flex-direction-row", tileGapCss ] attrs)
         (List.map (\( t, atts ) -> drawTile atts t) tilesWithWinInfo)
 
 
 drawGroupsSimple : List Group.Group -> Html.Html msg
 drawGroupsSimple groups =
-    Html.div [ class "is-flex is-flex-direction-row is-flex-wrap-wrap", groupGapCss ] (List.map (drawGroup [] Nothing) groups)
+    Html.div [ class "groups is-flex is-flex-direction-row is-flex-wrap-wrap", groupGapCss ] (List.map (drawGroup [] Nothing) groups)
 
 
 winningTileCss : Html.Attribute msg
