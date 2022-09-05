@@ -315,7 +315,7 @@ renderWinningTiles model =
                     model.waits
                 )
             ]
-        , div [ class "block is-flex is-flex-direction-row", UI.tileGapCss ]
+        , div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss, UI.tileHeightCss ]
             (List.map (\( t, g ) -> UI.drawTile [ onClick (StartWaitsAnimation ( t, g )), class "is-clickable" ] t) model.waits)
         , svg [ width "1000", height "120", viewBox "11 0 1000 120" ]
             (List.map

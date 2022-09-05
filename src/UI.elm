@@ -7,6 +7,7 @@ module UI exposing
     , tileGap
     , tileGapCss
     , tileHeight
+    , tileHeightCss
     , tilePath
     , tileWidth
     )
@@ -41,7 +42,7 @@ renderTiles addEmptySpots tiles =
         allTiles =
             List.append (List.map drawTileSimple tiles) emptySpots
     in
-    Html.div [ class "is-flex is-flex-direction-row", tileGapCss ] allTiles
+    Html.div [ class "tiles is-flex is-flex-direction-row", tileGapCss, tileHeightCss ] allTiles
 
 
 drawTile : List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg
@@ -115,6 +116,11 @@ tileHeight =
     64
 
 
+tileHeightCss : Html.Attribute msg
+tileHeightCss =
+    style "height" (String.fromInt tileHeight ++ "px")
+
+
 tileGap : Int
 tileGap =
     2
@@ -138,8 +144,10 @@ groupGapCss =
 tileCss : String -> List (Html.Attribute msg)
 tileCss path =
     [ style "background-image" ("url(" ++ path ++ "), url(/img/placeholder.png)")
-    , style "background-position-x" "-11px, 0px"
+    , style "background-position-x" "49%, 0px"
     , style "background-repeat" "no-repeat, no-repeat"
+    , style "background-size" "152%, 100%"
+    , style "padding-bottom" "152%"
     , style "height" (String.fromInt tileHeight ++ "px")
     , style "width" (String.fromInt tileWidth ++ "px")
     ]
@@ -213,7 +221,7 @@ drawGroups specialGroups winTile groups =
             else
                 class ""
     in
-    Html.div [ class "groups is-flex is-flex-direction-row is-flex-wrap-wrap", groupGapCss ]
+    Html.div [ class "groups is-flex is-flex-direction-row is-flex-wrap-wrap", groupGapCss, tileHeightCss ]
         (List.map (\{ group, isRepeated, winningTile } -> drawGroup [ css isRepeated ] winningTile group) groupsWithRepeatedInfo)
 
 
@@ -249,7 +257,7 @@ drawGroup attrs winningTile group =
 
 drawGroupsSimple : List Group.Group -> Html.Html msg
 drawGroupsSimple groups =
-    Html.div [ class "groups is-flex is-flex-direction-row is-flex-wrap-wrap", groupGapCss ] (List.map (drawGroup [] Nothing) groups)
+    Html.div [ class "groups is-flex is-flex-direction-row is-flex-wrap-wrap", groupGapCss, tileHeightCss ] (List.map (drawGroup [] Nothing) groups)
 
 
 winningTileCss : Html.Attribute msg
