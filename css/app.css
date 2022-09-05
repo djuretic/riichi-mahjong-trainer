@@ -5,3 +5,7 @@ html {
 .footer {
     padding-bottom: 3rem;
 }
+
+.group {
+    min-width: 20px;
+}

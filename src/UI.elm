@@ -150,6 +150,9 @@ tileCss path =
     , style "padding-bottom" "152%"
     , style "height" (String.fromInt tileHeight ++ "px")
     , style "width" (String.fromInt tileWidth ++ "px")
+
+    -- needed for nested flex to work when shrinking
+    , style "min-width" "20px"
     ]
 
 
@@ -221,7 +224,7 @@ drawGroups specialGroups winTile groups =
             else
                 class ""
     in
-    Html.div [ class "groups is-flex is-flex-direction-row is-flex-wrap-wrap", groupGapCss, tileHeightCss ]
+    Html.div [ class "groups is-flex is-flex-direction-row", groupGapCss, tileHeightCss ]
         (List.map (\{ group, isRepeated, winningTile } -> drawGroup [ css isRepeated ] winningTile group) groupsWithRepeatedInfo)
 
 
@@ -257,7 +260,7 @@ drawGroup attrs winningTile group =
 
 drawGroupsSimple : List Group.Group -> Html.Html msg
 drawGroupsSimple groups =
-    Html.div [ class "groups is-flex is-flex-direction-row is-flex-wrap-wrap", groupGapCss, tileHeightCss ] (List.map (drawGroup [] Nothing) groups)
+    Html.div [ class "groups is-flex is-flex-direction-row", groupGapCss, tileHeightCss ] (List.map (drawGroup [] Nothing) groups)
 
 
 winningTileCss : Html.Attribute msg

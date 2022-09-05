@@ -301,6 +301,14 @@ renderWinningTiles model =
             [ text "Wait tiles:"
             , UI.renderTiles False (List.map Tuple.first model.waits)
             ]
+        , div [ class "block is-flex is-flex-direction-column", style "gap" "15px" ]
+            (List.map
+                    (\( t, g ) ->
+                        div []
+                            [UI.drawGroups commonGroups t g]
+                    )
+                    model.waits
+                )
         , table [ class "table is-striped" ]
             [ thead []
                 [ th [] [ text "Groups" ]
