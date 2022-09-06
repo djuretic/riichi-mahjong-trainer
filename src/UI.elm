@@ -216,15 +216,9 @@ drawGroups specialGroups winTile groups =
             addGroupIsRepeatedData specialGroups groups
                 |> addCointainsWinningTile
 
-        css isRepeated =
-            if isRepeated then
-                style "opacity" "0.5"
-
-            else
-                class ""
     in
     Html.div [ class "groups is-flex is-flex-direction-row", groupGapCss, tileHeightCss ]
-        (List.map (\{ group, isRepeated, winningTile } -> drawGroup [ css isRepeated ] winningTile group) groupsWithRepeatedInfo)
+        (List.map (\{ group, winningTile } -> drawGroup [] winningTile group) groupsWithRepeatedInfo)
 
 
 drawGroup : List (Html.Attribute msg) -> Maybe Tile.Tile -> Group.Group -> Html.Html msg
