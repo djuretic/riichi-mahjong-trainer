@@ -147,7 +147,6 @@ tileCss path =
     , style "background-position-x" "49%, 0px"
     , style "background-repeat" "no-repeat, no-repeat"
     , style "background-size" "152%, 100%"
-    , style "padding-bottom" "152%"
     , style "height" (String.fromInt tileHeight ++ "px")
     , style "width" (String.fromInt tileWidth ++ "px")
 
