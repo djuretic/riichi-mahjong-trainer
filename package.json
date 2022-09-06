@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "format": "elm-format src/ tests/",
+    "debug": "elm-live src/Main.elm --open -- --debug",
+    "live": "elm-live src/Main.elm --open",
     "test": "elm-test"
   },
   "repository": {
@@ -20,5 +22,9 @@
   "dependencies": {
     "elm-format": "^0.8.5",
     "elm-test": "^0.19.1-revision9"
+  },
+  "devDependencies": {
+    "elm": "^0.19.1-5",
+    "elm-live": "^4.0.2"
   }
 }
