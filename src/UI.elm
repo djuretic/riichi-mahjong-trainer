@@ -9,6 +9,7 @@ module UI exposing
     , tileHeight
     , tileHeightCss
     , tilePath
+    , tileScale
     , tileWidth
     )
 
@@ -75,13 +76,13 @@ tilePath { number, suit } =
     if isRedDora then
         case suit of
             Tile.Sou ->
-                "/img/red-doras/red-dora-bamboo5.png"
+                "/img/128px/red-doras/red-dora-bamboo5.png"
 
             Tile.Pin ->
-                "/img/red-doras/red-dora-pin5.png"
+                "/img/128px/red-doras/red-dora-pin5.png"
 
             Tile.Man ->
-                "/img/red-doras/red-dora-man5.png"
+                "/img/128px/red-doras/red-dora-man5.png"
 
             Tile.Honor ->
                 ""
@@ -89,13 +90,13 @@ tilePath { number, suit } =
     else
         case suit of
             Tile.Sou ->
-                "/img/bamboo/bamboo" ++ n ++ ".png"
+                "/img/128px/bamboo/bamboo" ++ n ++ ".png"
 
             Tile.Pin ->
-                "/img/pin/pin" ++ n ++ ".png"
+                "/img/128px/pin/pin" ++ n ++ ".png"
 
             Tile.Man ->
-                "/img/man/man" ++ n ++ ".png"
+                "/img/128px/man/man" ++ n ++ ".png"
 
             Tile.Honor ->
                 pathHonorTile number
@@ -106,14 +107,19 @@ drawBackTile =
     Html.div (tileCss "/img/face-down-64px.png") []
 
 
+tileScale : Float
+tileScale =
+    1.5
+
+
 tileWidth : Int
 tileWidth =
-    42
+    toFloat 42 * tileScale |> round
 
 
 tileHeight : Int
 tileHeight =
-    64
+    toFloat 64 * tileScale |> round
 
 
 tileHeightCss : Html.Attribute msg
@@ -143,7 +149,7 @@ groupGapCss =
 
 tileCss : String -> List (Html.Attribute msg)
 tileCss path =
-    [ style "background-image" ("url(" ++ path ++ "), url(/img/placeholder.png)")
+    [ style "background-image" ("url(" ++ path ++ "), url(/img/128px/placeholder.png)")
     , style "background-position-x" "49%, 0px"
     , style "background-repeat" "no-repeat, no-repeat"
     , style "background-size" "152%, 100%"

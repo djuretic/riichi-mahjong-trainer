@@ -321,6 +321,9 @@ renderWinningTiles model =
     let
         commonGroups =
             Group.commonGroups (List.map Tuple.second model.waits)
+
+        heightStr =
+            String.fromInt UI.tileHeight
     in
     div [ class "block" ]
         [ div [ class "block" ]
@@ -351,7 +354,7 @@ renderWinningTiles model =
             ]
         , div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss, UI.tileHeightCss ]
             (List.map (\( t, g ) -> UI.drawTile [ onClick (StartWaitsAnimation ( t, g )), class "is-clickable" ] t) model.waits)
-        , svg [ width "1000", height "120", viewBox "11 0 1000 120" ]
+        , svg [ width "1000", height heightStr, viewBox ("11 0 1000 " ++ heightStr) ]
             (List.map
                 (\at ->
                     let
@@ -374,7 +377,15 @@ renderWinningTiles model =
                             else
                                 "1"
                     in
-                    image [ cssClasses, xlinkHref (UI.tilePath at.tile), x (String.fromInt posX), y (String.fromInt posY), opacity opacityNumber ] []
+                    image
+                        [ cssClasses
+                        , xlinkHref (UI.tilePath at.tile)
+                        , x (String.fromInt posX)
+                        , y (String.fromInt posY)
+                        , width (String.fromInt (64 * UI.tileScale |> round))
+                        , opacity opacityNumber
+                        ]
+                        []
                 )
                 model.animatedTiles
             )
