@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "format": "elm-format src/ tests/",
+    "make": "elm make src/Main.elm --output app.js",
     "debug": "elm-live src/Main.elm --open -- --debug",
-    "live": "elm-live src/Main.elm --open",
+    "live": "elm-live src/Main.elm --open -- --output app.js",
     "test": "elm-test"
   },
   "repository": {

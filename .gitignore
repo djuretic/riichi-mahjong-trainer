@@ -4,4 +4,4 @@ elm-stuff
 package-lock.json
 node_modules/
 *.md
-index.html
+app.js

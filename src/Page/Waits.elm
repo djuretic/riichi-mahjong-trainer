@@ -1,10 +1,12 @@
-module Page.Waits exposing (Model, Msg, init, subscriptions, update, view)
+port module Page.Waits exposing (Model, Msg, init, subscriptions, update, view)
 
 import Browser.Events
 import Group exposing (Group)
 import Html exposing (Html, button, div, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (class, disabled, style)
 import Html.Events exposing (onClick)
+import Json.Decode as D
+import Json.Encode as E
 import List.Extra
 import Point
 import Random
@@ -14,6 +16,9 @@ import Svg.Attributes exposing (filter, height, opacity, viewBox, width, x, xlin
 import Tile exposing (Tile)
 import Time
 import UI
+
+
+port setStorageWaits : E.Value -> Cmd msg
 
 
 type alias Model =
@@ -26,6 +31,13 @@ type alias Model =
     , confirmedSelected : Bool
     , lastTick : Int
     , animatedTiles : List AnimatedTile
+    }
+
+
+type alias PreferencesModel =
+    { suitSelection : SuitSelection
+    , numberOfNonPairs : Int
+    , minNumberOfWaits : Int
     }
 
 
@@ -62,13 +74,22 @@ type AnimState
     | WinningTileExit
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( { suitSelection = RandomSuit
+init : E.Value -> ( Model, Cmd Msg )
+init flags =
+    let
+        prefs =
+            case D.decodeValue decoder flags of
+                Ok pref ->
+                    pref
+
+                Err _ ->
+                    { suitSelection = RandomSuit, numberOfNonPairs = 1, minNumberOfWaits = 1 }
+    in
+    ( { suitSelection = prefs.suitSelection
       , tiles = []
       , waits = []
-      , numberOfNonPairs = 1
-      , minNumberOfWaits = 1
+      , numberOfNonPairs = prefs.numberOfNonPairs
+      , minNumberOfWaits = prefs.minNumberOfWaits
       , selectedWaits = Set.empty
       , confirmedSelected = False
       , lastTick = 0
@@ -91,7 +112,12 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GenerateTiles ->
-            ( model, Random.generate TilesGenerated (Group.randomTenpaiGroups model.numberOfNonPairs (suitSelectionToSuit model.suitSelection)) )
+            ( model
+            , Cmd.batch
+                [ setStorageWaits (encode model)
+                , Random.generate TilesGenerated (Group.randomTenpaiGroups model.numberOfNonPairs (suitSelectionToSuit model.suitSelection))
+                ]
+            )
 
         SetSuitSelection suitSelection ->
             update GenerateTiles { model | suitSelection = suitSelection }
@@ -303,12 +329,12 @@ renderWinningTiles model =
             ]
         , div [ class "block is-flex is-flex-direction-column", style "gap" "15px" ]
             (List.map
-                    (\( t, g ) ->
-                        div []
-                            [UI.drawGroups commonGroups t g]
-                    )
-                    model.waits
+                (\( t, g ) ->
+                    div []
+                        [ UI.drawGroups commonGroups t g ]
                 )
+                model.waits
+            )
         , table [ class "table is-striped" ]
             [ thead []
                 [ th [] [ text "Groups" ]
@@ -477,3 +503,58 @@ hideUnusedAnimatedTiles tiles =
                 t
         )
         tiles
+
+
+suitSelectionToString : SuitSelection -> String
+suitSelectionToString suitSel =
+    case suitSel of
+        RandomSuit ->
+            "r"
+
+        FixedSuitMan ->
+            "m"
+
+        FixedSuitPin ->
+            "p"
+
+        FixedSuitSou ->
+            "s"
+
+
+stringToSuitSelection : String -> SuitSelection
+stringToSuitSelection s =
+    case s of
+        "r" ->
+            RandomSuit
+
+        "m" ->
+            FixedSuitMan
+
+        "p" ->
+            FixedSuitPin
+
+        "s" ->
+            FixedSuitSou
+
+        _ ->
+            RandomSuit
+
+
+decoder : D.Decoder PreferencesModel
+decoder =
+    D.map3
+        (\suit nonPairs minWaits ->
+            { suitSelection = stringToSuitSelection suit, numberOfNonPairs = nonPairs, minNumberOfWaits = minWaits }
+        )
+        (D.field "suit" D.string)
+        (D.field "nonPairs" D.int)
+        (D.field "minWaits" D.int)
+
+
+encode : Model -> E.Value
+encode model =
+    E.object
+        [ ( "suit", E.string (suitSelectionToString model.suitSelection) )
+        , ( "nonPairs", E.int model.numberOfNonPairs )
+        , ( "minWaits", E.int model.minNumberOfWaits )
+        ]

@@ -215,7 +215,6 @@ drawGroups specialGroups winTile groups =
         groupsWithRepeatedInfo =
             addGroupIsRepeatedData specialGroups groups
                 |> addCointainsWinningTile
-
     in
     Html.div [ class "groups is-flex is-flex-direction-row", groupGapCss, tileHeightCss ]
         (List.map (\{ group, winningTile } -> drawGroup [] winningTile group) groupsWithRepeatedInfo)

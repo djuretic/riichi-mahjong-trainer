@@ -4,11 +4,12 @@ import Browser
 import Html
 import Html.Attributes exposing (attribute, class, href, style, target)
 import Html.Events exposing (onClick)
+import Json.Encode as E
 import Page.Scoring
 import Page.Waits
 
 
-main : Program () Model Msg
+main : Program E.Value Model Msg
 main =
     Browser.element
         { init = init
@@ -42,14 +43,14 @@ type Page
     | WaitsPage
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : E.Value -> ( Model, Cmd Msg )
+init flags =
     let
         ( scoring, scoringCmd ) =
             Page.Scoring.init
 
         ( waits, waitsCmd ) =
-            Page.Waits.init
+            Page.Waits.init flags
     in
     ( { page = WaitsPage
       , scoring = scoring
