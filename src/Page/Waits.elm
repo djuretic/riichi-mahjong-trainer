@@ -324,6 +324,9 @@ renderWinningTiles model =
 
         heightStr =
             String.fromInt UI.tileHeight
+
+        doubleHeightStr =
+            String.fromInt (2 * UI.tileHeight)
     in
     div [ class "block" ]
         [ div [ class "block" ]
@@ -354,41 +357,43 @@ renderWinningTiles model =
             ]
         , div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss, UI.tileHeightCss ]
             (List.map (\( t, g ) -> UI.drawTile [ onClick (StartWaitsAnimation ( t, g )), class "is-clickable" ] t) model.waits)
-        , svg [ width "1000", height heightStr, viewBox ("11 0 1000 " ++ heightStr) ]
-            (List.map
-                (\at ->
-                    let
-                        ( posX, posY ) =
-                            at.pos
+        , div [ class "tiles block is-flex is-flex-direction-row", UI.tileHeightDoubleCss ]
+            [ svg [ width "1000", height doubleHeightStr, viewBox ("11 -" ++ heightStr ++ " 1000 " ++ doubleHeightStr) ]
+                (List.map
+                    (\at ->
+                        let
+                            ( posX, posY ) =
+                                at.pos
 
-                        cssClasses =
-                            if List.member at.state [ WinningTileEnter, WinningTileExit ] then
-                                filter "sepia(50%)"
+                            cssClasses =
+                                if List.member at.state [ WinningTileEnter, WinningTileExit ] then
+                                    filter "sepia(50%)"
 
-                            else
-                                filter ""
+                                else
+                                    filter ""
 
-                        opacityNumber =
-                            if at.state == WinningTileExit then
-                                toFloat (posY + UI.tileHeight)
-                                    / toFloat UI.tileHeight
-                                    |> String.fromFloat
+                            opacityNumber =
+                                if at.state == WinningTileExit then
+                                    toFloat (posY + UI.tileHeight)
+                                        / toFloat UI.tileHeight
+                                        |> String.fromFloat
 
-                            else
-                                "1"
-                    in
-                    image
-                        [ cssClasses
-                        , xlinkHref (UI.tilePath at.tile)
-                        , x (String.fromInt posX)
-                        , y (String.fromInt posY)
-                        , width (String.fromInt (64 * UI.tileScale |> round))
-                        , opacity opacityNumber
-                        ]
-                        []
+                                else
+                                    "1"
+                        in
+                        image
+                            [ cssClasses
+                            , xlinkHref (UI.tilePath at.tile)
+                            , x (String.fromInt posX)
+                            , y (String.fromInt posY)
+                            , width (String.fromInt (64 * UI.tileScale |> round))
+                            , opacity opacityNumber
+                            ]
+                            []
+                    )
+                    model.animatedTiles
                 )
-                model.animatedTiles
-            )
+            ]
         ]
 
 

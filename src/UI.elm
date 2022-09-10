@@ -8,6 +8,7 @@ module UI exposing
     , tileGapCss
     , tileHeight
     , tileHeightCss
+    , tileHeightDoubleCss
     , tilePath
     , tileScale
     , tileWidth
@@ -125,6 +126,11 @@ tileHeight =
 tileHeightCss : Html.Attribute msg
 tileHeightCss =
     style "height" (String.fromInt tileHeight ++ "px")
+
+
+tileHeightDoubleCss : Html.Attribute msg
+tileHeightDoubleCss =
+    style "height" (String.fromInt (2 * tileHeight) ++ "px")
 
 
 tileGap : Int
