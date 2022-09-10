@@ -299,15 +299,15 @@ renderWaitButtons model =
                 style "opacity" "0.5"
 
         renderRow tiles =
-            div [ class "is-flex is-flex-direction-row", UI.tileGapCss ]
+            div [ class "waits-buttons is-flex is-flex-direction-row", UI.tileGapCss ]
                 (List.map
                     (\t ->
-                        div
+                        UI.drawTile
                             [ onClick (ToggleWaitTile t)
                             , selectedCss t
                             , style "cursor" "pointer"
                             ]
-                            [ UI.drawTileSimple t ]
+                            t
                     )
                     tiles
                 )
