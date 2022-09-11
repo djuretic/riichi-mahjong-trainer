@@ -327,13 +327,20 @@ renderWinningTiles model =
 
         doubleHeightStr =
             String.fromInt (2 * UI.tileHeight)
+
+        groupGapSvg =
+            15
+
+        widthStr =
+            String.fromInt
+                ((model.numberOfNonPairs * 3 + 2) * (UI.tileWidth + UI.tileGap) + (groupGapSvg * 4) + 5)
     in
     div [ class "block" ]
         [ div [ class "block" ]
             [ text "Wait tiles:"
             , UI.renderTiles False (List.map Tuple.first model.waits)
             ]
-        , div [ class "block is-flex is-flex-direction-column", style "gap" "15px" ]
+        , div [ class "block is-flex is-flex-direction-column", style "gap" (String.fromInt groupGapSvg ++ "px") ]
             (List.map
                 (\( t, g ) ->
                     div []
@@ -358,7 +365,7 @@ renderWinningTiles model =
         , div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss, UI.tileHeightCss ]
             (List.map (\( t, g ) -> UI.drawTile [ onClick (StartWaitsAnimation ( t, g )), class "is-clickable" ] t) model.waits)
         , div [ class "tiles block is-flex is-flex-direction-row", UI.tileHeightDoubleCss ]
-            [ svg [ width "1000", height doubleHeightStr, viewBox ("11 -" ++ heightStr ++ " 1000 " ++ doubleHeightStr) ]
+            [ svg [ width widthStr, height doubleHeightStr, viewBox ("11 -" ++ heightStr ++ " " ++ widthStr ++ " " ++ doubleHeightStr) ]
                 (List.map
                     (\at ->
                         let

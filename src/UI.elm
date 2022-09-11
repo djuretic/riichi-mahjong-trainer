@@ -133,6 +133,8 @@ tileHeightDoubleCss =
     style "height" (String.fromInt (2 * tileHeight) ++ "px")
 
 
+{-| Gap between individual tiles
+-}
 tileGap : Int
 tileGap =
     2
