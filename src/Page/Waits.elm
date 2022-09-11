@@ -2,7 +2,7 @@ port module Page.Waits exposing (Model, Msg, init, subscriptions, update, view)
 
 import Browser.Events
 import Group exposing (Group)
-import Html exposing (Html, button, div, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, button, div, label, text)
 import Html.Attributes exposing (class, disabled, style)
 import Html.Events exposing (onClick)
 import Json.Decode as D
@@ -348,20 +348,6 @@ renderWinningTiles model =
                 )
                 model.waits
             )
-        , table [ class "table is-striped" ]
-            [ thead []
-                [ th [] [ text "Groups" ]
-                ]
-            , tbody []
-                (List.map
-                    (\( t, g ) ->
-                        tr []
-                            [ td [] [ UI.drawGroups commonGroups t g ]
-                            ]
-                    )
-                    model.waits
-                )
-            ]
         , div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss, UI.tileHeightCss ]
             (List.map (\( t, g ) -> UI.drawTile [ onClick (StartWaitsAnimation ( t, g )), class "is-clickable" ] t) model.waits)
         , div [ class "tiles block is-flex is-flex-direction-row", UI.tileHeightDoubleCss ]
