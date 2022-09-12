@@ -131,7 +131,7 @@ view model =
                     ]
                 ]
             , Html.h1 [ class "title" ] [ Html.text "Riichi mahjong trainer" ]
-            , content
+            , Html.div [ class "main" ] [ content ]
             ]
         , Html.footer [ class "footer" ]
             [ Html.div [ class "content has-text-centered" ]
