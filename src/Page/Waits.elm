@@ -140,15 +140,19 @@ update msg model =
                 ( initAnimatedTiles { model | tiles = tiles, waits = waits, selectedWaits = Set.empty, confirmedSelected = False }, Cmd.none )
 
         ToggleWaitTile tile ->
-            let
-                compTile =
-                    Tile.toComparable tile
-            in
-            if Set.member compTile model.selectedWaits then
-                ( { model | selectedWaits = Set.remove compTile model.selectedWaits }, Cmd.none )
+            if model.confirmedSelected then
+                ( model, Cmd.none )
 
             else
-                ( { model | selectedWaits = Set.insert compTile model.selectedWaits }, Cmd.none )
+                let
+                    compTile =
+                        Tile.toComparable tile
+                in
+                if Set.member compTile model.selectedWaits then
+                    ( { model | selectedWaits = Set.remove compTile model.selectedWaits }, Cmd.none )
+
+                else
+                    ( { model | selectedWaits = Set.insert compTile model.selectedWaits }, Cmd.none )
 
         ConfirmSelected ->
             ( { model | confirmedSelected = True }, Cmd.none )
@@ -209,7 +213,7 @@ view model =
             ]
         , div [ class "block" ] [ UI.renderTiles False model.tiles ]
         , div [ class "block" ] [ text "Select wait tiles:", renderWaitButtons model ]
-        , button [ class "button block", onClick ConfirmSelected, disabled (Set.isEmpty model.selectedWaits) ] [ text "Confirm" ]
+        , button [ class "button block", onClick ConfirmSelected, disabled (Set.isEmpty model.selectedWaits || model.confirmedSelected) ] [ text "Confirm" ]
         , if model.confirmedSelected then
             renderWinningTiles model
 

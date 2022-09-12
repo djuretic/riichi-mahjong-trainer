@@ -3,7 +3,6 @@ module Main exposing (main)
 import Browser
 import Html
 import Html.Attributes exposing (attribute, class, href, style, target)
-import Html.Events exposing (onClick)
 import Json.Encode as E
 import Page.Scoring
 import Page.Waits
@@ -107,12 +106,11 @@ view model =
                 WaitsPage ->
                     Html.map WaitsMsg (Page.Waits.view model.waits)
 
-        isActive targetPage =
-            if model.page == targetPage then
-                class "is-active"
-
-            else
-                class ""
+        -- isActive targetPage =
+        --     if model.page == targetPage then
+        --         class "is-active"
+        --     else
+        --         class ""
     in
     Html.div
         [ style "background-color" "#ffffff"
@@ -120,6 +118,7 @@ view model =
         [ Html.div [ class "container" ]
             [ linkStylesheetNode "../css/bulma.min.css"
             , linkStylesheetNode "../css/app.css"
+
             -- , Html.nav [ class "navbar" ]
             --     [ Html.div [ class "navbar-menu" ]
             --         [ Html.div [ class "navbar-brand" ]
