@@ -235,15 +235,15 @@ renderSuitSelection : Model -> Html Msg
 renderSuitSelection model =
     let
         createButton txt suitSel =
-            let
-                cssClass =
-                    if model.suitSelection == suitSel then
-                        class "button is-primary is-selected"
-
-                    else
-                        class "button"
-            in
-            button [ cssClass, onClick (SetSuitSelection suitSel) ] [ text txt ]
+            button
+                [ classList
+                    [ ( "button", True )
+                    , ( "is-primary", model.suitSelection == suitSel )
+                    , ( "is-selected", model.suitSelection == suitSel )
+                    ]
+                , onClick (SetSuitSelection suitSel)
+                ]
+                [ text txt ]
     in
     div [ class "buttons has-addons" ]
         [ createButton "Random" RandomSuit
@@ -257,15 +257,15 @@ renderNumberTilesSelector : Model -> Html Msg
 renderNumberTilesSelector model =
     let
         createButton txt numberOfNonPairs =
-            let
-                cssClass =
-                    if model.numberOfNonPairs == numberOfNonPairs then
-                        class "button is-primary is-selected"
-
-                    else
-                        class "button"
-            in
-            button [ cssClass, onClick (SetNumberNonPairs numberOfNonPairs) ] [ text txt ]
+            button
+                [ classList
+                    [ ( "button", True )
+                    , ( "is-primary", model.numberOfNonPairs == numberOfNonPairs )
+                    , ( "is-selected", model.numberOfNonPairs == numberOfNonPairs )
+                    ]
+                , onClick (SetNumberNonPairs numberOfNonPairs)
+                ]
+                [ text txt ]
     in
     div [ class "buttons has-addons" ]
         [ createButton "4" 1
@@ -279,15 +279,15 @@ renderMinWaitsSelector : Model -> Html Msg
 renderMinWaitsSelector model =
     let
         createButton txt minNumberOfWaits =
-            let
-                cssClass =
-                    if model.minNumberOfWaits == minNumberOfWaits then
-                        class "button is-primary is-selected"
-
-                    else
-                        class "button"
-            in
-            button [ cssClass, onClick (SetNumberMinWaits minNumberOfWaits) ] [ text txt ]
+            button
+                [ classList
+                    [ ( "button", True )
+                    , ( "is-primary", model.minNumberOfWaits == minNumberOfWaits )
+                    , ( "is-selected", model.minNumberOfWaits == minNumberOfWaits )
+                    ]
+                , onClick (SetNumberMinWaits minNumberOfWaits)
+                ]
+                [ text txt ]
     in
     div [ class "buttons has-addons" ]
         [ createButton "1" 1
@@ -336,11 +336,7 @@ renderWinningTilesSection model =
             15
 
         isActiveTabCss expected =
-            if model.groupsView == expected then
-                class "is-active"
-
-            else
-                class ""
+            classList [ ( "is-active", model.groupsView == expected ) ]
 
         groupsTable =
             if model.groupsView == GroupTable && model.confirmedSelected then
