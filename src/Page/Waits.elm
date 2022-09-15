@@ -323,18 +323,8 @@ renderWaitButtons model =
 renderWinningTiles : Model -> Html Msg
 renderWinningTiles model =
     let
-        heightStr =
-            String.fromInt UI.tileHeight
-
-        doubleHeightStr =
-            String.fromInt (2 * UI.tileHeight)
-
         groupGapSvg =
             15
-
-        widthStr =
-            String.fromInt
-                ((model.numberOfNonPairs * 3 + 2) * (UI.tileWidth + UI.tileGap) + (groupGapSvg * 4) + 5)
     in
     div [ class "block" ]
         [ div [ class "block" ]
@@ -351,43 +341,59 @@ renderWinningTiles model =
             )
         , div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss, UI.tileHeightCss ]
             (List.map (\( t, g ) -> UI.drawTile [ onClick (StartWaitsAnimation ( t, g )), class "is-clickable" ] t) model.waits)
-        , div [ class "tiles block is-flex is-flex-direction-row", UI.tileHeightDoubleCss ]
-            [ svg [ width widthStr, height doubleHeightStr, viewBox ("11 -" ++ heightStr ++ " " ++ widthStr ++ " " ++ doubleHeightStr) ]
-                (List.map
-                    (\at ->
-                        let
-                            ( posX, posY ) =
-                                at.pos
+        , renderSvg groupGapSvg model
+        ]
 
-                            cssClasses =
-                                if List.member at.state [ WinningTileEnter, WinningTileExit ] then
-                                    filter "sepia(50%)"
 
-                                else
-                                    filter ""
+renderSvg : Int -> Model -> Html Msg
+renderSvg groupGapSvg model =
+    let
+        heightStr =
+            String.fromInt UI.tileHeight
 
-                            opacityNumber =
-                                if at.state == WinningTileExit then
-                                    toFloat (posY + UI.tileHeight)
-                                        / toFloat UI.tileHeight
-                                        |> String.fromFloat
+        doubleHeightStr =
+            String.fromInt (2 * UI.tileHeight)
 
-                                else
-                                    "1"
-                        in
-                        image
-                            [ cssClasses
-                            , xlinkHref (UI.tilePath at.tile)
-                            , x (String.fromInt posX)
-                            , y (String.fromInt posY)
-                            , width (String.fromInt (64 * UI.tileScale |> round))
-                            , opacity opacityNumber
-                            ]
-                            []
-                    )
-                    model.animatedTiles
+        widthStr =
+            String.fromInt
+                ((model.numberOfNonPairs * 3 + 2) * (UI.tileWidth + UI.tileGap) + (groupGapSvg * 4) + 5)
+    in
+    div [ class "tiles block is-flex is-flex-direction-row", UI.tileHeightDoubleCss ]
+        [ svg [ width widthStr, height doubleHeightStr, viewBox ("11 -" ++ heightStr ++ " " ++ widthStr ++ " " ++ doubleHeightStr) ]
+            (List.map
+                (\at ->
+                    let
+                        ( posX, posY ) =
+                            at.pos
+
+                        cssClasses =
+                            if List.member at.state [ WinningTileEnter, WinningTileExit ] then
+                                filter "sepia(50%)"
+
+                            else
+                                filter ""
+
+                        opacityNumber =
+                            if at.state == WinningTileExit then
+                                toFloat (posY + UI.tileHeight)
+                                    / toFloat UI.tileHeight
+                                    |> String.fromFloat
+
+                            else
+                                "1"
+                    in
+                    image
+                        [ cssClasses
+                        , xlinkHref (UI.tilePath at.tile)
+                        , x (String.fromInt posX)
+                        , y (String.fromInt posY)
+                        , width (String.fromInt (64 * UI.tileScale |> round))
+                        , opacity opacityNumber
+                        ]
+                        []
                 )
-            ]
+                model.animatedTiles
+            )
         ]
 
 
