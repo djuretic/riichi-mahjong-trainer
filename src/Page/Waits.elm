@@ -2,7 +2,7 @@ port module Page.Waits exposing (Model, Msg, init, subscriptions, update, view)
 
 import Browser.Events
 import Group exposing (Group)
-import Html exposing (Html, button, div, label, text)
+import Html exposing (Html, a, button, div, label, li, text, ul)
 import Html.Attributes exposing (class, disabled, style)
 import Html.Events exposing (onClick)
 import Json.Decode as D
@@ -31,7 +31,13 @@ type alias Model =
     , confirmedSelected : Bool
     , lastTick : Int
     , animatedTiles : List AnimatedTile
+    , groupsView : GroupsView
     }
+
+
+type GroupsView
+    = GroupAnimation
+    | GroupTable
 
 
 type alias PreferencesModel =
@@ -49,6 +55,7 @@ type Msg
     | TilesGenerated (List Tile)
     | ToggleWaitTile Tile
     | ConfirmSelected
+    | SetGroupsView GroupsView
     | StartWaitsAnimation ( Tile, List Group )
     | Tick Time.Posix
 
@@ -94,6 +101,7 @@ init flags =
       , confirmedSelected = False
       , lastTick = 0
       , animatedTiles = []
+      , groupsView = GroupAnimation
       }
     , Random.generate TilesGenerated (Group.randomTenpaiGroups 1 Nothing)
     )
@@ -156,6 +164,9 @@ update msg model =
 
         ConfirmSelected ->
             ( { model | confirmedSelected = True }, Cmd.none )
+
+        SetGroupsView groupsView ->
+            ( { model | groupsView = groupsView }, Cmd.none )
 
         StartWaitsAnimation ( _, groups ) ->
             ( { model | animatedTiles = setupAnimation model groups }, Cmd.none )
@@ -325,24 +336,54 @@ renderWinningTiles model =
     let
         groupGapSvg =
             15
+
+        isActiveTabCss expected =
+            if model.groupsView == expected then
+                class "is-active"
+
+            else
+                class ""
+
+        groupsTable =
+            if model.groupsView == GroupTable then
+                [ div [ class "block is-flex is-flex-direction-column", style "gap" (String.fromInt groupGapSvg ++ "px") ]
+                    (List.map
+                        (\( t, g ) ->
+                            div []
+                                [ UI.drawGroups t g ]
+                        )
+                        model.waits
+                    )
+                ]
+
+            else
+                []
+
+        groupsSvgAnimation =
+            if model.groupsView == GroupAnimation then
+                [ div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss, UI.tileHeightCss ]
+                    (List.map (\( t, g ) -> UI.drawTile [ onClick (StartWaitsAnimation ( t, g )), class "is-clickable" ] t) model.waits)
+                , renderSvg groupGapSvg model
+                ]
+
+            else
+                []
     in
     div [ class "block" ]
-        [ div [ class "block" ]
+        ([ div [ class "block" ]
             [ text "Wait tiles:"
             , UI.renderTiles False (List.map Tuple.first model.waits)
             ]
-        , div [ class "block is-flex is-flex-direction-column", style "gap" (String.fromInt groupGapSvg ++ "px") ]
-            (List.map
-                (\( t, g ) ->
-                    div []
-                        [ UI.drawGroups t g ]
-                )
-                model.waits
-            )
-        , div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss, UI.tileHeightCss ]
-            (List.map (\( t, g ) -> UI.drawTile [ onClick (StartWaitsAnimation ( t, g )), class "is-clickable" ] t) model.waits)
-        , renderSvg groupGapSvg model
-        ]
+         , div [ class "tabs is-boxed" ]
+            [ ul []
+                [ li [ isActiveTabCss GroupAnimation, onClick (SetGroupsView GroupAnimation) ] [ a [] [ text "Animation" ] ]
+                , li [ isActiveTabCss GroupTable, onClick (SetGroupsView GroupTable) ] [ a [] [ text "Table" ] ]
+                ]
+            ]
+         ]
+            ++ groupsTable
+            ++ groupsSvgAnimation
+        )
 
 
 renderSvg : Int -> Model -> Html Msg
