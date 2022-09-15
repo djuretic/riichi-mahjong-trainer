@@ -91,20 +91,26 @@ init flags =
 
                 Err _ ->
                     { suitSelection = RandomSuit, numberOfNonPairs = 1, minNumberOfWaits = 1 }
+
+        model =
+            { suitSelection = prefs.suitSelection
+            , tiles = []
+            , waits = []
+            , numberOfNonPairs = prefs.numberOfNonPairs
+            , minNumberOfWaits = prefs.minNumberOfWaits
+            , selectedWaits = Set.empty
+            , confirmedSelected = False
+            , lastTick = 0
+            , animatedTiles = []
+            , groupsView = GroupAnimation
+            }
     in
-    ( { suitSelection = prefs.suitSelection
-      , tiles = []
-      , waits = []
-      , numberOfNonPairs = prefs.numberOfNonPairs
-      , minNumberOfWaits = prefs.minNumberOfWaits
-      , selectedWaits = Set.empty
-      , confirmedSelected = False
-      , lastTick = 0
-      , animatedTiles = []
-      , groupsView = GroupAnimation
-      }
-    , Random.generate TilesGenerated (Group.randomTenpaiGroups 1 Nothing)
-    )
+    ( model, cmdGenerateRandomTiles model )
+
+
+cmdGenerateRandomTiles : Model -> Cmd Msg
+cmdGenerateRandomTiles model =
+    Random.generate TilesGenerated (Group.randomTenpaiGroups model.numberOfNonPairs (suitSelectionToSuit model.suitSelection))
 
 
 subscriptions : Model -> Sub Msg
@@ -123,7 +129,7 @@ update msg model =
             ( model
             , Cmd.batch
                 [ setStorageWaits (encode model)
-                , Random.generate TilesGenerated (Group.randomTenpaiGroups model.numberOfNonPairs (suitSelectionToSuit model.suitSelection))
+                , cmdGenerateRandomTiles model
                 ]
             )
 
