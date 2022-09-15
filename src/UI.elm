@@ -197,9 +197,10 @@ pathHonorTile n =
             ""
 
 
-drawGroups : List Group.Group -> Tile.Tile -> List Group.Group -> Html.Html msg
-drawGroups specialGroups winTile groups =
+drawGroups : Tile.Tile -> List Group.Group -> Html.Html msg
+drawGroups winTile groups =
     let
+        -- unused
         addGroupIsRepeatedData sg lg =
             case lg of
                 [] ->
@@ -227,7 +228,7 @@ drawGroups specialGroups winTile groups =
                     groupsData
 
         groupsWithRepeatedInfo =
-            addGroupIsRepeatedData specialGroups groups
+            addGroupIsRepeatedData [] groups
                 |> addCointainsWinningTile
     in
     Html.div [ class "groups is-flex is-flex-direction-row", groupGapCss, tileHeightCss ]

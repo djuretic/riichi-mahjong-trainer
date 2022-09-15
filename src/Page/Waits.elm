@@ -323,9 +323,6 @@ renderWaitButtons model =
 renderWinningTiles : Model -> Html Msg
 renderWinningTiles model =
     let
-        commonGroups =
-            Group.commonGroups (List.map Tuple.second model.waits)
-
         heightStr =
             String.fromInt UI.tileHeight
 
@@ -348,7 +345,7 @@ renderWinningTiles model =
             (List.map
                 (\( t, g ) ->
                     div []
-                        [ UI.drawGroups commonGroups t g ]
+                        [ UI.drawGroups t g ]
                 )
                 model.waits
             )
