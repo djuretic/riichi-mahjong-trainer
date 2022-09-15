@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Html
-import Html.Attributes exposing (attribute, class, href, style, target)
+import Html.Attributes exposing (class, href, style, target)
 import Json.Encode as E
 import Page.Scoring
 import Page.Waits
@@ -16,18 +16,6 @@ main =
         , view = view
         , subscriptions = subscriptions
         }
-
-
-linkStylesheetNode : String -> Html.Html msg
-linkStylesheetNode path =
-    let
-        attrs =
-            [ attribute "rel" "stylesheet"
-            , attribute "property" "stylesheet"
-            , attribute "href" path
-            ]
-    in
-    Html.node "link" attrs []
 
 
 type alias Model =
@@ -116,20 +104,17 @@ view model =
         [ style "background-color" "#ffffff"
         ]
         [ Html.div [ class "container" ]
-            [ linkStylesheetNode "../css/bulma.min.css"
-            , linkStylesheetNode "../css/app.css"
-
-            -- , Html.nav [ class "navbar" ]
-            --     [ Html.div [ class "navbar-menu" ]
-            --         [ Html.div [ class "navbar-brand" ]
-            --             [ Html.a [ class "navbar-item" ] [ Html.text "Mahjong" ] ]
-            --         , Html.div [ class "navbar-start" ]
-            --             [ Html.a [ class "navbar-item", onClick (SetPage ScoringPage), isActive ScoringPage ] [ Html.text "Scoring" ]
-            --             , Html.a [ class "navbar-item", onClick (SetPage WaitsPage), isActive WaitsPage ] [ Html.text "Waits" ]
-            --             ]
-            --         ]
-            --     ]
-            , Html.h1 [ class "title" ] [ Html.text "Riichi mahjong trainer" ]
+            [ -- , Html.nav [ class "navbar" ]
+              --     [ Html.div [ class "navbar-menu" ]
+              --         [ Html.div [ class "navbar-brand" ]
+              --             [ Html.a [ class "navbar-item" ] [ Html.text "Mahjong" ] ]
+              --         , Html.div [ class "navbar-start" ]
+              --             [ Html.a [ class "navbar-item", onClick (SetPage ScoringPage), isActive ScoringPage ] [ Html.text "Scoring" ]
+              --             , Html.a [ class "navbar-item", onClick (SetPage WaitsPage), isActive WaitsPage ] [ Html.text "Waits" ]
+              --             ]
+              --         ]
+              --     ]
+              Html.h1 [ class "title" ] [ Html.text "Riichi mahjong trainer" ]
             , Html.div [ class "main" ] [ content ]
             ]
         , Html.footer [ class "footer" ]
