@@ -44,6 +44,7 @@ type alias PreferencesModel =
     { suitSelection : SuitSelection
     , numberOfNonPairs : Int
     , minNumberOfWaits : Int
+    , groupsView : GroupsView
     }
 
 
@@ -90,7 +91,7 @@ init flags =
                     pref
 
                 Err _ ->
-                    { suitSelection = RandomSuit, numberOfNonPairs = 1, minNumberOfWaits = 1 }
+                    { suitSelection = RandomSuit, numberOfNonPairs = 1, minNumberOfWaits = 1, groupsView = GroupAnimation }
 
         model =
             { suitSelection = prefs.suitSelection
@@ -102,7 +103,7 @@ init flags =
             , confirmedSelected = False
             , lastTick = 0
             , animatedTiles = []
-            , groupsView = GroupAnimation
+            , groupsView = prefs.groupsView
             }
     in
     ( model, cmdGenerateRandomTiles model )
@@ -172,7 +173,11 @@ update msg model =
             ( { model | confirmedSelected = True }, Cmd.none )
 
         SetGroupsView groupsView ->
-            ( { model | groupsView = groupsView }, Cmd.none )
+            let
+                newModel =
+                    { model | groupsView = groupsView }
+            in
+            ( newModel, setStorageWaits (encode newModel) )
 
         StartWaitsAnimation ( _, groups ) ->
             ( { model | animatedTiles = setupAnimation model groups }, Cmd.none )
@@ -608,19 +613,42 @@ stringToSuitSelection s =
 
 decoder : D.Decoder PreferencesModel
 decoder =
-    D.map3
-        (\suit nonPairs minWaits ->
-            { suitSelection = stringToSuitSelection suit, numberOfNonPairs = nonPairs, minNumberOfWaits = minWaits }
+    D.map4
+        (\suit nonPairs minWaits gView ->
+            let
+                groupsView =
+                    case gView of
+                        "a" ->
+                            GroupAnimation
+
+                        "t" ->
+                            GroupTable
+
+                        _ ->
+                            GroupAnimation
+            in
+            { suitSelection = stringToSuitSelection suit, numberOfNonPairs = nonPairs, minNumberOfWaits = minWaits, groupsView = groupsView }
         )
         (D.field "suit" D.string)
         (D.field "nonPairs" D.int)
         (D.field "minWaits" D.int)
+        (D.field "groupsView" D.string)
 
 
 encode : Model -> E.Value
 encode model =
+    let
+        groupsViewStr =
+            case model.groupsView of
+                GroupAnimation ->
+                    "a"
+
+                GroupTable ->
+                    "t"
+    in
     E.object
         [ ( "suit", E.string (suitSelectionToString model.suitSelection) )
         , ( "nonPairs", E.int model.numberOfNonPairs )
         , ( "minWaits", E.int model.minNumberOfWaits )
+        , ( "groupsView", E.string groupsViewStr )
         ]
