@@ -344,6 +344,13 @@ renderWinningTilesSection model =
         isActiveTabCss expected =
             classList [ ( "is-active", model.groupsView == expected ) ]
 
+        noContentDiv =
+            if model.confirmedSelected then
+                []
+
+            else
+                [ div [ class "block has-text-centered p-6" ] [ text "Select waits to view possible groups" ] ]
+
         groupsTable =
             if model.groupsView == GroupTable && model.confirmedSelected then
                 [ div [ class "block is-flex is-flex-direction-column", style "gap" (String.fromInt groupGapSvg ++ "px") ]
@@ -377,6 +384,7 @@ renderWinningTilesSection model =
         ]
         :: (groupsTable
                 ++ groupsSvgAnimation
+                ++ noContentDiv
            )
 
 
