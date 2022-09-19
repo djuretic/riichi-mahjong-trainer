@@ -12,7 +12,7 @@ import Point
 import Random
 import Set exposing (Set)
 import Svg exposing (image, svg)
-import Svg.Attributes exposing (filter, height, opacity, viewBox, width, x, xlinkHref, y)
+import Svg.Attributes exposing (filter, opacity, viewBox, width, x, xlinkHref, y)
 import Tile exposing (Tile)
 import Time
 import UI
@@ -413,8 +413,8 @@ renderSvg groupGapSvg model =
             String.fromInt
                 ((model.numberOfNonPairs * 3 + 2) * (UI.tileWidth + UI.tileGap) + (groupGapSvg * 4) + 5)
     in
-    div [ class "tiles block is-flex is-flex-direction-row", UI.tileHeightDoubleCss ]
-        [ svg [ width widthStr, height doubleHeightStr, viewBox ("0 -" ++ heightStr ++ " " ++ widthStr ++ " " ++ doubleHeightStr) ]
+    div [ class "tiles block is-flex is-flex-direction-row", style "min-width" "20px" ]
+        [ svg [ width widthStr, viewBox ("0 -" ++ heightStr ++ " " ++ widthStr ++ " " ++ doubleHeightStr) ]
             (List.map
                 (\at ->
                     let
