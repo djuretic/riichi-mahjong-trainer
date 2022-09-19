@@ -414,7 +414,7 @@ renderSvg groupGapSvg model =
                 ((model.numberOfNonPairs * 3 + 2) * (UI.tileWidth + UI.tileGap) + (groupGapSvg * 4) + 5)
     in
     div [ class "tiles block is-flex is-flex-direction-row", UI.tileHeightDoubleCss ]
-        [ svg [ width widthStr, height doubleHeightStr, viewBox ("11 -" ++ heightStr ++ " " ++ widthStr ++ " " ++ doubleHeightStr) ]
+        [ svg [ width widthStr, height doubleHeightStr, viewBox ("0 -" ++ heightStr ++ " " ++ widthStr ++ " " ++ doubleHeightStr) ]
             (List.map
                 (\at ->
                     let
@@ -442,7 +442,7 @@ renderSvg groupGapSvg model =
                         , xlinkHref (UI.tilePath at.tile)
                         , x (String.fromInt posX)
                         , y (String.fromInt posY)
-                        , width (String.fromInt (64 * UI.tileScale |> round))
+                        , width (String.fromInt UI.tileWidth)
                         , opacity opacityNumber
                         ]
                         []

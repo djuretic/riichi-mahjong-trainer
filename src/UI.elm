@@ -16,7 +16,7 @@ module UI exposing
 
 import Group
 import Html
-import Html.Attributes exposing (class, style)
+import Html.Attributes exposing (class, src, style)
 import List.Extra
 import Tile
 
@@ -44,7 +44,7 @@ renderTiles addEmptySpots tiles =
         allTiles =
             List.append (List.map drawTileSimple tiles) emptySpots
     in
-    Html.div [ class "tiles is-flex is-flex-direction-row", tileGapCss, tileHeightCss ] allTiles
+    Html.div [ class "tiles is-flex is-flex-direction-row", tileGapCss ] allTiles
 
 
 drawTile : List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg
@@ -57,7 +57,7 @@ drawTile attrs tile =
         Html.text ""
 
     else
-        Html.div (tileCss path |> List.append attrs) []
+        Html.img (tileCss path |> List.append attrs) []
 
 
 drawTileSimple : Tile.Tile -> Html.Html msg
@@ -77,13 +77,13 @@ tilePath { number, suit } =
     if isRedDora then
         case suit of
             Tile.Sou ->
-                "/img/128px/red-doras/red-dora-bamboo5.png"
+                "/img/128px_v2/red-doras/red-dora-bamboo5.png"
 
             Tile.Pin ->
-                "/img/128px/red-doras/red-dora-pin5.png"
+                "/img/128px_v2/red-doras/red-dora-pin5.png"
 
             Tile.Man ->
-                "/img/128px/red-doras/red-dora-man5.png"
+                "/img/128px_v2/red-doras/red-dora-man5.png"
 
             Tile.Honor ->
                 ""
@@ -91,13 +91,13 @@ tilePath { number, suit } =
     else
         case suit of
             Tile.Sou ->
-                "/img/128px/bamboo/bamboo" ++ n ++ ".png"
+                "/img/128px_v2/bamboo/bamboo" ++ n ++ ".png"
 
             Tile.Pin ->
-                "/img/128px/pin/pin" ++ n ++ ".png"
+                "/img/128px_v2/pin/pin" ++ n ++ ".png"
 
             Tile.Man ->
-                "/img/128px/man/man" ++ n ++ ".png"
+                "/img/128px_v2/man/man" ++ n ++ ".png"
 
             Tile.Honor ->
                 pathHonorTile number
@@ -115,7 +115,7 @@ tileScale =
 
 tileWidth : Int
 tileWidth =
-    toFloat 42 * tileScale |> round
+    toFloat 41 * tileScale |> round
 
 
 tileHeight : Int
@@ -157,11 +157,13 @@ groupGapCss =
 
 tileCss : String -> List (Html.Attribute msg)
 tileCss path =
-    [ style "background-image" ("url(" ++ path ++ "), url(/img/128px/placeholder.png)")
-    , style "background-position-x" "49%, 0px"
-    , style "background-repeat" "no-repeat, no-repeat"
-    , style "background-size" "152%, 100%"
-    , style "height" (String.fromInt tileHeight ++ "px")
+    [ src path
+
+    --     style "background-image" ("url(" ++ path ++ "), url(/img/128px/placeholder.png)")
+    -- , style "background-position-x" "49%, 0px"
+    -- , style "background-repeat" "no-repeat, no-repeat"
+    -- , style "background-size" "152%, 100%"
+    -- , style "height" (String.fromInt tileHeight ++ "px")
     , style "width" (String.fromInt tileWidth ++ "px")
 
     -- needed for nested flex to work when shrinking
@@ -173,25 +175,25 @@ pathHonorTile : Int -> String
 pathHonorTile n =
     case n of
         1 ->
-            "/img/winds/wind-east.png"
+            "/img/128px_v2/winds/wind-east.png"
 
         2 ->
-            "/img/winds/wind-south.png"
+            "/img/128px_v2/winds/wind-south.png"
 
         3 ->
-            "/img/winds/wind-west.png"
+            "/img/128px_v2/winds/wind-west.png"
 
         4 ->
-            "/img/winds/wind-north.png"
+            "/img/128px_v2/winds/wind-north.png"
 
         5 ->
-            "/img/dragons/dragon-haku.png"
+            "/img/128px_v2/dragons/dragon-haku.png"
 
         6 ->
-            "/img/dragons/dragon-green.png"
+            "/img/128px_v2/dragons/dragon-green.png"
 
         7 ->
-            "/img/dragons/dragon-chun.png"
+            "/img/128px_v2/dragons/dragon-chun.png"
 
         _ ->
             ""
@@ -231,7 +233,7 @@ drawGroups winTile groups =
             addGroupIsRepeatedData [] groups
                 |> addCointainsWinningTile
     in
-    Html.div [ class "groups is-flex is-flex-direction-row", groupGapCss, tileHeightCss ]
+    Html.div [ class "groups is-flex is-flex-direction-row", groupGapCss ]
         (List.map (\{ group, winningTile } -> drawGroup [] winningTile group) groupsWithRepeatedInfo)
 
 
