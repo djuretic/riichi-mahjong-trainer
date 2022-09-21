@@ -373,7 +373,7 @@ renderWinningTilesSection model =
 
         groupsSvgAnimation =
             if model.groupsView == GroupAnimation && model.confirmedSelected then
-                [ div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss, UI.tileHeightCss ]
+                [ div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss ]
                     (List.map (\( t, g ) -> UI.drawTile [ onClick (StartWaitsAnimation ( t, g )), class "is-clickable" ] t) model.waits)
                 , renderSvg groupGapSvg model
                 ]

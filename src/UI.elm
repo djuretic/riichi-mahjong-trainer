@@ -1,5 +1,6 @@
 module UI exposing
-    ( drawGroups
+    ( breakpoints
+    , drawGroups
     , drawGroupsSimple
     , drawTile
     , drawTileSimple
@@ -26,6 +27,21 @@ type alias GroupData =
     , isRepeated : Bool
     , winningTile : Maybe Tile.Tile
     }
+
+
+breakpoints : Html.Html msg
+breakpoints =
+    let
+        div cls =
+            Html.div [ class cls ] [ Html.text cls ]
+    in
+    Html.div []
+        [ div "is-hidden-mobile"
+        , div "is-hidden-tablet-only"
+        , div "is-hidden-desktop-only"
+        , div "is-hidden-widescreen-only"
+        , div "is-hidden-fullhd"
+        ]
 
 
 renderTiles : Bool -> List Tile.Tile -> Html.Html msg
@@ -158,14 +174,12 @@ groupGapCss =
 tileCss : String -> List (Html.Attribute msg)
 tileCss path =
     [ src path
+    , class "tile"
 
     --     style "background-image" ("url(" ++ path ++ "), url(/img/128px/placeholder.png)")
     -- , style "background-position-x" "49%, 0px"
     -- , style "background-repeat" "no-repeat, no-repeat"
     -- , style "background-size" "152%, 100%"
-    -- , style "height" (String.fromInt tileHeight ++ "px")
-    , style "width" (String.fromInt tileWidth ++ "px")
-
     -- needed for nested flex to work when shrinking
     , style "min-width" "20px"
     ]

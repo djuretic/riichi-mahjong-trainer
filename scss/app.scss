@@ -24,4 +24,15 @@
 @import "../node_modules/bulma/sass/layout/footer.sass";
 
 
-@import "styles.scss"
+@import "styles.scss";
+
+
+.tile {
+    @include mobile {
+        max-width: 51px;
+    }
+
+    @include tablet {
+        max-width: 62px;
+    }
+}
