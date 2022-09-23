@@ -375,7 +375,8 @@ renderWinningTilesSection model =
             if model.groupsView == GroupAnimation && model.confirmedSelected then
                 [ div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss ]
                     (List.map (\( t, g ) -> UI.drawTile [ onClick (StartWaitsAnimation ( t, g )), class "is-clickable" ] t) model.waits)
-                , renderSvg groupGapSvg model
+                , renderSvg groupGapSvg 1 "is-hidden-mobile" model
+                , renderSvg groupGapSvg 0.8 "is-hidden-tablet" model
                 ]
 
             else
@@ -400,8 +401,8 @@ renderWinningTiles model =
     ]
 
 
-renderSvg : Int -> Model -> Html Msg
-renderSvg groupGapSvg model =
+renderSvg : Int -> Float -> String -> Model -> Html Msg
+renderSvg groupGapSvg zoom cssClass model =
     let
         heightStr =
             String.fromInt UI.tileHeight
@@ -409,12 +410,14 @@ renderSvg groupGapSvg model =
         doubleHeightStr =
             String.fromInt (2 * UI.tileHeight)
 
-        widthStr =
-            String.fromInt
-                ((model.numberOfNonPairs * 3 + 2) * (UI.tileWidth + UI.tileGap) + (groupGapSvg * 4) + 5)
+        widthPx =
+            (model.numberOfNonPairs * 3 + 2) * (UI.tileWidth + UI.tileGap) + (groupGapSvg * 4) + 5
+
+        svgWidth =
+            toFloat widthPx * zoom |> round
     in
-    div [ class "tiles block is-flex is-flex-direction-row", style "min-width" "20px" ]
-        [ svg [ width widthStr, viewBox ("0 -" ++ heightStr ++ " " ++ widthStr ++ " " ++ doubleHeightStr) ]
+    div [ class ("tiles block is-flex is-flex-direction-row " ++ cssClass), style "min-width" "20px" ]
+        [ svg [ width (String.fromInt svgWidth), viewBox ("0 -" ++ heightStr ++ " " ++ String.fromInt widthPx ++ " " ++ doubleHeightStr) ]
             (List.map
                 (\at ->
                     let
