@@ -31,6 +31,7 @@ type alias Model =
     , confirmedSelected : Bool
     , lastTick : Int
     , animatedTiles : List AnimatedTile
+    , currentAnimatedTile : Maybe Tile
     , groupsView : GroupsView
     }
 
@@ -103,6 +104,7 @@ init flags =
             , confirmedSelected = False
             , lastTick = 0
             , animatedTiles = []
+            , currentAnimatedTile = Nothing
             , groupsView = prefs.groupsView
             }
     in
@@ -179,8 +181,8 @@ update msg model =
             in
             ( newModel, setStorageWaits (encode newModel) )
 
-        StartWaitsAnimation ( _, groups ) ->
-            ( { model | animatedTiles = setupAnimation model groups }, Cmd.none )
+        StartWaitsAnimation ( tile, groups ) ->
+            ( { model | animatedTiles = setupAnimation model groups, currentAnimatedTile = Just tile }, Cmd.none )
 
         Tick tickTime ->
             let
@@ -376,7 +378,13 @@ renderWinningTilesSection model =
                 [ renderSvg groupGapSvg 1 "is-hidden-mobile" model
                 , renderSvg groupGapSvg 0.8 "is-hidden-tablet" model
                 , div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss ]
-                    (List.map (\( t, g ) -> UI.drawTile [ onClick (StartWaitsAnimation ( t, g )), class "is-clickable" ] t) model.waits)
+                    (List.map
+                        (\( t, g ) ->
+                            button [ class "button is-clickable", classList [ ( "is-primary", model.currentAnimatedTile == Just t ) ], onClick (StartWaitsAnimation ( t, g )) ]
+                                [ UI.drawTile [] t ]
+                        )
+                        model.waits
+                    )
                 ]
 
             else

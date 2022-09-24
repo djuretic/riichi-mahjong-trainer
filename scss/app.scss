@@ -27,12 +27,27 @@
 @import "styles.scss";
 
 
+$mobile-tile-w: 51px;
+$tablet-tile-w: 62px;
+
 .tile {
     @include mobile {
-        max-width: 51px;
+        max-width: $mobile-tile-w;
     }
 
     @include tablet {
-        max-width: 62px;
+        max-width: $tablet-tile-w;
+    }
+}
+
+.button {
+    .tile {
+        @include mobile {
+            max-width: $mobile-tile-w * 0.5;
+        }
+    
+        @include tablet {
+            max-width: $tablet-tile-w * 0.5;
+        }
     }
 }
