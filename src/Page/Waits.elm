@@ -84,6 +84,11 @@ type AnimState
     | WinningTileExit
 
 
+dummyTile : Tile
+dummyTile =
+    Tile 0 Tile.Man
+
+
 init : E.Value -> ( Model, Cmd Msg )
 init flags =
     let
@@ -183,10 +188,16 @@ update msg model =
             ( newModel, setStorageWaits (encode newModel) )
 
         StartWaitsAnimation ( tile, groups ) ->
-            ( { model | animatedTiles = setupAnimation model groups, currentAnimatedTile = Just tile }, Cmd.none )
+            let
+                tilesWithDummySeparator =
+                    List.map Group.toTiles groups
+                        |> List.intersperse [ dummyTile ]
+                        |> List.concat
+            in
+            ( { model | animatedTiles = setupAnimation model tilesWithDummySeparator, currentAnimatedTile = Just tile }, Cmd.none )
 
         ResetWaitsAnimation ->
-            ( { model | currentAnimatedTile = Nothing }, Cmd.none )
+            ( { model | animatedTiles = setupAnimation model model.tiles, currentAnimatedTile = Nothing }, Cmd.none )
 
         Tick tickTime ->
             let
@@ -497,17 +508,11 @@ initAnimatedTiles ({ tiles, waits } as model) =
     { model | animatedTiles = List.append baseTiles waitTiles }
 
 
-setupAnimation : Model -> List Group -> List AnimatedTile
-setupAnimation model groups =
+{-| Tiles can contain dummyTile to indicate a separation between groups.
+-}
+setupAnimation : Model -> List Tile -> List AnimatedTile
+setupAnimation model tiles =
     let
-        dummyTile =
-            Tile 0 Tile.Man
-
-        groupTiles =
-            List.map Group.toTiles groups
-                |> List.intersperse [ dummyTile ]
-                |> List.concat
-
         animTiles =
             resetNextMovements model.animatedTiles
     in
@@ -520,7 +525,7 @@ setupAnimation model groups =
                 ( offset + UI.tileWidth + UI.tileGap, updateAnimTile t offset acc )
         )
         ( 0, animTiles )
-        groupTiles
+        tiles
         |> Tuple.second
         |> hideUnusedAnimatedTiles
 
