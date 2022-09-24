@@ -59,6 +59,7 @@ type Msg
     | ConfirmSelected
     | SetGroupsView GroupsView
     | StartWaitsAnimation ( Tile, List Group )
+    | ResetWaitsAnimation
     | Tick Time.Posix
 
 
@@ -183,6 +184,9 @@ update msg model =
 
         StartWaitsAnimation ( tile, groups ) ->
             ( { model | animatedTiles = setupAnimation model groups, currentAnimatedTile = Just tile }, Cmd.none )
+
+        ResetWaitsAnimation ->
+            ( { model | currentAnimatedTile = Nothing }, Cmd.none )
 
         Tick tickTime ->
             let
@@ -378,12 +382,13 @@ renderWinningTilesSection model =
                 [ renderSvg groupGapSvg 1 "is-hidden-mobile" model
                 , renderSvg groupGapSvg 0.8 "is-hidden-tablet" model
                 , div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss ]
-                    (List.map
-                        (\( t, g ) ->
-                            button [ class "button is-clickable", classList [ ( "is-primary", model.currentAnimatedTile == Just t ) ], onClick (StartWaitsAnimation ( t, g )) ]
-                                [ UI.drawTile [] t ]
-                        )
-                        model.waits
+                    (button [ class "button", classList [ ( "is-primary", model.currentAnimatedTile == Nothing ) ], onClick ResetWaitsAnimation ] []
+                        :: List.map
+                            (\( t, g ) ->
+                                button [ class "button", classList [ ( "is-primary", model.currentAnimatedTile == Just t ) ], onClick (StartWaitsAnimation ( t, g )) ]
+                                    [ UI.drawTile [] t ]
+                            )
+                            model.waits
                     )
                 ]
 
