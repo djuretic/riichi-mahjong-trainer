@@ -388,15 +388,23 @@ renderWinningTilesSection model =
             else
                 []
 
+        resetAnimButton =
+            button
+                [ class "button is-large animation-button"
+                , classList [ ( "is-primary", model.currentAnimatedTile == Nothing ) ]
+                , onClick ResetWaitsAnimation
+                ]
+                [ div [ class "tile empty-tile" ] [] ]
+
         groupsSvgAnimation =
             if model.groupsView == GroupAnimation && model.confirmedSelected then
                 [ renderSvg groupGapSvg 1 "is-hidden-mobile" model
                 , renderSvg groupGapSvg 0.8 "is-hidden-tablet" model
                 , div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss ]
-                    (button [ class "button", classList [ ( "is-primary", model.currentAnimatedTile == Nothing ) ], onClick ResetWaitsAnimation ] []
+                    (resetAnimButton
                         :: List.map
                             (\( t, g ) ->
-                                button [ class "button", classList [ ( "is-primary", model.currentAnimatedTile == Just t ) ], onClick (StartWaitsAnimation ( t, g )) ]
+                                button [ class "button is-large animation-button", classList [ ( "is-primary", model.currentAnimatedTile == Just t ) ], onClick (StartWaitsAnimation ( t, g )) ]
                                     [ UI.drawTile [] t ]
                             )
                             model.waits

@@ -40,7 +40,10 @@ $tablet-tile-w: 62px;
     }
 }
 
-.button {
+.animation-button {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+
     .tile {
         @include mobile {
             max-width: $mobile-tile-w * 0.5;
