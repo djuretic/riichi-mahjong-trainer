@@ -1,8 +1,10 @@
 port module Page.Waits exposing (Model, Msg, init, subscriptions, update, view)
 
 import Browser.Events
+import FontAwesome as Icon
+import FontAwesome.Regular as IconR
 import Group exposing (Group)
-import Html exposing (Html, a, button, div, label, li, text, ul)
+import Html exposing (Html, a, button, div, label, li, span, text, ul)
 import Html.Attributes exposing (class, classList, disabled, style)
 import Html.Events exposing (onClick)
 import Json.Decode as D
@@ -12,7 +14,7 @@ import Point
 import Random
 import Set exposing (Set)
 import Svg exposing (image, svg)
-import Svg.Attributes exposing (filter, opacity, viewBox, width, x, xlinkHref, y)
+import Svg.Attributes as SvgA exposing (filter, opacity, viewBox, width, x, xlinkHref, y)
 import Tile exposing (Tile)
 import Time
 import UI
@@ -394,7 +396,7 @@ renderWinningTilesSection model =
                 , classList [ ( "is-primary", model.currentAnimatedTile == Nothing ) ]
                 , onClick ResetWaitsAnimation
                 ]
-                [ div [ class "tile empty-tile" ] [] ]
+                [ Icon.styled [ SvgA.class "tile empty-tile" ] IconR.circleXmark |> Icon.view ]
 
         groupsSvgAnimation =
             if model.groupsView == GroupAnimation && model.confirmedSelected then
