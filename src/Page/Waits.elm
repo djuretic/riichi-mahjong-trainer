@@ -419,8 +419,8 @@ renderWinningTilesSection model =
     in
     div [ class "tabs is-boxed" ]
         [ ul []
-            [ li [ isActiveTabCss GroupAnimation, onClick (SetGroupsView GroupAnimation) ] [ a [] [ Icon.styled [ SvgA.class "icon" ] IconR.circlePlay |> Icon.view, span [] [ text "Animation" ] ] ]
-            , li [ isActiveTabCss GroupTable, onClick (SetGroupsView GroupTable) ] [ a [] [ Icon.styled [ SvgA.class "icon" ] IconS.table |> Icon.view, span [] [ text "Table" ] ] ]
+            [ li [ isActiveTabCss GroupAnimation, onClick (SetGroupsView GroupAnimation) ] [ a [] [ Icon.styled [ SvgA.class "icon is-small" ] IconR.circlePlay |> Icon.view, span [] [ text "Animation" ] ] ]
+            , li [ isActiveTabCss GroupTable, onClick (SetGroupsView GroupTable) ] [ a [] [ Icon.styled [ SvgA.class "icon is-small" ] IconS.table |> Icon.view, span [] [ text "Table" ] ] ]
             ]
         ]
         :: (groupsTable
