@@ -3,6 +3,7 @@ port module Page.Waits exposing (Model, Msg, init, subscriptions, update, view)
 import Browser.Events
 import FontAwesome as Icon
 import FontAwesome.Regular as IconR
+import FontAwesome.Solid as IconS
 import Group exposing (Group)
 import Html exposing (Html, a, button, div, label, li, span, text, ul)
 import Html.Attributes exposing (class, classList, disabled, style)
@@ -418,8 +419,8 @@ renderWinningTilesSection model =
     in
     div [ class "tabs is-boxed" ]
         [ ul []
-            [ li [ isActiveTabCss GroupAnimation, onClick (SetGroupsView GroupAnimation) ] [ a [] [ text "Animation" ] ]
-            , li [ isActiveTabCss GroupTable, onClick (SetGroupsView GroupTable) ] [ a [] [ text "Table" ] ]
+            [ li [ isActiveTabCss GroupAnimation, onClick (SetGroupsView GroupAnimation) ] [ a [] [ Icon.styled [ SvgA.class "icon" ] IconR.circlePlay |> Icon.view, span [] [ text "Animation" ] ] ]
+            , li [ isActiveTabCss GroupTable, onClick (SetGroupsView GroupTable) ] [ a [] [ Icon.styled [ SvgA.class "icon" ] IconS.table |> Icon.view, span [] [ text "Table" ] ] ]
             ]
         ]
         :: (groupsTable
