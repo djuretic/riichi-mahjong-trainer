@@ -259,7 +259,7 @@ view model =
             else
                 span [ class "icon-text has-text-danger" ]
                     [ UI.icon "icon" IconS.ban
-                    , span [] [ text "Wrong answer" ]
+                    , span [] [ text "Wrong" ]
                     ]
     in
     div []
@@ -269,10 +269,16 @@ view model =
             , minWaitsSelector
             ]
         , div [ class "block" ] [ UI.renderTiles False model.tiles ]
-        , div [ class "block" ] [ text "Select wait tiles:", renderWaitButtons model ]
-        , div [ class "block", classList [ ( "is-invisible", not model.confirmedSelected ) ] ] [ feedbackMsg ]
+        , div [ class "block" ]
+            [ text "Select wait tiles:"
+            , renderWaitButtons model
+            , div [ class "mt-3", classList [ ( "is-invisible", not model.confirmedSelected ) ] ] [ feedbackMsg ]
+            ]
         , div [ class "block", classList [ ( "is-invisible", not model.confirmedSelected ) ] ] (renderWinningTiles model)
-        , button [ class "button block", onClick ConfirmSelected, disabled (Set.isEmpty model.selectedWaits || model.confirmedSelected) ] [ text "Confirm" ]
+        , div [ class "buttons" ]
+            [ button [ class "button is-primary", onClick ConfirmSelected, disabled (Set.isEmpty model.selectedWaits || model.confirmedSelected) ] [ text "Confirm" ]
+            , button [ class "button", onClick GenerateTiles ] [ text "New hand" ]
+            ]
         , div [ class "block" ]
             (renderWinningTilesSection model)
         ]
@@ -365,7 +371,7 @@ renderWaitButtons model =
                         UI.drawTile
                             [ onClick (ToggleWaitTile t)
                             , selectedCss t
-                            , style "cursor" "pointer"
+                            , classList [ ( "is-clickable", not model.confirmedSelected ) ]
                             ]
                             t
                     )
