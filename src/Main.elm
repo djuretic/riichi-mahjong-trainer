@@ -1,14 +1,13 @@
 module Main exposing (main)
 
 import Browser
-import FontAwesome
 import FontAwesome.Brands as Brands
 import Html
 import Html.Attributes exposing (class, href, style, target)
 import Json.Encode as E
 import Page.Scoring
 import Page.Waits
-import Svg.Attributes as SvgA
+import UI
 
 
 main : Program E.Value Model Msg
@@ -126,7 +125,7 @@ view model =
                     [ Html.text "Mahjong tile images by "
                     , Html.a [ href "https://www.martinpersson.org/", target "_blank" ] [ Html.text "Martin Persson" ]
                     ]
-                , Html.a [ href "https://github.com", target "_blank" ] [ FontAwesome.styled [ SvgA.class "icon" ] Brands.github |> FontAwesome.view ]
+                , Html.a [ href "https://github.com", target "_blank" ] [ UI.icon "icon" Brands.github ]
                 ]
             ]
         ]

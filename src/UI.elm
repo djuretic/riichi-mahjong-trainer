@@ -4,6 +4,7 @@ module UI exposing
     , drawGroupsSimple
     , drawTile
     , drawTileSimple
+    , icon
     , renderTiles
     , tileGap
     , tileGapCss
@@ -15,10 +16,12 @@ module UI exposing
     , tileWidth
     )
 
+import FontAwesome
 import Group
 import Html
 import Html.Attributes exposing (class, src, style)
 import List.Extra
+import Svg.Attributes as SvgA
 import Tile
 
 
@@ -289,3 +292,8 @@ drawGroupsSimple groups =
 winningTileCss : Html.Attribute msg
 winningTileCss =
     Html.Attributes.style "filter" "sepia(50%)"
+
+
+icon : String -> FontAwesome.Icon hasId -> Html.Html msg
+icon classes icn =
+    FontAwesome.styled [ SvgA.class classes ] icn |> FontAwesome.view

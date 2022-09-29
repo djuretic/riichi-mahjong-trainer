@@ -1,7 +1,6 @@
 port module Page.Waits exposing (Model, Msg, init, subscriptions, update, view)
 
 import Browser.Events
-import FontAwesome as Icon
 import FontAwesome.Regular as IconR
 import FontAwesome.Solid as IconS
 import Group exposing (Group)
@@ -15,7 +14,7 @@ import Point
 import Random
 import Set exposing (Set)
 import Svg exposing (image, svg)
-import Svg.Attributes as SvgA exposing (filter, opacity, viewBox, width, x, xlinkHref, y)
+import Svg.Attributes as SvgA
 import Tile exposing (Tile)
 import Time
 import UI
@@ -246,6 +245,22 @@ view model =
         minWaitsSelector =
             renderLabel "Min. number of waits"
                 (renderMinWaitsSelector model)
+
+        expected =
+            Set.fromList (List.map Tuple.first model.waits |> List.map Tile.toComparable)
+
+        feedbackMsg =
+            if expected == model.selectedWaits then
+                span [ class "icon-text has-text-success" ]
+                    [ UI.icon "icon" IconS.squareCheck
+                    , span [] [ text "Correct!" ]
+                    ]
+
+            else
+                span [ class "icon-text has-text-danger" ]
+                    [ UI.icon "icon" IconS.ban
+                    , span [] [ text "Wrong answer" ]
+                    ]
     in
     div []
         [ div [ class "block" ]
@@ -255,6 +270,7 @@ view model =
             ]
         , div [ class "block" ] [ UI.renderTiles False model.tiles ]
         , div [ class "block" ] [ text "Select wait tiles:", renderWaitButtons model ]
+        , div [ class "block", classList [ ( "is-invisible", not model.confirmedSelected ) ] ] [ feedbackMsg ]
         , div [ class "block", classList [ ( "is-invisible", not model.confirmedSelected ) ] ] (renderWinningTiles model)
         , button [ class "button block", onClick ConfirmSelected, disabled (Set.isEmpty model.selectedWaits || model.confirmedSelected) ] [ text "Confirm" ]
         , div [ class "block" ]
@@ -397,7 +413,7 @@ renderWinningTilesSection model =
                 , classList [ ( "is-primary", model.currentAnimatedTile == Nothing ) ]
                 , onClick ResetWaitsAnimation
                 ]
-                [ Icon.styled [ SvgA.class "tile empty-tile" ] IconR.circleXmark |> Icon.view ]
+                [ UI.icon "tile empty-tile" IconR.circleXmark ]
 
         groupsSvgAnimation =
             if model.groupsView == GroupAnimation && model.confirmedSelected then
@@ -419,8 +435,8 @@ renderWinningTilesSection model =
     in
     div [ class "tabs is-boxed" ]
         [ ul []
-            [ li [ isActiveTabCss GroupAnimation, onClick (SetGroupsView GroupAnimation) ] [ a [] [ Icon.styled [ SvgA.class "icon is-small" ] IconR.circlePlay |> Icon.view, span [] [ text "Animation" ] ] ]
-            , li [ isActiveTabCss GroupTable, onClick (SetGroupsView GroupTable) ] [ a [] [ Icon.styled [ SvgA.class "icon is-small" ] IconS.table |> Icon.view, span [] [ text "Table" ] ] ]
+            [ li [ isActiveTabCss GroupAnimation, onClick (SetGroupsView GroupAnimation) ] [ a [] [ UI.icon "icon is-small" IconR.circlePlay, span [] [ text "Animation" ] ] ]
+            , li [ isActiveTabCss GroupTable, onClick (SetGroupsView GroupTable) ] [ a [] [ UI.icon "icon is-small" IconS.table, span [] [ text "Table" ] ] ]
             ]
         ]
         :: (groupsTable
@@ -452,7 +468,7 @@ renderSvg groupGapSvg zoom cssClass model =
             toFloat widthPx * zoom |> round
     in
     div [ class ("tiles block is-flex is-flex-direction-row " ++ cssClass), style "min-width" "20px" ]
-        [ svg [ width (String.fromInt svgWidth), viewBox ("0 -" ++ heightStr ++ " " ++ String.fromInt widthPx ++ " " ++ doubleHeightStr) ]
+        [ svg [ SvgA.width (String.fromInt svgWidth), SvgA.viewBox ("0 -" ++ heightStr ++ " " ++ String.fromInt widthPx ++ " " ++ doubleHeightStr) ]
             (List.map
                 (\at ->
                     let
@@ -461,10 +477,10 @@ renderSvg groupGapSvg zoom cssClass model =
 
                         cssClasses =
                             if List.member at.state [ WinningTileEnter, WinningTileExit ] then
-                                filter "sepia(50%)"
+                                SvgA.filter "sepia(50%)"
 
                             else
-                                filter ""
+                                SvgA.filter ""
 
                         opacityNumber =
                             if at.state == WinningTileExit then
@@ -477,11 +493,11 @@ renderSvg groupGapSvg zoom cssClass model =
                     in
                     image
                         [ cssClasses
-                        , xlinkHref (UI.tilePath at.tile)
-                        , x (String.fromInt posX)
-                        , y (String.fromInt posY)
-                        , width (String.fromInt UI.tileWidth)
-                        , opacity opacityNumber
+                        , SvgA.xlinkHref (UI.tilePath at.tile)
+                        , SvgA.x (String.fromInt posX)
+                        , SvgA.y (String.fromInt posY)
+                        , SvgA.width (String.fromInt UI.tileWidth)
+                        , SvgA.opacity opacityNumber
                         ]
                         []
                 )
