@@ -13,7 +13,11 @@ html {
     background-color: $dark-mode-bg-color;
 }
 
-
+.theme-toggle {
+    position: absolute;
+    right: 0.5rem;
+    top: 0.8rem;
+}
 
 .dark-mode {
     color: $dark-mode-color;

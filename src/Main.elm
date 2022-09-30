@@ -1,10 +1,11 @@
 module Main exposing (main)
 
 import Browser
+import FontAwesome
 import FontAwesome.Brands as Brands
 import FontAwesome.Solid as Solid
 import Html
-import Html.Attributes exposing (class, href, target)
+import Html.Attributes exposing (class, href, target, title)
 import Html.Events exposing (onClick)
 import Json.Encode as E
 import Page.Scoring
@@ -140,7 +141,7 @@ view model =
               --         ]
               --     ]
               Html.h1 [ class "title" ] [ Html.text "Riichi mahjong trainer" ]
-            , Html.span [ onClick ToggleTheme, class "is-clickable" ] [ UI.icon "icon" Solid.moon ]
+            , Html.span [ onClick ToggleTheme, class "theme-toggle is-clickable", title "Toggle light/dark mode" ] [ UI.icon "icon" (nextThemeIcon model) ]
             , Html.div [ class "main" ] [ content ]
             ]
         , Html.footer [ class "footer" ]
@@ -163,3 +164,13 @@ themeClass model =
 
         DarkMode ->
             class "dark-mode"
+
+
+nextThemeIcon : Model -> FontAwesome.Icon FontAwesome.WithoutId
+nextThemeIcon model =
+    case model.theme of
+        LightMode ->
+            Solid.moon
+
+        DarkMode ->
+            Solid.sun
