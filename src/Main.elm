@@ -2,8 +2,10 @@ module Main exposing (main)
 
 import Browser
 import FontAwesome.Brands as Brands
+import FontAwesome.Solid as Solid
 import Html
-import Html.Attributes exposing (class, href, style, target)
+import Html.Attributes exposing (class, href, target)
+import Html.Events exposing (onClick)
 import Json.Encode as E
 import Page.Scoring
 import Page.Waits
@@ -22,9 +24,15 @@ main =
 
 type alias Model =
     { page : Page
+    , theme : Theme
     , scoring : Page.Scoring.Model
     , waits : Page.Waits.Model
     }
+
+
+type Theme
+    = LightMode
+    | DarkMode
 
 
 type Page
@@ -42,6 +50,7 @@ init flags =
             Page.Waits.init flags
     in
     ( { page = WaitsPage
+      , theme = LightMode
       , scoring = scoring
       , waits = waits
       }
@@ -51,6 +60,7 @@ init flags =
 
 type Msg
     = SetPage Page
+    | ToggleTheme
     | ScoringMsg Page.Scoring.Msg
     | WaitsMsg Page.Waits.Msg
 
@@ -60,6 +70,18 @@ update msg model =
     case msg of
         SetPage page ->
             ( { model | page = page }, Cmd.none )
+
+        ToggleTheme ->
+            let
+                newTheme =
+                    case model.theme of
+                        LightMode ->
+                            DarkMode
+
+                        DarkMode ->
+                            LightMode
+            in
+            ( { model | theme = newTheme }, Cmd.none )
 
         ScoringMsg smsg ->
             let
@@ -103,7 +125,8 @@ view model =
         --         class ""
     in
     Html.div
-        [ style "background-color" "#ffffff"
+        [ class "base-container"
+        , themeClass model
         ]
         [ Html.div [ class "container" ]
             [ -- , Html.nav [ class "navbar" ]
@@ -117,15 +140,26 @@ view model =
               --         ]
               --     ]
               Html.h1 [ class "title" ] [ Html.text "Riichi mahjong trainer" ]
+            , Html.span [ onClick ToggleTheme, class "is-clickable" ] [ UI.icon "icon" Solid.moon ]
             , Html.div [ class "main" ] [ content ]
             ]
         , Html.footer [ class "footer" ]
             [ Html.div [ class "has-text-centered" ]
-                [ Html.p [ class "content"]
+                [ Html.p [ class "content" ]
                     [ Html.text "Mahjong tile images by "
                     , Html.a [ href "https://www.martinpersson.org/", target "_blank" ] [ Html.text "Martin Persson" ]
                     ]
-                , Html.p [class "mt-2"] [Html.a [ href "https://github.com", target "_blank" ] [ UI.icon "icon" Brands.github ]]
+                , Html.p [ class "mt-2" ] [ Html.a [ href "https://github.com", target "_blank" ] [ UI.icon "icon" Brands.github ] ]
                 ]
             ]
         ]
+
+
+themeClass : Model -> Html.Attribute msg
+themeClass model =
+    case model.theme of
+        LightMode ->
+            class "light-mode"
+
+        DarkMode ->
+            class "dark-mode"

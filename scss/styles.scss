@@ -1,5 +1,86 @@
+$dark-mode-color: #C9D1D9;
+$dark-mode-bg-color: #0a0a0a;
+
 html {
     background-color: #fafafa;
+}
+
+.base-container.light-mode {
+    background-color: #ffffff;
+}
+
+.base-container.dark-mode {
+    background-color: $dark-mode-bg-color;
+}
+
+
+
+.dark-mode {
+    color: $dark-mode-color;
+
+    // based on https://github.com/jloh/bulma-prefers-dark
+    
+    .label, .title, .tabs a {
+        color: $dark-mode-color;
+    }
+
+    .footer {
+        background-color: #121212;
+    }
+
+    .button {
+        background-color: $dark-mode-bg-color;
+        border-color: #363636;
+        color: #dbdbdb;
+    }
+    .button:hover, .button.is-hovered {
+        border-color: #4a4a4a;
+        color: #dbdbdb;
+    }
+    .button:focus, .button.is-focused {
+        border-color: #5ea3e4;
+        color: #dbdbdb;
+    }
+        .button:focus:not(:active), .button.is-focused:not(:active) {
+        box-shadow: 0 0 0 0.125em rgba(94, 163, 228, 0.25);
+    }
+    .button.is-primary {
+        background-color: #009e86;
+        border-color: transparent;
+        color: #fff;
+    }
+    .button.is-primary:hover, .button.is-primary.is-hovered {
+        background-color: #00917c;
+        border-color: transparent;
+        color: #fff;
+    }
+      .button.is-primary:focus, .button.is-primary.is-focused {
+        border-color: transparent;
+        color: #fff;
+      }
+    .button.is-primary:focus:not(:active), .button.is-primary.is-focused:not(:active) {
+        box-shadow: 0 0 0 0.125em rgba(0, 158, 134, 0.25);
+    }
+    .button.is-primary:active, .button.is-primary.is-active {
+        background-color: #008571;
+        border-color: transparent;
+        color: #fff;
+    }
+    .button.is-primary[disabled],
+    fieldset[disabled] .button.is-primary {
+        background-color: #009e86;
+        border-color: transparent;
+        box-shadow: none;
+    }
+    
+    .tabs.is-boxed a:hover {
+        background-color: #242424;
+        border-bottom-color: #363636;
+      }
+    .tabs.is-boxed li.is-active a {
+        background-color: $dark-mode-bg-color;
+        border-color: #363636;
+    }
 }
 
 .main, .title {
