@@ -1,5 +1,6 @@
 module UI exposing
     ( breakpoints
+    , drawBackTile
     , drawGroups
     , drawGroupsSimple
     , drawTile
@@ -124,7 +125,7 @@ tilePath { number, suit } =
 
 drawBackTile : Html.Html msg
 drawBackTile =
-    Html.div (tileCss "/img/face-down-64px.png") []
+    Html.img (tileCss "/img/128px_v2/face-down-128px.png") []
 
 
 tileScale : Float

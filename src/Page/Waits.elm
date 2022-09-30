@@ -419,7 +419,7 @@ renderWinningTilesSection model =
                 , classList [ ( "is-primary", model.currentAnimatedTile == Nothing ) ]
                 , onClick ResetWaitsAnimation
                 ]
-                [ UI.icon "tile empty-tile" IconR.circleXmark ]
+                [ UI.drawBackTile ]
 
         groupsSvgAnimation =
             if model.groupsView == GroupAnimation && model.confirmedSelected then
