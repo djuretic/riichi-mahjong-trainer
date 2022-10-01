@@ -279,7 +279,7 @@ view model =
             [ button [ class "button is-primary", onClick ConfirmSelected, disabled (Set.isEmpty model.selectedWaits || model.confirmedSelected) ] [ text "Confirm" ]
             , button [ class "button", onClick GenerateTiles ] [ text "New hand" ]
             ]
-        , div [ class "block" ]
+        , div [ class "block mb-5" ]
             (renderWinningTilesSection model)
         ]
 
