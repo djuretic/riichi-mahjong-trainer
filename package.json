@@ -7,7 +7,7 @@
     "css-build": "node-sass --omit-source-map-url scss/app.scss css/app.css",
     "css-watch": "npm run css-build -- --watch",
     "format": "elm-format src/ tests/",
-    "make": "elm make src/Main.elm --optimize --output app.js",
+    "make": "./optimize.sh src/Main.elm",
     "debug": "elm-live src/Main.elm --open -- --output app.js --debug",
     "live": "elm-live src/Main.elm --open --host 0.0.0.0 -- --output app.js",
     "test": "elm-test"
@@ -30,6 +30,7 @@
     "bulma": "^0.9.4",
     "elm": "^0.19.1-5",
     "elm-live": "^4.0.2",
-    "node-sass": "^7.0.3"
+    "node-sass": "^7.0.3",
+    "uglify-js": "^3.17.2"
   }
 }
