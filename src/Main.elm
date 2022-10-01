@@ -1,4 +1,4 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser
 import FontAwesome
@@ -7,10 +7,14 @@ import FontAwesome.Solid as Solid
 import Html
 import Html.Attributes exposing (class, href, target, title)
 import Html.Events exposing (onClick)
+import Json.Decode as D
 import Json.Encode as E
 import Page.Scoring
 import Page.Waits
 import UI
+
+
+port setDarkMode : String -> Cmd msg
 
 
 main : Program E.Value Model Msg
@@ -44,14 +48,27 @@ type Page
 init : E.Value -> ( Model, Cmd Msg )
 init flags =
     let
+        ( waitsFlags, darkTheme ) =
+            case D.decodeValue flagsDecoder flags of
+                Ok res ->
+                    res
+
+                Err _ ->
+                    ( E.null, "f" )
+
         ( scoring, scoringCmd ) =
             Page.Scoring.init
 
         ( waits, waitsCmd ) =
-            Page.Waits.init flags
+            Page.Waits.init waitsFlags
     in
     ( { page = WaitsPage
-      , theme = LightMode
+      , theme =
+            if darkTheme == "t" then
+                DarkMode
+
+            else
+                LightMode
       , scoring = scoring
       , waits = waits
       }
@@ -74,15 +91,15 @@ update msg model =
 
         ToggleTheme ->
             let
-                newTheme =
+                ( strTheme, newTheme ) =
                     case model.theme of
                         LightMode ->
-                            DarkMode
+                            ( "t", DarkMode )
 
                         DarkMode ->
-                            LightMode
+                            ( "f", LightMode )
             in
-            ( { model | theme = newTheme }, Cmd.none )
+            ( { model | theme = newTheme }, setDarkMode strTheme )
 
         ScoringMsg smsg ->
             let
@@ -174,3 +191,10 @@ nextThemeIcon model =
 
         DarkMode ->
             Solid.sun
+
+
+flagsDecoder : D.Decoder ( D.Value, String )
+flagsDecoder =
+    D.map2 (\a b -> ( a, b ))
+        (D.field "waits" D.value)
+        (D.field "darkMode" D.string)
