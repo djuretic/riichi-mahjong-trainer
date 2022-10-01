@@ -336,7 +336,11 @@ debugGroup listGroup =
         text "[]"
 
     else
-        ul [] (List.map (\g -> li [] [ text (Debug.toString g) ]) listGroup)
+        text "[]"
+
+
+
+-- ul [] (List.map (\g -> li [] [ text (Debug.toString g) ]) listGroup)
 
 
 debugGroups : Group.GroupsPerSuit -> Html Msg

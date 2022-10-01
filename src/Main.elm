@@ -1,5 +1,7 @@
 port module Main exposing (main)
 
+-- import Page.Scoring
+
 import Browser
 import FontAwesome
 import FontAwesome.Brands as Brands
@@ -9,7 +11,6 @@ import Html.Attributes exposing (class, href, target, title)
 import Html.Events exposing (onClick)
 import Json.Decode as D
 import Json.Encode as E
-import Page.Scoring
 import Page.Waits
 import UI
 
@@ -30,7 +31,8 @@ main =
 type alias Model =
     { page : Page
     , theme : Theme
-    , scoring : Page.Scoring.Model
+
+    -- , scoring : Page.Scoring.Model
     , waits : Page.Waits.Model
     }
 
@@ -56,9 +58,8 @@ init flags =
                 Err _ ->
                     ( E.null, "f" )
 
-        ( scoring, scoringCmd ) =
-            Page.Scoring.init
-
+        -- ( scoring, scoringCmd ) =
+        --     Page.Scoring.init
         ( waits, waitsCmd ) =
             Page.Waits.init waitsFlags
     in
@@ -69,17 +70,18 @@ init flags =
 
             else
                 LightMode
-      , scoring = scoring
+
+      --   , scoring = scoring
       , waits = waits
       }
-    , Cmd.batch [ Cmd.map ScoringMsg scoringCmd, Cmd.map WaitsMsg waitsCmd ]
+    , Cmd.batch [ Cmd.map WaitsMsg waitsCmd ]
     )
 
 
 type Msg
     = SetPage Page
     | ToggleTheme
-    | ScoringMsg Page.Scoring.Msg
+      -- | ScoringMsg Page.Scoring.Msg
     | WaitsMsg Page.Waits.Msg
 
 
@@ -101,13 +103,12 @@ update msg model =
             in
             ( { model | theme = newTheme }, setDarkMode strTheme )
 
-        ScoringMsg smsg ->
-            let
-                ( scoring, scoringCmd ) =
-                    Page.Scoring.update smsg model.scoring
-            in
-            ( { model | scoring = scoring }, Cmd.map ScoringMsg scoringCmd )
-
+        -- ScoringMsg smsg ->
+        --     let
+        --         ( scoring, scoringCmd ) =
+        --             Page.Scoring.update smsg model.scoring
+        --     in
+        --     ( { model | scoring = scoring }, Cmd.map ScoringMsg scoringCmd )
         WaitsMsg wmsg ->
             let
                 ( waits, waitsCmd ) =
@@ -131,8 +132,9 @@ view model =
         content =
             case model.page of
                 ScoringPage ->
-                    Html.map ScoringMsg (Page.Scoring.view model.scoring)
+                    Html.div [] []
 
+                -- Html.map ScoringMsg (Page.Scoring.view model.scoring)
                 WaitsPage ->
                     Html.map WaitsMsg (Page.Waits.view model.waits)
 
