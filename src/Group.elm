@@ -385,25 +385,34 @@ randomTripletOrRun =
             )
 
 
-randomTripletOrRunOf : Tile.Suit -> Random.Generator Group
-randomTripletOrRunOf suit =
-    let
-        maxRange =
-            if suit == Tile.Honor then
-                7
+randomTripletOrRunOf : Int -> Tile.Suit -> Random.Generator Group
+randomTripletOrRunOf tripletWeight suit =
+    if suit == Tile.Honor then
+        Random.int 1 7
+            |> Random.map (\n -> Group Triplet n suit)
 
-            else
-                9 + 7
-    in
-    Random.int 1 maxRange
-        |> Random.map
-            (\n ->
-                if n < 10 then
-                    Group Triplet n suit
+    else
+        Random.weighted ( toFloat tripletWeight, Triplet ) [ ( toFloat (100 - tripletWeight), Run ) ]
+            |> Random.andThen
+                (\groupType ->
+                    if groupType == Triplet then
+                        randomTripletOf suit
 
-                else
-                    Group Run (n - 9) suit
-            )
+                    else
+                        randomRunOf suit
+                )
+
+
+randomTripletOf : Tile.Suit -> Random.Generator Group
+randomTripletOf suit =
+    Random.int 1 9
+        |> Random.map (\n -> Group Triplet n suit)
+
+
+randomRunOf : Tile.Suit -> Random.Generator Group
+randomRunOf suit =
+    Random.int 1 7
+        |> Random.map (\n -> Group Run n suit)
 
 
 randomWinningGroups : Random.Generator (List Group)
@@ -418,11 +427,11 @@ randomWinningGroups =
     Random.map2 (\g p -> List.append g [ p ]) groups pair
 
 
-randomCompleteGroups : Int -> Maybe Tile.Suit -> Random.Generator (List Group)
-randomCompleteGroups numNonPairs wantedSuit =
+randomCompleteGroups : Int -> Int -> Maybe Tile.Suit -> Random.Generator (List Group)
+randomCompleteGroups numNonPairs tripletWeight wantedSuit =
     let
         otherGroups suit =
-            Random.list numNonPairs (randomTripletOrRunOf suit)
+            Random.list numNonPairs (randomTripletOrRunOf 30 suit)
 
         baseSuit =
             case wantedSuit of
@@ -443,20 +452,20 @@ randomCompleteGroups numNonPairs wantedSuit =
                             |> List.concat
                 in
                 if Tile.hasMoreThan4Tiles tiles then
-                    randomCompleteGroups numNonPairs wantedSuit
+                    randomCompleteGroups numNonPairs tripletWeight wantedSuit
 
                 else
                     Random.constant g
             )
 
 
-randomTenpaiGroups : Int -> Maybe Tile.Suit -> Random.Generator (List Tile.Tile)
-randomTenpaiGroups numNonPairs wantedSuit =
+randomTenpaiGroups : Int -> Int -> Maybe Tile.Suit -> Random.Generator (List Tile.Tile)
+randomTenpaiGroups numNonPairs tripletWeight wantedSuit =
     let
         posToRemove =
             Random.int 0 (2 + (numNonPairs * 3) - 1)
     in
-    randomCompleteGroups numNonPairs wantedSuit
+    randomCompleteGroups numNonPairs tripletWeight wantedSuit
         |> Random.map2
             (\pos lg ->
                 List.map toTiles lg

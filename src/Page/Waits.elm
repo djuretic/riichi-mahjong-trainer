@@ -121,7 +121,7 @@ init flags =
 
 cmdGenerateRandomTiles : Model -> Cmd Msg
 cmdGenerateRandomTiles model =
-    Random.generate TilesGenerated (Group.randomTenpaiGroups model.numberOfNonPairs (suitSelectionToSuit model.suitSelection))
+    Random.generate TilesGenerated (Group.randomTenpaiGroups model.numberOfNonPairs 30 (suitSelectionToSuit model.suitSelection))
 
 
 subscriptions : Model -> Sub Msg
