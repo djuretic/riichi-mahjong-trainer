@@ -5,6 +5,7 @@ elm-stuff
 package-lock.json
 node_modules/
 *.md
+!README.md
 app.js
 app.min.js
 app.css
