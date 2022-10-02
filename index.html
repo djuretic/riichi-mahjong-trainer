@@ -8,10 +8,24 @@
   <script type="text/javascript" src="app.js"></script>
   <link href="../css/app.css" rel="stylesheet">
   <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <script src="https://swetrix.org/swetrix.js" defer></script>
 </head>
 
 <body>
   <div id="main-app"></div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      swetrix.init('YOUR_PROJECT_ID')
+      swetrix.trackViews()
+    })
+  </script>
+  <noscript>
+    <img
+      src="https://api.swetrix.com/log/noscript?pid=YOUR_PROJECT_ID"
+      alt=""
+      referrerpolicy="no-referrer-when-downgrade"
+    />
+  </noscript>
 </body>
 
 <script type="text/javascript">
