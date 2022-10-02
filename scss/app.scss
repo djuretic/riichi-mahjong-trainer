@@ -36,6 +36,10 @@ $primary: hsl(155, 52%, 57%);
 $mobile-tile-w: 51px;
 $tablet-tile-w: 62px;
 
+a.icon-link .icon {
+    color: $text;
+}
+
 .tile {
     @include mobile {
         max-width: $mobile-tile-w;

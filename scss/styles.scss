@@ -25,7 +25,7 @@ html {
 
     // based on https://github.com/jloh/bulma-prefers-dark
     
-    .label, .title, .tabs a {
+    .label, .title, .tabs a, a.icon-link .icon {
         color: $dark-mode-color;
     }
 

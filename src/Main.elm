@@ -160,7 +160,7 @@ view model =
               --         ]
               --     ]
               Html.h1 [ class "title" ] [ Html.text "Mahjong Waits Trainer" ]
-            , Html.span [ onClick ToggleTheme, class "theme-toggle is-clickable", title "Toggle light/dark mode" ] [ UI.icon "icon" (nextThemeIcon model) ]
+            , Html.a [ onClick ToggleTheme, class "icon-link theme-toggle is-clickable", title "Toggle light/dark mode" ] [ UI.icon "icon" (nextThemeIcon model) ]
             , Html.div [ class "main" ] [ content ]
             ]
         , Html.footer [ class "footer" ]
@@ -173,7 +173,7 @@ view model =
                     [ Html.text "Favicon by "
                     , Html.a [ href "https://www.flaticon.com/free-icons/mahjong", target "_blank" ] [ Html.text "Freepik - Flaticon" ]
                     ]
-                , Html.p [ class "mt-2" ] [ Html.a [ href "https://github.com", target "_blank" ] [ UI.icon "icon" Brands.github ] ]
+                , Html.p [ class "mt-2" ] [ Html.a [ class "icon-link", href "https://github.com/djuretic/riichi-mahjong-trainer", target "_blank" ] [ UI.icon "icon" Brands.github ] ]
                 ]
             ]
         ]
