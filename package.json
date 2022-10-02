@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "css-build": "node-sass --omit-source-map-url scss/app.scss css/app.css",
-    "css-build:prod": "node-sass --omit-source-map-url --output-style compressed scss/app.scss css/app.min.css",
+    "css-build:prod": "node-sass --omit-source-map-url --output-style compressed scss/app.scss public/app.min.css",
     "css-watch": "npm run css-build -- --watch",
     "format": "elm-format src/ tests/",
-    "make": "./optimize.sh src/Main.elm && npm run css-build:prod",
+    "build:prod": "./optimize.sh src/Main.elm",
     "debug": "elm-live src/Main.elm --open -- --output app.js --debug",
     "live": "elm-live src/Main.elm --open --host 0.0.0.0 -- --output app.js",
     "test": "elm-test"
