@@ -159,7 +159,7 @@ view model =
               --             ]
               --         ]
               --     ]
-              Html.h1 [ class "title" ] [ Html.text "Riichi mahjong trainer" ]
+              Html.h1 [ class "title" ] [ Html.text "Mahjong Waits Trainer" ]
             , Html.span [ onClick ToggleTheme, class "theme-toggle is-clickable", title "Toggle light/dark mode" ] [ UI.icon "icon" (nextThemeIcon model) ]
             , Html.div [ class "main" ] [ content ]
             ]
