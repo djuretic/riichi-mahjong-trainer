@@ -169,6 +169,10 @@ view model =
                     [ Html.text "Mahjong tile images by "
                     , Html.a [ href "https://www.martinpersson.org/", target "_blank" ] [ Html.text "Martin Persson" ]
                     ]
+                , Html.p [ class "content" ]
+                    [ Html.text "Favicon by "
+                    , Html.a [ href "https://www.flaticon.com/free-icons/mahjong", target "_blank" ] [ Html.text "Freepik - Flaticon" ]
+                    ]
                 , Html.p [ class "mt-2" ] [ Html.a [ href "https://github.com", target "_blank" ] [ UI.icon "icon" Brands.github ] ]
                 ]
             ]

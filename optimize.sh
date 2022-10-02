@@ -18,5 +18,6 @@ npm run css-build:prod
 
 mkdir -p public/img
 cp -r img/128px_v2 public/img/
+cp img/favicon.ico public/img/
 
 sed 's#"../css/app.css#"app.min.css#; s/app.js/app.min.js/' index.html > public/index.html
