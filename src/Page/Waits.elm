@@ -162,7 +162,7 @@ update msg model =
                 update GenerateTiles model
 
             else
-                ( initAnimatedTiles { model | tiles = tiles, waits = waits, selectedWaits = Set.empty, confirmedSelected = False }, Cmd.none )
+                ( initAnimatedTiles { model | tiles = tiles, waits = waits, selectedWaits = Set.empty, confirmedSelected = False, currentAnimatedTile = Nothing }, Cmd.none )
 
         ToggleWaitTile tile ->
             if model.confirmedSelected then
