@@ -7,6 +7,7 @@ module Tile exposing
     , allSuitTiles
     , allTiles
     , deduplicate
+    , fromString
     , greenDragonNumber
     , hasMoreThan4Tiles
     , isRun
@@ -33,6 +34,7 @@ module Tile exposing
 
 import Array
 import Counter
+import Parser exposing ((|.), (|=))
 import Random
 
 
@@ -331,3 +333,76 @@ maxRange suit =
 
     else
         9
+
+
+handSuit : Parser.Parser (List Tile)
+handSuit =
+    Parser.map tilesFromSuitString <|
+        Parser.getChompedString <|
+            Parser.succeed ()
+                |. Parser.chompWhile (\c -> Char.isDigit c)
+                |. Parser.chompIf (\c -> c == 's' || c == 'm' || c == 'p' || c == 'z')
+
+
+parseHandHelper : List Tile -> Parser.Parser (Parser.Step (List Tile) (List Tile))
+parseHandHelper parsedSuits =
+    Parser.oneOf
+        [ Parser.succeed (\hand -> Parser.Loop (List.append parsedSuits hand))
+            |= handSuit
+        , Parser.succeed ()
+            |> Parser.map (\_ -> Parser.Done parsedSuits)
+        ]
+
+
+handSuits : Parser.Parser (List Tile)
+handSuits =
+    Parser.loop [] parseHandHelper
+
+
+fromString : String -> List Tile
+fromString input =
+    case Parser.run handSuits input of
+        Ok value ->
+            value
+
+        Err _ ->
+            []
+
+
+tilesFromSuitString : String -> List Tile
+tilesFromSuitString parsedSuit =
+    let
+        suit =
+            String.right 1 parsedSuit |> toSuit
+
+        tiles =
+            String.dropRight 1 parsedSuit
+                |> String.toList
+                |> List.map String.fromChar
+                |> List.filterMap String.toInt
+    in
+    case suit of
+        Just s ->
+            List.map (\n -> Tile n s) tiles
+
+        Nothing ->
+            []
+
+
+toSuit : String -> Maybe Suit
+toSuit s =
+    case s of
+        "p" ->
+            Just Pin
+
+        "s" ->
+            Just Sou
+
+        "m" ->
+            Just Man
+
+        "z" ->
+            Just Honor
+
+        _ ->
+            Nothing

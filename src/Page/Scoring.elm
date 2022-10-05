@@ -1,13 +1,12 @@
-module Page.Scoring exposing (Model, Msg, init, showParseResult, update, view)
+module Page.Scoring exposing (Model, Msg, init, update, view)
 
 import Group exposing (Group)
 import Hand exposing (Hand)
 import Html exposing (Html, a, button, div, input, li, p, table, tbody, td, text, tfoot, th, thead, tr, ul)
 import Html.Attributes exposing (class, colspan, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
-import Parser exposing ((|.), (|=))
 import Random
-import Tile exposing (Suit(..), Tile)
+import Tile exposing (Suit(..))
 import UI
 
 
@@ -70,7 +69,7 @@ update msg model =
         HandStr handString ->
             let
                 tiles =
-                    showParseResult handString
+                    Tile.fromString handString
 
                 allGroups =
                     Group.findGroups tiles
@@ -255,79 +254,6 @@ renderTabContent model =
                     , renderFuDetails model.hand
                     , renderScore model.hand
                     ]
-
-
-toSuit : String -> Maybe Suit
-toSuit s =
-    case s of
-        "p" ->
-            Just Pin
-
-        "s" ->
-            Just Sou
-
-        "m" ->
-            Just Man
-
-        "z" ->
-            Just Honor
-
-        _ ->
-            Nothing
-
-
-tilesFromSuitString : String -> List Tile
-tilesFromSuitString parsedSuit =
-    let
-        suit =
-            String.right 1 parsedSuit |> toSuit
-
-        tiles =
-            String.dropRight 1 parsedSuit
-                |> String.toList
-                |> List.map String.fromChar
-                |> List.filterMap String.toInt
-    in
-    case suit of
-        Just s ->
-            List.map (\n -> Tile n s) tiles
-
-        Nothing ->
-            []
-
-
-handSuit : Parser.Parser (List Tile)
-handSuit =
-    Parser.map tilesFromSuitString <|
-        Parser.getChompedString <|
-            Parser.succeed ()
-                |. Parser.chompWhile (\c -> Char.isDigit c)
-                |. Parser.chompIf (\c -> c == 's' || c == 'm' || c == 'p' || c == 'z')
-
-
-parseHandHelper : List Tile -> Parser.Parser (Parser.Step (List Tile) (List Tile))
-parseHandHelper parsedSuits =
-    Parser.oneOf
-        [ Parser.succeed (\hand -> Parser.Loop (List.append parsedSuits hand))
-            |= handSuit
-        , Parser.succeed ()
-            |> Parser.map (\_ -> Parser.Done parsedSuits)
-        ]
-
-
-handSuits : Parser.Parser (List Tile)
-handSuits =
-    Parser.loop [] parseHandHelper
-
-
-showParseResult : String -> List Tile
-showParseResult input =
-    case Parser.run handSuits input of
-        Ok value ->
-            value
-
-        Err _ ->
-            []
 
 
 debugGroup : List Group -> Html Msg
