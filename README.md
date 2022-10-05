@@ -2,6 +2,8 @@
 
 A trainer for Mahjong written in Elm.
 
+Site: https://mahjong-trainer.netlify.app
+
 ## Develop
 
 Make sure that you have Elm installed in your system.
