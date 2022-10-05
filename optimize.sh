@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # From https://guide.elm-lang.org/optimization/asset_size.html
 set -e
 

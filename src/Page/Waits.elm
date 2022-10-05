@@ -25,6 +25,7 @@ port setStorageWaits : E.Value -> Cmd msg
 
 type alias Model =
     { suitSelection : SuitSelection
+    , showTilesWithNumbers : Bool
     , tiles : List Tile
     , waits : List ( Tile, List Group )
     , numberOfNonPairs : Int
@@ -104,6 +105,7 @@ init flags =
 
         model =
             { suitSelection = prefs.suitSelection
+            , showTilesWithNumbers = True
             , tiles = []
             , waits = []
             , numberOfNonPairs = prefs.numberOfNonPairs
@@ -268,7 +270,7 @@ view model =
             , tilesSelector
             , minWaitsSelector
             ]
-        , div [ class "block" ] [ UI.renderTiles False model.tiles ]
+        , div [ class "block" ] [ UI.renderTiles model.showTilesWithNumbers model.tiles ]
         , div [ class "block" ]
             [ text "Select wait tiles:"
             , renderWaitButtons model
@@ -368,7 +370,7 @@ renderWaitButtons model =
             div [ class "waits-buttons is-flex is-flex-direction-row", UI.tileGapCss ]
                 (List.map
                     (\t ->
-                        UI.drawTile
+                        UI.drawTile model.showTilesWithNumbers
                             [ onClick (ToggleWaitTile t)
                             , selectedCss t
                             , classList [ ( "is-clickable", not model.confirmedSelected ) ]
@@ -404,7 +406,7 @@ renderWinningTilesSection model =
                     (List.map
                         (\( t, g ) ->
                             div []
-                                [ UI.drawGroups t g ]
+                                [ UI.drawGroups model.showTilesWithNumbers t g ]
                         )
                         model.waits
                     )
@@ -430,7 +432,7 @@ renderWinningTilesSection model =
                         :: List.map
                             (\( t, g ) ->
                                 button [ class "button is-large animation-button", classList [ ( "is-primary", model.currentAnimatedTile == Just t ) ], onClick (StartWaitsAnimation ( t, g )) ]
-                                    [ UI.drawTile [] t ]
+                                    [ UI.drawTile model.showTilesWithNumbers [] t ]
                             )
                             model.waits
                     )
@@ -454,7 +456,7 @@ renderWinningTilesSection model =
 renderWinningTiles : Model -> List (Html Msg)
 renderWinningTiles model =
     [ text "Wait tiles:"
-    , UI.renderTiles False (List.map Tuple.first model.waits)
+    , UI.renderTiles model.showTilesWithNumbers (List.map Tuple.first model.waits)
     ]
 
 
@@ -499,7 +501,7 @@ renderSvg groupGapSvg zoom cssClass model =
                     in
                     image
                         [ cssClasses
-                        , SvgA.xlinkHref (UI.tilePath at.tile)
+                        , SvgA.xlinkHref (UI.tilePath model.showTilesWithNumbers at.tile)
                         , SvgA.x (String.fromInt posX)
                         , SvgA.y (String.fromInt posY)
                         , SvgA.width (String.fromInt UI.tileWidth)

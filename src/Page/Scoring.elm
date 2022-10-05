@@ -239,7 +239,7 @@ renderTabContent model =
                             (\( t, g ) ->
                                 tr []
                                     [ td [] [ UI.renderTiles False [ t ] ]
-                                    , td [] [ UI.drawGroups t g ]
+                                    , td [] [ UI.drawGroups True t g ]
                                     ]
                             )
                             winningTiles
@@ -249,7 +249,7 @@ renderTabContent model =
             else
                 div []
                     [ debugGroups model.allGroups
-                    , UI.drawGroupsSimple model.hand.groups
+                    , UI.drawGroupsSimple True model.hand.groups
                     , renderHanDetails model.hand
                     , renderFuDetails model.hand
                     , renderScore model.hand
@@ -353,7 +353,7 @@ renderFuSource fuSource =
     tr []
         [ td [] [ text explanation ]
         , td [] [ text (String.fromInt fuSource.fu ++ " fu") ]
-        , td [] [ UI.drawGroupsSimple fuSource.groups ]
+        , td [] [ UI.drawGroupsSimple True fuSource.groups ]
         ]
 
 

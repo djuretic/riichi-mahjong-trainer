@@ -18,6 +18,7 @@ module UI exposing
     )
 
 import FontAwesome
+import FontAwesome.Solid exposing (n)
 import Group
 import Html
 import Html.Attributes exposing (class, src, style)
@@ -49,29 +50,19 @@ breakpoints =
 
 
 renderTiles : Bool -> List Tile.Tile -> Html.Html msg
-renderTiles addEmptySpots tiles =
+renderTiles addNumbers tiles =
     let
-        renderedTiles =
-            List.map drawTileSimple tiles
-
-        emptySpots =
-            if addEmptySpots then
-                List.repeat (14 - List.length renderedTiles) drawBackTile
-
-            else
-                []
-
         allTiles =
-            List.append (List.map drawTileSimple tiles) emptySpots
+            List.map (drawTileSimple addNumbers) tiles
     in
     Html.div [ class "tiles is-flex is-flex-direction-row", tileGapCss ] allTiles
 
 
-drawTile : List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg
-drawTile attrs tile =
+drawTile : Bool -> List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg
+drawTile addNumbers attrs tile =
     let
         path =
-            tilePath tile
+            tilePath addNumbers tile
     in
     if String.isEmpty path then
         Html.text ""
@@ -80,47 +71,36 @@ drawTile attrs tile =
         Html.img (tileCss path |> List.append attrs) []
 
 
-drawTileSimple : Tile.Tile -> Html.Html msg
-drawTileSimple tile =
-    drawTile [] tile
+drawTileSimple : Bool -> Tile.Tile -> Html.Html msg
+drawTileSimple addNumbers tile =
+    drawTile addNumbers [] tile
 
 
-tilePath : Tile.Tile -> String
-tilePath { number, suit } =
+tilePath : Bool -> Tile.Tile -> String
+tilePath addNumbers { number, suit } =
     let
         n =
             String.fromInt number
 
-        isRedDora =
-            number == 0
+        n_and_version =
+            if addNumbers then
+                n ++ "_annotated"
+
+            else
+                n
     in
-    if isRedDora then
-        case suit of
-            Tile.Sou ->
-                "/img/128px_v2/red-doras/red-dora-bamboo5.png"
+    case suit of
+        Tile.Sou ->
+            "/img/128px_v2/bamboo/bamboo" ++ n_and_version ++ ".png"
 
-            Tile.Pin ->
-                "/img/128px_v2/red-doras/red-dora-pin5.png"
+        Tile.Pin ->
+            "/img/128px_v2/pin/pin" ++ n_and_version ++ ".png"
 
-            Tile.Man ->
-                "/img/128px_v2/red-doras/red-dora-man5.png"
+        Tile.Man ->
+            "/img/128px_v2/man/man" ++ n_and_version ++ ".png"
 
-            Tile.Honor ->
-                ""
-
-    else
-        case suit of
-            Tile.Sou ->
-                "/img/128px_v2/bamboo/bamboo" ++ n ++ ".png"
-
-            Tile.Pin ->
-                "/img/128px_v2/pin/pin" ++ n ++ ".png"
-
-            Tile.Man ->
-                "/img/128px_v2/man/man" ++ n ++ ".png"
-
-            Tile.Honor ->
-                pathHonorTile number
+        Tile.Honor ->
+            pathHonorTile number
 
 
 drawBackTile : Html.Html msg
@@ -217,8 +197,8 @@ pathHonorTile n =
             ""
 
 
-drawGroups : Tile.Tile -> List Group.Group -> Html.Html msg
-drawGroups winTile groups =
+drawGroups : Bool -> Tile.Tile -> List Group.Group -> Html.Html msg
+drawGroups addNumbers winTile groups =
     let
         -- unused
         addGroupIsRepeatedData sg lg =
@@ -252,11 +232,11 @@ drawGroups winTile groups =
                 |> addCointainsWinningTile
     in
     Html.div [ class "groups is-flex is-flex-direction-row", groupGapCss ]
-        (List.map (\{ group, winningTile } -> drawGroup [] winningTile group) groupsWithRepeatedInfo)
+        (List.map (\{ group, winningTile } -> drawGroup addNumbers [] winningTile group) groupsWithRepeatedInfo)
 
 
-drawGroup : List (Html.Attribute msg) -> Maybe Tile.Tile -> Group.Group -> Html.Html msg
-drawGroup attrs winningTile group =
+drawGroup : Bool -> List (Html.Attribute msg) -> Maybe Tile.Tile -> Group.Group -> Html.Html msg
+drawGroup addNumbers attrs winningTile group =
     let
         tiles : List ( Tile.Tile, List (Html.Attribute msg) )
         tiles =
@@ -282,12 +262,12 @@ drawGroup attrs winningTile group =
                     tiles
     in
     Html.div (List.append [ class "group is-flex is-flex-direction-row", tileGapCss ] attrs)
-        (List.map (\( t, atts ) -> drawTile atts t) tilesWithWinInfo)
+        (List.map (\( t, atts ) -> drawTile addNumbers atts t) tilesWithWinInfo)
 
 
-drawGroupsSimple : List Group.Group -> Html.Html msg
-drawGroupsSimple groups =
-    Html.div [ class "groups is-flex is-flex-direction-row", groupGapCss, tileHeightCss ] (List.map (drawGroup [] Nothing) groups)
+drawGroupsSimple : Bool -> List Group.Group -> Html.Html msg
+drawGroupsSimple addNumbers groups =
+    Html.div [ class "groups is-flex is-flex-direction-row", groupGapCss, tileHeightCss ] (List.map (drawGroup addNumbers [] Nothing) groups)
 
 
 winningTileCss : Html.Attribute msg
