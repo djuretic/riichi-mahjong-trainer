@@ -25,7 +25,7 @@ port setStorageWaits : E.Value -> Cmd msg
 
 type alias Model =
     { suitSelection : SuitSelection
-    , showTilesWithNumbers : Bool
+    , numberedTiles : Bool
     , tiles : List Tile
     , waits : List ( Tile, List Group )
     , numberOfNonPairs : Int
@@ -46,6 +46,7 @@ type GroupsView
 
 type alias PreferencesModel =
     { suitSelection : SuitSelection
+    , numberedTiles : Bool
     , numberOfNonPairs : Int
     , minNumberOfWaits : Int
     , groupsView : GroupsView
@@ -57,6 +58,7 @@ type Msg
     | SetSuitSelection SuitSelection
     | SetNumberNonPairs Int
     | SetNumberMinWaits Int
+    | SetAddNumbersToTiles Bool
     | TilesGenerated (List Tile)
     | ToggleWaitTile Tile
     | ConfirmSelected
@@ -101,11 +103,11 @@ init flags =
                     pref
 
                 Err _ ->
-                    { suitSelection = RandomSuit, numberOfNonPairs = 1, minNumberOfWaits = 1, groupsView = GroupAnimation }
+                    { suitSelection = RandomSuit, numberOfNonPairs = 1, minNumberOfWaits = 1, groupsView = GroupAnimation, numberedTiles = False }
 
         model =
             { suitSelection = prefs.suitSelection
-            , showTilesWithNumbers = True
+            , numberedTiles = prefs.numberedTiles
             , tiles = []
             , waits = []
             , numberOfNonPairs = prefs.numberOfNonPairs
@@ -154,6 +156,13 @@ update msg model =
 
         SetNumberMinWaits num ->
             update GenerateTiles { model | minNumberOfWaits = num }
+
+        SetAddNumbersToTiles value ->
+            let
+                newModel =
+                    { model | numberedTiles = value }
+            in
+            ( newModel, setStorageWaits (encode newModel) )
 
         TilesGenerated tiles ->
             let
@@ -230,24 +239,6 @@ update msg model =
 view : Model -> Html Msg
 view model =
     let
-        renderLabel labelText content =
-            div [ class "field is-horizontal" ]
-                [ div [ class "field-label" ] [ label [ class "label" ] [ text labelText ] ]
-                , div [ class "field-body" ] [ content ]
-                ]
-
-        suitSelector =
-            renderLabel "Suit"
-                (renderSuitSelection model)
-
-        tilesSelector =
-            renderLabel "Number of tiles"
-                (renderNumberTilesSelector model)
-
-        minWaitsSelector =
-            renderLabel "Min. number of waits"
-                (renderMinWaitsSelector model)
-
         expected =
             Set.fromList (List.map Tuple.first model.waits |> List.map Tile.toComparable)
 
@@ -266,11 +257,12 @@ view model =
     in
     div []
         [ div [ class "block" ]
-            [ suitSelector
-            , tilesSelector
-            , minWaitsSelector
+            [ renderLabel "Suit" (renderSuitSelection model)
+            , renderLabel "Number of tiles" (renderNumberTilesSelector model)
+            , renderLabel "Min. number of waits" (renderMinWaitsSelector model)
+            , renderLabel "Numbered tiles" (renderNumberedTilesSelector model)
             ]
-        , div [ class "block" ] [ UI.renderTiles model.showTilesWithNumbers model.tiles ]
+        , div [ class "block" ] [ UI.renderTiles model.numberedTiles model.tiles ]
         , div [ class "block" ]
             [ text "Select wait tiles:"
             , renderWaitButtons model
@@ -283,6 +275,14 @@ view model =
             ]
         , div [ class "block mb-5" ]
             (renderWinningTilesSection model)
+        ]
+
+
+renderLabel : String -> Html Msg -> Html Msg
+renderLabel labelText content =
+    div [ class "field is-horizontal" ]
+        [ div [ class "field-label" ] [ label [ class "label" ] [ text labelText ] ]
+        , div [ class "field-body" ] [ content ]
         ]
 
 
@@ -351,6 +351,26 @@ renderMinWaitsSelector model =
         ]
 
 
+renderNumberedTilesSelector : Model -> Html Msg
+renderNumberedTilesSelector model =
+    let
+        createButton txt addNumbersToTiles =
+            button
+                [ classList
+                    [ ( "button", True )
+                    , ( "is-primary", model.numberedTiles == addNumbersToTiles )
+                    , ( "is-selected", model.numberedTiles == addNumbersToTiles )
+                    ]
+                , onClick (SetAddNumbersToTiles addNumbersToTiles)
+                ]
+                [ text txt ]
+    in
+    div [ class "buttons has-addons" ]
+        [ createButton "Yes" True
+        , createButton "No" False
+        ]
+
+
 renderWaitButtons : Model -> Html Msg
 renderWaitButtons model =
     let
@@ -370,7 +390,7 @@ renderWaitButtons model =
             div [ class "waits-buttons is-flex is-flex-direction-row", UI.tileGapCss ]
                 (List.map
                     (\t ->
-                        UI.drawTile model.showTilesWithNumbers
+                        UI.drawTile model.numberedTiles
                             [ onClick (ToggleWaitTile t)
                             , selectedCss t
                             , classList [ ( "is-clickable", not model.confirmedSelected ) ]
@@ -406,7 +426,7 @@ renderWinningTilesSection model =
                     (List.map
                         (\( t, g ) ->
                             div []
-                                [ UI.drawGroups model.showTilesWithNumbers t g ]
+                                [ UI.drawGroups model.numberedTiles t g ]
                         )
                         model.waits
                     )
@@ -432,7 +452,7 @@ renderWinningTilesSection model =
                         :: List.map
                             (\( t, g ) ->
                                 button [ class "button is-large animation-button", classList [ ( "is-primary", model.currentAnimatedTile == Just t ) ], onClick (StartWaitsAnimation ( t, g )) ]
-                                    [ UI.drawTile model.showTilesWithNumbers [] t ]
+                                    [ UI.drawTile model.numberedTiles [] t ]
                             )
                             model.waits
                     )
@@ -456,7 +476,7 @@ renderWinningTilesSection model =
 renderWinningTiles : Model -> List (Html Msg)
 renderWinningTiles model =
     [ text "Wait tiles:"
-    , UI.renderTiles model.showTilesWithNumbers (List.map Tuple.first model.waits)
+    , UI.renderTiles model.numberedTiles (List.map Tuple.first model.waits)
     ]
 
 
@@ -501,7 +521,7 @@ renderSvg groupGapSvg zoom cssClass model =
                     in
                     image
                         [ cssClasses
-                        , SvgA.xlinkHref (UI.tilePath model.showTilesWithNumbers at.tile)
+                        , SvgA.xlinkHref (UI.tilePath model.numberedTiles at.tile)
                         , SvgA.x (String.fromInt posX)
                         , SvgA.y (String.fromInt posY)
                         , SvgA.width (String.fromInt UI.tileWidth)
@@ -669,8 +689,8 @@ stringToSuitSelection s =
 
 decoder : D.Decoder PreferencesModel
 decoder =
-    D.map4
-        (\suit nonPairs minWaits gView ->
+    D.map5
+        (\suit nonPairs minWaits gView addNumbersToTiles ->
             let
                 groupsView =
                     case gView of
@@ -683,12 +703,18 @@ decoder =
                         _ ->
                             GroupAnimation
             in
-            { suitSelection = stringToSuitSelection suit, numberOfNonPairs = nonPairs, minNumberOfWaits = minWaits, groupsView = groupsView }
+            { suitSelection = stringToSuitSelection suit
+            , numberOfNonPairs = nonPairs
+            , minNumberOfWaits = minWaits
+            , groupsView = groupsView
+            , numberedTiles = Maybe.withDefault False addNumbersToTiles
+            }
         )
         (D.field "suit" D.string)
         (D.field "nonPairs" D.int)
         (D.field "minWaits" D.int)
         (D.field "groupsView" D.string)
+        (D.maybe (D.field "tileNumbers" D.bool))
 
 
 encode : Model -> E.Value
@@ -707,4 +733,5 @@ encode model =
         , ( "nonPairs", E.int model.numberOfNonPairs )
         , ( "minWaits", E.int model.minNumberOfWaits )
         , ( "groupsView", E.string groupsViewStr )
+        , ( "tileNumbers", E.bool model.numberedTiles )
         ]
