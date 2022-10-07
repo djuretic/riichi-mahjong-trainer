@@ -54,12 +54,12 @@ type alias PreferencesModel =
 
 
 type Msg
-    = GenerateTiles
+    = GenerateTiles Int
     | SetSuitSelection SuitSelection
     | SetNumberNonPairs Int
     | SetNumberMinWaits Int
     | SetAddNumbersToTiles Bool
-    | TilesGenerated (List Tile)
+    | TilesGenerated Int (List Tile)
     | ToggleWaitTile Tile
     | ConfirmSelected
     | SetGroupsView GroupsView
@@ -120,12 +120,12 @@ init flags =
             , groupsView = prefs.groupsView
             }
     in
-    ( model, cmdGenerateRandomTiles model )
+    ( model, cmdGenerateRandomTiles 0 model )
 
 
-cmdGenerateRandomTiles : Model -> Cmd Msg
-cmdGenerateRandomTiles model =
-    Random.generate TilesGenerated (Group.randomTenpaiGroups model.numberOfNonPairs 30 (suitSelectionToSuit model.suitSelection))
+cmdGenerateRandomTiles : Int -> Model -> Cmd Msg
+cmdGenerateRandomTiles numTries model =
+    Random.generate (TilesGenerated numTries) (Group.randomTenpaiGroups model.numberOfNonPairs 30 (suitSelectionToSuit model.suitSelection))
 
 
 subscriptions : Model -> Sub Msg
@@ -140,22 +140,26 @@ subscriptions model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GenerateTiles ->
+        GenerateTiles numTries ->
             ( model
             , Cmd.batch
                 [ setStorageWaits (encode model)
-                , cmdGenerateRandomTiles model
+                , cmdGenerateRandomTiles numTries model
                 ]
             )
 
         SetSuitSelection suitSelection ->
-            update GenerateTiles { model | suitSelection = suitSelection }
+            update (GenerateTiles 0) { model | suitSelection = suitSelection }
 
         SetNumberNonPairs num ->
-            update GenerateTiles { model | numberOfNonPairs = num }
+            let
+                newModel =
+                    { model | numberOfNonPairs = num }
+            in
+            update (GenerateTiles 0) { newModel | minNumberOfWaits = min newModel.minNumberOfWaits (numWaitsUpperBound newModel) }
 
         SetNumberMinWaits num ->
-            update GenerateTiles { model | minNumberOfWaits = num }
+            update (GenerateTiles 0) { model | minNumberOfWaits = num }
 
         SetAddNumbersToTiles value ->
             let
@@ -164,15 +168,18 @@ update msg model =
             in
             ( newModel, setStorageWaits (encode newModel) )
 
-        TilesGenerated tiles ->
+        TilesGenerated numTries tiles ->
             let
                 waits =
                     Group.winningTiles tiles
             in
             if List.length waits < model.minNumberOfWaits then
-                update GenerateTiles model
+                update (GenerateTiles (numTries + 1)) model
 
             else
+                -- let
+                --     _ = Debug.log "numTries" numTries
+                -- in
                 ( initAnimatedTiles { model | tiles = tiles, waits = waits, selectedWaits = Set.empty, confirmedSelected = False, currentAnimatedTile = Nothing }, Cmd.none )
 
         ToggleWaitTile tile ->
@@ -271,7 +278,7 @@ view model =
         , div [ class "block", classList [ ( "is-invisible", not model.confirmedSelected ) ] ] (renderWinningTiles model)
         , div [ class "buttons" ]
             [ button [ class "button is-primary", onClick ConfirmSelected, disabled (Set.isEmpty model.selectedWaits || model.confirmedSelected) ] [ text "Confirm" ]
-            , button [ class "button", onClick GenerateTiles ] [ text "New hand" ]
+            , button [ class "button", onClick (GenerateTiles 0) ] [ text "New hand" ]
             ]
         , div [ class "block mb-5" ]
             (renderWinningTilesSection model)
@@ -334,20 +341,25 @@ renderMinWaitsSelector : Model -> Html Msg
 renderMinWaitsSelector model =
     let
         createButton txt minNumberOfWaits =
-            button
-                [ classList
-                    [ ( "button", True )
-                    , ( "is-primary", model.minNumberOfWaits == minNumberOfWaits )
-                    , ( "is-selected", model.minNumberOfWaits == minNumberOfWaits )
+            if numWaitsUpperBound model < minNumberOfWaits then
+                text ""
+
+            else
+                button
+                    [ classList
+                        [ ( "button", True )
+                        , ( "is-primary", model.minNumberOfWaits == minNumberOfWaits )
+                        , ( "is-selected", model.minNumberOfWaits == minNumberOfWaits )
+                        ]
+                    , onClick (SetNumberMinWaits minNumberOfWaits)
                     ]
-                , onClick (SetNumberMinWaits minNumberOfWaits)
-                ]
-                [ text txt ]
+                    [ text txt ]
     in
     div [ class "buttons has-addons" ]
         [ createButton "1" 1
         , createButton "2" 2
         , createButton "3" 3
+        , createButton "4" 4
         ]
 
 
@@ -735,3 +747,12 @@ encode model =
         , ( "groupsView", E.string groupsViewStr )
         , ( "tileNumbers", E.bool model.numberedTiles )
         ]
+
+
+numWaitsUpperBound : Model -> Int
+numWaitsUpperBound { numberOfNonPairs } =
+    if numberOfNonPairs == 1 then
+        3
+
+    else
+        4
