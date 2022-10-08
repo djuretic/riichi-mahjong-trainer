@@ -15,6 +15,7 @@ module Group exposing
     , isTriplet
     , isWinningHand
     , member
+    , random5SidedWait
     , randomCompleteGroups
     , randomTenpaiGroups
     , randomWinningGroups
@@ -474,6 +475,84 @@ randomTenpaiGroups numNonPairs tripletWeight wantedSuit =
                     |> Tile.sort
             )
             posToRemove
+
+
+random5SidedWait : Maybe Tile.Suit -> Random.Generator (List Tile.Tile)
+random5SidedWait wantedSuit =
+    Random.uniform True [ False ]
+        |> Random.andThen
+            (\b ->
+                if b then
+                    randomTatsumaki wantedSuit
+
+                else
+                    randomRyanmentenWithNobetan wantedSuit
+            )
+
+
+{-| Example: 6667888p, waits 56789p
+-}
+randomTatsumaki : Maybe Tile.Suit -> Random.Generator (List Tile.Tile)
+randomTatsumaki wantedSuit =
+    let
+        baseSuit =
+            case wantedSuit of
+                Just s ->
+                    Random.constant s
+
+                Nothing ->
+                    Tile.randomNonHonorSuit
+    in
+    baseSuit
+        |> Random.andThen (\s -> Random.pair (Random.constant s) (Random.int 2 5))
+        |> Random.map
+            (\( s, n ) ->
+                [ Tile.Tile n s
+                , Tile.Tile n s
+                , Tile.Tile n s
+                , Tile.Tile (n + 1) s
+                , Tile.Tile (n + 2) s
+                , Tile.Tile (n + 2) s
+                , Tile.Tile (n + 2) s
+                ]
+            )
+
+
+{-| Example: 3334567m, waits 24578p
+-}
+randomRyanmentenWithNobetan : Maybe Tile.Suit -> Random.Generator (List Tile.Tile)
+randomRyanmentenWithNobetan wantedSuit =
+    let
+        baseSuit =
+            case wantedSuit of
+                Just s ->
+                    Random.constant s
+
+                Nothing ->
+                    Tile.randomNonHonorSuit
+
+        tripletPart numA numB suit =
+            Random.uniform (Tile.Tile numA suit) [ Tile.Tile numB suit ]
+                |> Random.map (\t -> List.repeat 2 t)
+    in
+    Random.pair baseSuit (Random.int 2 5)
+        |> Random.andThen
+            (\( s, n ) ->
+                Random.pair (tripletPart n (n + 4) s)
+                    (Random.constant
+                        [ Tile.Tile n s
+                        , Tile.Tile (n + 1) s
+                        , Tile.Tile (n + 2) s
+                        , Tile.Tile (n + 3) s
+                        , Tile.Tile (n + 4) s
+                        ]
+                    )
+            )
+        |> Random.map
+            (\( tp, tiles ) ->
+                List.append tp tiles
+                    |> Tile.sort
+            )
 
 
 winningTiles : List Tile.Tile -> List ( Tile.Tile, List Group )

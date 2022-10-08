@@ -125,7 +125,12 @@ init flags =
 
 cmdGenerateRandomTiles : Int -> Model -> Cmd Msg
 cmdGenerateRandomTiles numTries model =
-    Random.generate (TilesGenerated numTries) (Group.randomTenpaiGroups model.numberOfNonPairs 30 (suitSelectionToSuit model.suitSelection))
+    if model.numberOfNonPairs == 2 && model.minNumberOfWaits == 5 then
+        -- for efficiency we avoid the brute force method
+        Random.generate (TilesGenerated numTries) (Group.random5SidedWait (suitSelectionToSuit model.suitSelection))
+
+    else
+        Random.generate (TilesGenerated numTries) (Group.randomTenpaiGroups model.numberOfNonPairs 30 (suitSelectionToSuit model.suitSelection))
 
 
 subscriptions : Model -> Sub Msg
@@ -178,7 +183,8 @@ update msg model =
 
             else
                 -- let
-                --     _ = Debug.log "numTries" numTries
+                --     _ =
+                --         Debug.log "numTries" numTries
                 -- in
                 ( initAnimatedTiles { model | tiles = tiles, waits = waits, selectedWaits = Set.empty, confirmedSelected = False, currentAnimatedTile = Nothing }, Cmd.none )
 
@@ -360,6 +366,7 @@ renderMinWaitsSelector model =
         , createButton "2" 2
         , createButton "3" 3
         , createButton "4" 4
+        , createButton "5" 5
         ]
 
 
@@ -755,4 +762,4 @@ numWaitsUpperBound { numberOfNonPairs } =
         3
 
     else
-        4
+        5

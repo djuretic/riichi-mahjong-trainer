@@ -160,10 +160,6 @@ tileCss path =
     [ src path
     , class "tile"
 
-    --     style "background-image" ("url(" ++ path ++ "), url(/img/128px/placeholder.png)")
-    -- , style "background-position-x" "49%, 0px"
-    -- , style "background-repeat" "no-repeat, no-repeat"
-    -- , style "background-size" "152%, 100%"
     -- needed for nested flex to work when shrinking
     , style "min-width" "20px"
     ]
