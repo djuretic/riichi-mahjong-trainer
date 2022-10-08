@@ -209,7 +209,7 @@ toString group =
             String.repeat 2 (String.fromInt group.tileNumber) ++ Tile.suitToString group.suit
 
         Run ->
-            String.join ""
+            String.concat
                 [ String.fromInt group.tileNumber
                 , String.fromInt (group.tileNumber + 1)
                 , String.fromInt (group.tileNumber + 2)
@@ -449,8 +449,7 @@ randomCompleteGroups numNonPairs tripletWeight wantedSuit =
             (\g ->
                 let
                     tiles =
-                        List.map toTiles g
-                            |> List.concat
+                        List.concatMap toTiles g
                 in
                 if Tile.hasMoreThan4Tiles tiles then
                     randomCompleteGroups numNonPairs tripletWeight wantedSuit
@@ -469,8 +468,7 @@ randomTenpaiGroups numNonPairs tripletWeight wantedSuit =
     randomCompleteGroups numNonPairs tripletWeight wantedSuit
         |> Random.map2
             (\pos lg ->
-                List.map toTiles lg
-                    |> List.concat
+                List.concatMap toTiles lg
                     |> Tile.removeTileAtPosFromList pos
                     |> Tile.sort
             )

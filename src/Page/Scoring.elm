@@ -291,7 +291,7 @@ renderHanDetails : Hand -> Html Msg
 renderHanDetails hand =
     let
         details =
-            List.concat [ List.map renderHanSource hand.hanSources ]
+            List.map renderHanSource hand.hanSources
 
         footer =
             renderTotalHan hand.hanCount
@@ -329,7 +329,7 @@ renderFuDetails hand =
     if Hand.shouldCountFu hand then
         let
             details =
-                List.concat [ List.map renderFuSource hand.fuSources ]
+                List.map renderFuSource hand.fuSources
 
             footer =
                 renderTotalFu hand
@@ -400,7 +400,7 @@ renderScore hand =
                 hanStr
 
             else
-                String.join ""
+                String.concat
                     [ hanStr
                     , String.fromInt hand.fuCount
                     , " fu"

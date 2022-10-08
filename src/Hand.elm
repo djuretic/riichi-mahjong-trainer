@@ -1011,8 +1011,7 @@ randomWinningHand =
         createHand groups winBy seatWind roundWind winTilePos =
             let
                 tiles =
-                    List.map Group.toTiles groups
-                        |> List.concat
+                    List.concatMap Group.toTiles groups
                         |> Array.fromList
                         |> Tile.moveWinningTileToEnd winTilePos
                         |> Array.toList
@@ -1055,10 +1054,10 @@ shouldCountFu hand =
 getHandString : Hand -> String
 getHandString hand =
     if List.length hand.tiles == 13 then
-        List.map Tile.toString hand.tiles |> String.join ""
+        List.map Tile.toString hand.tiles |> String.concat
 
     else
-        List.map Group.toString hand.groups |> String.join ""
+        List.map Group.toString hand.groups |> String.concat
 
 
 type alias DealerScore =

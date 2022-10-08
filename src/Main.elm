@@ -74,7 +74,7 @@ init flags =
       --   , scoring = scoring
       , waits = waits
       }
-    , Cmd.batch [ Cmd.map WaitsMsg waitsCmd ]
+    , Cmd.map WaitsMsg waitsCmd
     )
 
 
