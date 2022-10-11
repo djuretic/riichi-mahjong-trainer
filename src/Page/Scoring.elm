@@ -6,7 +6,7 @@ import Html exposing (Html, a, button, div, input, li, p, table, tbody, td, text
 import Html.Attributes exposing (class, colspan, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Random
-import Tile exposing (Suit(..))
+import Tile
 import UI
 
 

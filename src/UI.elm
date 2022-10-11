@@ -18,7 +18,6 @@ module UI exposing
     )
 
 import FontAwesome
-import FontAwesome.Solid exposing (n)
 import Group
 import Html
 import Html.Attributes exposing (class, src, style)

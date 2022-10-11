@@ -36,25 +36,25 @@ import Simplify
 config : List Rule
 config =
     [ Docs.ReviewAtDocs.rule
-    -- , NoConfusingPrefixOperator.rule
+    , NoConfusingPrefixOperator.rule
     -- , NoDebug.Log.rule
     -- , NoDebug.TodoOrToString.rule
     --     |> Rule.ignoreErrorsForDirectories [ "tests/" ]
-    -- , NoExposingEverything.rule
-    --     |> Rule.ignoreErrorsForDirectories [ "tests/" ]
-    -- , NoImportingEverything.rule []
-    --     |> Rule.ignoreErrorsForDirectories [ "tests/" ]
-    -- , NoMissingTypeAnnotation.rule
+    , NoExposingEverything.rule
+        |> Rule.ignoreErrorsForDirectories [ "tests/" ]
+    , NoImportingEverything.rule []
+        |> Rule.ignoreErrorsForDirectories [ "tests/" ]
+    , NoMissingTypeAnnotation.rule
     -- , NoMissingTypeAnnotationInLetIn.rule
     -- , NoMissingTypeExpose.rule
-    -- , NoSimpleLetBody.rule
+    , NoSimpleLetBody.rule
     -- , NoPrematureLetComputation.rule
     -- , NoUnused.CustomTypeConstructors.rule []
     -- , NoUnused.CustomTypeConstructorArgs.rule
     -- , NoUnused.Dependencies.rule
     -- , NoUnused.Exports.rule
     -- , NoUnused.Parameters.rule
-    -- , NoUnused.Patterns.rule
-    -- , NoUnused.Variables.rule
-    , Simplify.rule Simplify.defaults
+    , NoUnused.Patterns.rule
+    , NoUnused.Variables.rule
+    -- , Simplify.rule Simplify.defaults
     ]
