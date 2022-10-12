@@ -466,7 +466,7 @@ renderWinningTilesSection model =
             if model.groupsView == GroupAnimation && model.confirmedSelected then
                 [ renderSvg groupGapSvg 1 "is-hidden-mobile" model
                 , renderSvg groupGapSvg 0.8 "is-hidden-tablet" model
-                , div [ class "tiles block is-flex is-flex-direction-row", UI.tileGapCss ]
+                , div [ class "tiles block is-flex is-flex-direction-row is-flex-wrap-wrap", UI.tileGapCss ]
                     (resetAnimButton
                         :: List.map
                             (\( t, g ) ->
