@@ -20,7 +20,7 @@ module UI exposing
 import FontAwesome
 import Group
 import Html
-import Html.Attributes exposing (class, src, style)
+import Html.Attributes exposing (class, src, style, title)
 import List.Extra
 import Svg.Attributes as SvgA
 import Tile
@@ -67,7 +67,7 @@ drawTile addNumbers attrs tile =
         Html.text ""
 
     else
-        Html.img (tileCss path |> List.append attrs) []
+        Html.img (tileCss path (Just tile) |> List.append attrs) []
 
 
 drawTileSimple : Bool -> Tile.Tile -> Html.Html msg
@@ -104,7 +104,7 @@ tilePath addNumbers { number, suit } =
 
 drawBackTile : Html.Html msg
 drawBackTile =
-    Html.img (tileCss "/img/128px_v2/face-down-128px.png") []
+    Html.img (tileCss "/img/128px_v2/face-down-128px.png" Nothing) []
 
 
 tileScale : Float
@@ -154,10 +154,11 @@ groupGapCss =
     Html.Attributes.style "gap" (String.fromInt groupGap ++ "px")
 
 
-tileCss : String -> List (Html.Attribute msg)
-tileCss path =
+tileCss : String -> Maybe Tile.Tile -> List (Html.Attribute msg)
+tileCss path tile =
     [ src path
     , class "tile"
+    , title (Maybe.map Tile.title tile |> Maybe.withDefault "")
 
     -- needed for nested flex to work when shrinking
     , style "min-width" "20px"

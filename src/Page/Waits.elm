@@ -546,7 +546,7 @@ renderSvg groupGapSvg zoom cssClass model =
                         , SvgA.width (String.fromInt UI.tileWidth)
                         , SvgA.opacity opacityNumber
                         ]
-                        []
+                        [ Svg.title [] [ Svg.text (Tile.title at.tile) ] ]
                 )
                 model.animatedTiles
             )
