@@ -7,6 +7,7 @@ import Group exposing (Group)
 import Html exposing (Html, a, button, div, label, li, span, text, ul)
 import Html.Attributes exposing (class, classList, disabled, style)
 import Html.Events exposing (onClick)
+import I18n
 import Json.Decode as D
 import Json.Encode as E
 import List.Extra
@@ -18,7 +19,6 @@ import Svg.Attributes as SvgA
 import Tile exposing (Tile)
 import Time
 import UI
-import I18n
 
 
 port setStorageWaits : E.Value -> Cmd msg
@@ -262,13 +262,13 @@ view model =
             if expected == model.selectedWaits then
                 span [ class "icon-text has-text-success" ]
                     [ UI.icon "icon" IconS.squareCheck
-                    , span [] [ text "Correct!" ]
+                    , span [] [ text (I18n.correctAnswer model.i18n) ]
                     ]
 
             else
                 span [ class "icon-text has-text-danger" ]
                     [ UI.icon "icon" IconS.ban
-                    , span [] [ text "Wrong" ]
+                    , span [] [ text (I18n.wrongAnswer model.i18n) ]
                     ]
     in
     div []
@@ -280,14 +280,16 @@ view model =
             ]
         , div [ class "block" ] [ UI.renderTiles model.numberedTiles model.tiles ]
         , div [ class "block" ]
-            [ text "Select wait tiles:"
+            [ text (I18n.selectWaitTilesText model.i18n)
             , renderWaitButtons model
             , div [ class "mt-3", classList [ ( "is-invisible", not model.confirmedSelected ) ] ] [ feedbackMsg ]
             ]
         , div [ class "block", classList [ ( "is-invisible", not model.confirmedSelected ) ] ] (renderWinningTiles model)
         , div [ class "buttons" ]
-            [ button [ class "button is-primary", onClick ConfirmSelected, disabled (Set.isEmpty model.selectedWaits || model.confirmedSelected) ] [ text "Confirm" ]
-            , button [ class "button", onClick (GenerateTiles 0) ] [ text "New hand" ]
+            [ button
+                [ class "button is-primary", onClick ConfirmSelected, disabled (Set.isEmpty model.selectedWaits || model.confirmedSelected) ]
+                [ text (I18n.confirmTilesButton model.i18n) ]
+            , button [ class "button", onClick (GenerateTiles 0) ] [ text (I18n.newHandButton model.i18n) ]
             ]
         , div [ class "block mb-5" ]
             (renderWinningTilesSection model)
@@ -440,7 +442,7 @@ renderWinningTilesSection model =
                 []
 
             else
-                [ div [ class "block has-text-centered p-6" ] [ text "Select waits to view possible groups" ] ]
+                [ div [ class "block has-text-centered p-6" ] [ text (I18n.groupsContentPlaceholder model.i18n) ] ]
 
         groupsTable =
             if model.groupsView == GroupTable && model.confirmedSelected then
@@ -485,8 +487,12 @@ renderWinningTilesSection model =
     in
     div [ class "tabs is-boxed" ]
         [ ul []
-            [ li [ isActiveTabCss GroupAnimation, onClick (SetGroupsView GroupAnimation) ] [ a [] [ UI.icon "icon is-small" IconR.circlePlay, span [] [ text "Animation" ] ] ]
-            , li [ isActiveTabCss GroupTable, onClick (SetGroupsView GroupTable) ] [ a [] [ UI.icon "icon is-small" IconS.table, span [] [ text "Table" ] ] ]
+            [ li
+                [ isActiveTabCss GroupAnimation, onClick (SetGroupsView GroupAnimation) ]
+                [ a [] [ UI.icon "icon is-small" IconR.circlePlay, span [] [ text (I18n.animationTab model.i18n) ] ] ]
+            , li
+                [ isActiveTabCss GroupTable, onClick (SetGroupsView GroupTable) ]
+                [ a [] [ UI.icon "icon is-small" IconS.table, span [] [ text (I18n.tableTab model.i18n) ] ] ]
             ]
         ]
         :: (groupsTable
@@ -497,7 +503,7 @@ renderWinningTilesSection model =
 
 renderWinningTiles : Model -> List (Html Msg)
 renderWinningTiles model =
-    [ text "Wait tiles:"
+    [ text (I18n.showWaitTilesText model.i18n)
     , UI.renderTiles model.numberedTiles (List.map Tuple.first model.waits)
     ]
 
