@@ -9,6 +9,7 @@ import FontAwesome.Solid as Solid
 import Html
 import Html.Attributes exposing (class, href, target, title)
 import Html.Events exposing (onClick)
+import I18n
 import Json.Decode as D
 import Json.Encode as E
 import Page.Waits
@@ -29,7 +30,8 @@ main =
 
 
 type alias Model =
-    { page : Page
+    { i18n : I18n.I18n
+    , page : Page
     , theme : Theme
 
     -- , scoring : Page.Scoring.Model
@@ -50,6 +52,9 @@ type Page
 init : E.Value -> ( Model, Cmd Msg )
 init flags =
     let
+        i18n =
+            I18n.init I18n.En
+
         ( waitsFlags, darkTheme ) =
             case D.decodeValue flagsDecoder flags of
                 Ok res ->
@@ -61,9 +66,10 @@ init flags =
         -- ( scoring, scoringCmd ) =
         --     Page.Scoring.init
         ( waits, waitsCmd ) =
-            Page.Waits.init waitsFlags
+            Page.Waits.init i18n waitsFlags
     in
-    ( { page = WaitsPage
+    ( { i18n = i18n
+      , page = WaitsPage
       , theme =
             if darkTheme == "t" then
                 DarkMode
@@ -160,19 +166,17 @@ view model =
               --         ]
               --     ]
               Html.h1 [ class "title" ] [ Html.text "Mahjong Waits Trainer" ]
-            , Html.a [ onClick ToggleTheme, class "icon-link theme-toggle is-clickable", title "Toggle light/dark mode" ] [ UI.icon "icon" (nextThemeIcon model) ]
+            , Html.a [ onClick ToggleTheme, class "icon-link theme-toggle is-clickable", title (I18n.toggleThemeButtonTitle model.i18n) ] [ UI.icon "icon" (nextThemeIcon model) ]
             , Html.div [ class "main" ] [ content ]
             ]
         , Html.footer [ class "footer" ]
             [ Html.div [ class "has-text-centered" ]
-                [ Html.p [ class "content" ]
-                    [ Html.text "Mahjong tile images by "
-                    , Html.a [ href "https://www.martinpersson.org/", target "_blank" ] [ Html.text "Martin Persson" ]
-                    ]
-                , Html.p [ class "content" ]
-                    [ Html.text "Favicon by "
-                    , Html.a [ href "https://www.flaticon.com/free-icons/mahjong", target "_blank" ] [ Html.text "Freepik - Flaticon" ]
-                    ]
+                [ Html.map never <|
+                    Html.p [ class "content" ]
+                        (I18n.mahjongImageCredits { author = "Martin Persson", href = "https://www.martinpersson.org/" } [] model.i18n)
+                , Html.map never <|
+                    Html.p [ class "content" ]
+                        (I18n.faviconCredits { author = "Freepik - Flaticon", href = "https://www.flaticon.com/free-icons/mahjong" } [] model.i18n)
                 , Html.p [ class "mt-2" ] [ Html.a [ class "icon-link", href "https://github.com/djuretic/riichi-mahjong-trainer", target "_blank" ] [ UI.icon "icon" Brands.github ] ]
                 ]
             ]

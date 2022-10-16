@@ -25,8 +25,8 @@ table-tab = Table
 
 groups-content-placeholder = Select waits to view possible groups
 
-mahjong-image-credits = Mahjong tile images by {$author}
-favicon-credits = Favicon by {$author}
+mahjong-image-credits = Mahjong tile images by <a href="{$href}" target="_blank">{$author}</a>
+favicon-credits = Favicon by <a href="{$href}" target="_blank">{$author}</a>
 
 tile-number-1 = one
 tile-number-2 = two

@@ -96,8 +96,8 @@ dummyTile =
     Tile 0 Tile.Man
 
 
-init : E.Value -> ( Model, Cmd Msg )
-init flags =
+init : I18n.I18n -> E.Value -> ( Model, Cmd Msg )
+init i18n flags =
     let
         prefs =
             case D.decodeValue decoder flags of
@@ -108,7 +108,7 @@ init flags =
                     { suitSelection = RandomSuit, numberOfNonPairs = 1, minNumberOfWaits = 1, groupsView = GroupAnimation, numberedTiles = False }
 
         model =
-            { i18n = I18n.init I18n.Es
+            { i18n = i18n
             , suitSelection = prefs.suitSelection
             , numberedTiles = prefs.numberedTiles
             , tiles = []
