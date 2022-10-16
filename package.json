@@ -9,6 +9,7 @@
     "css-watch": "npm run css-build -- --watch",
     "format": "elm-format src/ tests/",
     "build:prod": "./optimize.sh src/Main.elm",
+    "translations": "travelm-agency --elm_path=src/I18n.elm --inline translations",
     "debug": "elm-live src/Main.elm --open -- --output app.js --debug",
     "live": "elm-live src/Main.elm --open --host 0.0.0.0 -- --output app.js",
     "review": "elm-review",
@@ -34,6 +35,7 @@
     "elm-live": "^4.0.2",
     "elm-review": "^2.7.5",
     "node-sass": "^7.0.3",
+    "travelm-agency": "^3.2.0",
     "uglify-js": "^3.17.2"
   }
 }

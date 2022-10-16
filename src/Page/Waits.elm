@@ -18,13 +18,15 @@ import Svg.Attributes as SvgA
 import Tile exposing (Tile)
 import Time
 import UI
+import I18n
 
 
 port setStorageWaits : E.Value -> Cmd msg
 
 
 type alias Model =
-    { suitSelection : SuitSelection
+    { i18n : I18n.I18n
+    , suitSelection : SuitSelection
     , numberedTiles : Bool
     , tiles : List Tile
     , waits : List ( Tile, List Group )
@@ -106,7 +108,8 @@ init flags =
                     { suitSelection = RandomSuit, numberOfNonPairs = 1, minNumberOfWaits = 1, groupsView = GroupAnimation, numberedTiles = False }
 
         model =
-            { suitSelection = prefs.suitSelection
+            { i18n = I18n.init I18n.Es
+            , suitSelection = prefs.suitSelection
             , numberedTiles = prefs.numberedTiles
             , tiles = []
             , waits = []
@@ -270,10 +273,10 @@ view model =
     in
     div []
         [ div [ class "block" ]
-            [ renderLabel "Suit" (renderSuitSelection model)
-            , renderLabel "Number of tiles" (renderNumberTilesSelector model)
-            , renderLabel "Min. number of waits" (renderMinWaitsSelector model)
-            , renderLabel "Numbered tiles" (renderNumberedTilesSelector model)
+            [ renderLabel (I18n.suitSelectorTitle model.i18n) (renderSuitSelection model)
+            , renderLabel (I18n.numTilesSelectorTitle model.i18n) (renderNumberTilesSelector model)
+            , renderLabel (I18n.minWaitsSelectorTitle model.i18n) (renderMinWaitsSelector model)
+            , renderLabel (I18n.numberedTilesSelector model.i18n) (renderNumberedTilesSelector model)
             ]
         , div [ class "block" ] [ UI.renderTiles model.numberedTiles model.tiles ]
         , div [ class "block" ]
@@ -314,10 +317,10 @@ renderSuitSelection model =
                 [ text txt ]
     in
     div [ class "buttons has-addons" ]
-        [ createButton "Random" RandomSuit
-        , createButton "Characters" FixedSuitMan
-        , createButton "Circles" FixedSuitPin
-        , createButton "Bamboos" FixedSuitSou
+        [ createButton (I18n.suitSelectorTitleRandom model.i18n) RandomSuit
+        , createButton (I18n.suitSelectorTitleMan model.i18n) FixedSuitMan
+        , createButton (I18n.suitSelectorTitlePin model.i18n) FixedSuitPin
+        , createButton (I18n.suitSelectorTitleSou model.i18n) FixedSuitSou
         ]
 
 
@@ -385,8 +388,8 @@ renderNumberedTilesSelector model =
                 [ text txt ]
     in
     div [ class "buttons has-addons" ]
-        [ createButton "Yes" True
-        , createButton "No" False
+        [ createButton (I18n.numberedTilesSelectorYes model.i18n) True
+        , createButton (I18n.numberedTilesSelectorNo model.i18n) False
         ]
 
 
