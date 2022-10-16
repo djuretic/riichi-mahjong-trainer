@@ -24,7 +24,6 @@ module Tile exposing
     , removeTileAtPosFromList
     , sort
     , suitToString
-    , title
     , toArrayCounter
     , toComparable
     , toString
@@ -407,82 +406,3 @@ toSuit s =
 
         _ ->
             Nothing
-
-
-title : Tile -> String
-title tile =
-    if tile.suit == Honor then
-        case tile.number of
-            1 ->
-                "east wind"
-
-            2 ->
-                "south wind"
-
-            3 ->
-                "west wind"
-
-            4 ->
-                "north wind"
-
-            5 ->
-                "white dragon"
-
-            6 ->
-                "green dragon"
-
-            7 ->
-                "red dragon"
-
-            _ ->
-                "?"
-
-    else
-        let
-            suit =
-                case tile.suit of
-                    Man ->
-                        "characters"
-
-                    Pin ->
-                        "circles"
-
-                    Sou ->
-                        "bamboo"
-
-                    _ ->
-                        "?"
-
-            n =
-                case tile.number of
-                    1 ->
-                        "one"
-
-                    2 ->
-                        "two"
-
-                    3 ->
-                        "three"
-
-                    4 ->
-                        "four"
-
-                    5 ->
-                        "five"
-
-                    6 ->
-                        "six"
-
-                    7 ->
-                        "seven"
-
-                    8 ->
-                        "eight"
-
-                    9 ->
-                        "nine"
-
-                    _ ->
-                        "?"
-        in
-        n ++ " of " ++ suit

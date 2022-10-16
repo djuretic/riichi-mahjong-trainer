@@ -278,7 +278,7 @@ view model =
             , renderLabel (I18n.minWaitsSelectorTitle model.i18n) (renderMinWaitsSelector model)
             , renderLabel (I18n.numberedTilesSelector model.i18n) (renderNumberedTilesSelector model)
             ]
-        , div [ class "block" ] [ UI.renderTiles model.numberedTiles model.tiles ]
+        , div [ class "block" ] [ UI.renderTiles model.i18n model.numberedTiles model.tiles ]
         , div [ class "block" ]
             [ text (I18n.selectWaitTilesText model.i18n)
             , renderWaitButtons model
@@ -414,7 +414,8 @@ renderWaitButtons model =
             div [ class "waits-buttons is-flex is-flex-direction-row", UI.tileGapCss ]
                 (List.map
                     (\t ->
-                        UI.drawTile model.numberedTiles
+                        UI.drawTile model.i18n
+                            model.numberedTiles
                             [ onClick (ToggleWaitTile t)
                             , selectedCss t
                             , classList [ ( "is-clickable", not model.confirmedSelected ) ]
@@ -450,7 +451,7 @@ renderWinningTilesSection model =
                     (List.map
                         (\( t, g ) ->
                             div []
-                                [ UI.drawGroups model.numberedTiles t g ]
+                                [ UI.drawGroups model.i18n model.numberedTiles t g ]
                         )
                         model.waits
                     )
@@ -465,7 +466,7 @@ renderWinningTilesSection model =
                 , classList [ ( "is-primary", model.currentAnimatedTile == Nothing ) ]
                 , onClick ResetWaitsAnimation
                 ]
-                [ UI.drawBackTile ]
+                [ UI.drawBackTile model.i18n ]
 
         groupsSvgAnimation =
             if model.groupsView == GroupAnimation && model.confirmedSelected then
@@ -476,7 +477,7 @@ renderWinningTilesSection model =
                         :: List.map
                             (\( t, g ) ->
                                 button [ class "button is-large animation-button", classList [ ( "is-primary", model.currentAnimatedTile == Just t ) ], onClick (StartWaitsAnimation ( t, g )) ]
-                                    [ UI.drawTile model.numberedTiles [] t ]
+                                    [ UI.drawTile model.i18n model.numberedTiles [] t ]
                             )
                             model.waits
                     )
@@ -504,7 +505,7 @@ renderWinningTilesSection model =
 renderWinningTiles : Model -> List (Html Msg)
 renderWinningTiles model =
     [ text (I18n.showWaitTilesText model.i18n)
-    , UI.renderTiles model.numberedTiles (List.map Tuple.first model.waits)
+    , UI.renderTiles model.i18n model.numberedTiles (List.map Tuple.first model.waits)
     ]
 
 
@@ -555,7 +556,7 @@ renderSvg groupGapSvg zoom cssClass model =
                         , SvgA.width (String.fromInt UI.tileWidth)
                         , SvgA.opacity opacityNumber
                         ]
-                        [ Svg.title [] [ Svg.text (Tile.title at.tile) ] ]
+                        [ Svg.title [] [ Svg.text (UI.tileTitle model.i18n at.tile) ] ]
                 )
                 model.animatedTiles
             )

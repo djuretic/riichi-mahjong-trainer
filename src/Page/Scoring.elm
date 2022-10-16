@@ -5,13 +5,15 @@ import Hand exposing (Hand)
 import Html exposing (Html, a, button, div, input, li, p, table, tbody, td, text, tfoot, th, thead, tr, ul)
 import Html.Attributes exposing (class, colspan, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
+import I18n
 import Random
 import Tile
 import UI
 
 
 type alias Model =
-    { handString : String
+    { i18n : I18n.I18n
+    , handString : String
     , hand : Hand
     , allGroups : Group.GroupsPerSuit
     , activeTab : ActiveTab
@@ -34,7 +36,7 @@ type ActiveTab
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" Hand.init (Group.GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ]) GuessTab guessValueInit
+    ( Model (I18n.init I18n.En) "" Hand.init (Group.GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ]) GuessTab guessValueInit
     , Random.generate WinningHandGenerated Hand.randomWinningHand
     )
 
@@ -208,7 +210,7 @@ view model =
     div []
         [ input [ class "input", type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
         , button [ class "button is-primary", onClick GenerateRandomWinningHand ] [ text "Random winning hand" ]
-        , p [] [ UI.renderTiles True model.hand.tiles ]
+        , p [] [ UI.renderTiles model.i18n True model.hand.tiles ]
         , renderWinBy model.hand
         , renderWinds model.hand
         , div [ class "tabs" ]
@@ -238,8 +240,8 @@ renderTabContent model =
                         (List.map
                             (\( t, g ) ->
                                 tr []
-                                    [ td [] [ UI.renderTiles False [ t ] ]
-                                    , td [] [ UI.drawGroups True t g ]
+                                    [ td [] [ UI.renderTiles model.i18n False [ t ] ]
+                                    , td [] [ UI.drawGroups model.i18n True t g ]
                                     ]
                             )
                             winningTiles
@@ -249,9 +251,9 @@ renderTabContent model =
             else
                 div []
                     [ debugGroups model.allGroups
-                    , UI.drawGroupsSimple True model.hand.groups
+                    , UI.drawGroupsSimple model.i18n True model.hand.groups
                     , renderHanDetails model.hand
-                    , renderFuDetails model.hand
+                    , renderFuDetails model.i18n model.hand
                     , renderScore model.hand
                     ]
 
@@ -324,12 +326,12 @@ renderHanSource hanSource =
         ]
 
 
-renderFuDetails : Hand -> Html Msg
-renderFuDetails hand =
+renderFuDetails : I18n.I18n -> Hand -> Html Msg
+renderFuDetails i18n hand =
     if Hand.shouldCountFu hand then
         let
             details =
-                List.map renderFuSource hand.fuSources
+                List.map (renderFuSource i18n) hand.fuSources
 
             footer =
                 renderTotalFu hand
@@ -344,8 +346,8 @@ renderFuDetails hand =
         div [] []
 
 
-renderFuSource : Hand.FuSource -> Html Msg
-renderFuSource fuSource =
+renderFuSource : I18n.I18n -> Hand.FuSource -> Html Msg
+renderFuSource i18n fuSource =
     let
         explanation =
             Hand.fuDescriptionToString fuSource.description
@@ -353,7 +355,7 @@ renderFuSource fuSource =
     tr []
         [ td [] [ text explanation ]
         , td [] [ text (String.fromInt fuSource.fu ++ " fu") ]
-        , td [] [ UI.drawGroupsSimple True fuSource.groups ]
+        , td [] [ UI.drawGroupsSimple i18n True fuSource.groups ]
         ]
 
 
@@ -493,7 +495,7 @@ renderGuessTab model =
 
         fuSummary =
             if isFuGuessed model.guessedValue then
-                renderFuDetails model.hand
+                renderFuDetails model.i18n model.hand
 
             else
                 div [] []

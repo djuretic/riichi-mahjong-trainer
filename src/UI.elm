@@ -14,6 +14,7 @@ module UI exposing
     , tileHeightDoubleCss
     , tilePath
     , tileScale
+    , tileTitle
     , tileWidth
     )
 
@@ -21,6 +22,7 @@ import FontAwesome
 import Group
 import Html
 import Html.Attributes exposing (class, src, style, title)
+import I18n exposing (I18n)
 import List.Extra
 import Svg.Attributes as SvgA
 import Tile
@@ -48,17 +50,17 @@ breakpoints =
         ]
 
 
-renderTiles : Bool -> List Tile.Tile -> Html.Html msg
-renderTiles addNumbers tiles =
+renderTiles : I18n -> Bool -> List Tile.Tile -> Html.Html msg
+renderTiles i18n addNumbers tiles =
     let
         allTiles =
-            List.map (drawTileSimple addNumbers) tiles
+            List.map (drawTileSimple i18n addNumbers) tiles
     in
     Html.div [ class "tiles is-flex is-flex-direction-row", tileGapCss ] allTiles
 
 
-drawTile : Bool -> List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg
-drawTile addNumbers attrs tile =
+drawTile : I18n -> Bool -> List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg
+drawTile i18n addNumbers attrs tile =
     let
         path =
             tilePath addNumbers tile
@@ -67,12 +69,12 @@ drawTile addNumbers attrs tile =
         Html.text ""
 
     else
-        Html.img (tileCss path (Just tile) |> List.append attrs) []
+        Html.img (tileCss i18n path (Just tile) |> List.append attrs) []
 
 
-drawTileSimple : Bool -> Tile.Tile -> Html.Html msg
-drawTileSimple addNumbers tile =
-    drawTile addNumbers [] tile
+drawTileSimple : I18n -> Bool -> Tile.Tile -> Html.Html msg
+drawTileSimple i18n addNumbers tile =
+    drawTile i18n addNumbers [] tile
 
 
 tilePath : Bool -> Tile.Tile -> String
@@ -102,9 +104,9 @@ tilePath addNumbers { number, suit } =
             pathHonorTile number
 
 
-drawBackTile : Html.Html msg
-drawBackTile =
-    Html.img (tileCss "/img/128px_v2/face-down-128px.png" Nothing) []
+drawBackTile : I18n -> Html.Html msg
+drawBackTile i18n =
+    Html.img (tileCss i18n "/img/128px_v2/face-down-128px.png" Nothing) []
 
 
 tileScale : Float
@@ -154,11 +156,11 @@ groupGapCss =
     Html.Attributes.style "gap" (String.fromInt groupGap ++ "px")
 
 
-tileCss : String -> Maybe Tile.Tile -> List (Html.Attribute msg)
-tileCss path tile =
+tileCss : I18n -> String -> Maybe Tile.Tile -> List (Html.Attribute msg)
+tileCss i18n path tile =
     [ src path
     , class "tile"
-    , title (Maybe.map Tile.title tile |> Maybe.withDefault "")
+    , title (Maybe.map (tileTitle i18n) tile |> Maybe.withDefault "")
 
     -- needed for nested flex to work when shrinking
     , style "min-width" "20px"
@@ -193,8 +195,8 @@ pathHonorTile n =
             ""
 
 
-drawGroups : Bool -> Tile.Tile -> List Group.Group -> Html.Html msg
-drawGroups addNumbers winTile groups =
+drawGroups : I18n -> Bool -> Tile.Tile -> List Group.Group -> Html.Html msg
+drawGroups i18n addNumbers winTile groups =
     let
         -- unused
         addGroupIsRepeatedData sg lg =
@@ -228,11 +230,11 @@ drawGroups addNumbers winTile groups =
                 |> addCointainsWinningTile
     in
     Html.div [ class "groups is-flex is-flex-direction-row", groupGapCss ]
-        (List.map (\{ group, winningTile } -> drawGroup addNumbers [] winningTile group) groupsWithRepeatedInfo)
+        (List.map (\{ group, winningTile } -> drawGroup i18n addNumbers [] winningTile group) groupsWithRepeatedInfo)
 
 
-drawGroup : Bool -> List (Html.Attribute msg) -> Maybe Tile.Tile -> Group.Group -> Html.Html msg
-drawGroup addNumbers attrs winningTile group =
+drawGroup : I18n -> Bool -> List (Html.Attribute msg) -> Maybe Tile.Tile -> Group.Group -> Html.Html msg
+drawGroup i18n addNumbers attrs winningTile group =
     let
         tiles : List ( Tile.Tile, List (Html.Attribute msg) )
         tiles =
@@ -258,12 +260,12 @@ drawGroup addNumbers attrs winningTile group =
                     tiles
     in
     Html.div (List.append [ class "group is-flex is-flex-direction-row", tileGapCss ] attrs)
-        (List.map (\( t, atts ) -> drawTile addNumbers atts t) tilesWithWinInfo)
+        (List.map (\( t, atts ) -> drawTile i18n addNumbers atts t) tilesWithWinInfo)
 
 
-drawGroupsSimple : Bool -> List Group.Group -> Html.Html msg
-drawGroupsSimple addNumbers groups =
-    Html.div [ class "groups is-flex is-flex-direction-row", groupGapCss, tileHeightCss ] (List.map (drawGroup addNumbers [] Nothing) groups)
+drawGroupsSimple : I18n -> Bool -> List Group.Group -> Html.Html msg
+drawGroupsSimple i18n addNumbers groups =
+    Html.div [ class "groups is-flex is-flex-direction-row", groupGapCss, tileHeightCss ] (List.map (drawGroup i18n addNumbers [] Nothing) groups)
 
 
 winningTileCss : Html.Attribute msg
@@ -274,3 +276,79 @@ winningTileCss =
 icon : String -> FontAwesome.Icon hasId -> Html.Html msg
 icon classes icn =
     FontAwesome.styled [ SvgA.class classes ] icn |> FontAwesome.view
+
+
+tileTitle : I18n -> Tile.Tile -> String
+tileTitle i18n tile =
+    if tile.suit == Tile.Honor then
+        case tile.number of
+            1 ->
+                I18n.eastWindDescription i18n
+
+            2 ->
+                I18n.southWindDescription i18n
+
+            3 ->
+                I18n.westWindDescription i18n
+
+            4 ->
+                I18n.northWindDescription i18n
+
+            5 ->
+                I18n.whiteDragonDescription i18n
+
+            6 ->
+                I18n.greenDragonDescription i18n
+
+            7 ->
+                I18n.redDragonDescription i18n
+
+            _ ->
+                "?"
+
+    else
+        let
+            n =
+                case tile.number of
+                    1 ->
+                        I18n.tileNumber1 i18n
+
+                    2 ->
+                        I18n.tileNumber2 i18n
+
+                    3 ->
+                        I18n.tileNumber3 i18n
+
+                    4 ->
+                        I18n.tileNumber4 i18n
+
+                    5 ->
+                        I18n.tileNumber5 i18n
+
+                    6 ->
+                        I18n.tileNumber6 i18n
+
+                    7 ->
+                        I18n.tileNumber7 i18n
+
+                    8 ->
+                        I18n.tileNumber8 i18n
+
+                    9 ->
+                        I18n.tileNumber9 i18n
+
+                    _ ->
+                        "?"
+        in
+        case tile.suit of
+            Tile.Man ->
+                I18n.manTileDescription n i18n
+
+            Tile.Pin ->
+                I18n.pinTileDescription n i18n
+
+            Tile.Sou ->
+                I18n.souTileDescription n i18n
+
+            _ ->
+                "?"
