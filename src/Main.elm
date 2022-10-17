@@ -30,7 +30,8 @@ main =
 
 
 type alias Model =
-    { i18n : I18n.I18n
+    { language : I18n.Language
+    , i18n : I18n.I18n
     , page : Page
     , theme : Theme
 
@@ -52,8 +53,11 @@ type Page
 init : E.Value -> ( Model, Cmd Msg )
 init flags =
     let
+        lang =
+            I18n.Es
+
         i18n =
-            I18n.init I18n.En
+            I18n.init lang
 
         ( waitsFlags, darkTheme ) =
             case D.decodeValue flagsDecoder flags of
@@ -68,7 +72,8 @@ init flags =
         ( waits, waitsCmd ) =
             Page.Waits.init i18n waitsFlags
     in
-    ( { i18n = i18n
+    ( { language = lang
+      , i18n = i18n
       , page = WaitsPage
       , theme =
             if darkTheme == "t" then
@@ -87,6 +92,7 @@ init flags =
 type Msg
     = SetPage Page
     | ToggleTheme
+    | ToggleLanguage
       -- | ScoringMsg Page.Scoring.Msg
     | WaitsMsg Page.Waits.Msg
 
@@ -108,6 +114,21 @@ update msg model =
                             ( "f", LightMode )
             in
             ( { model | theme = newTheme }, setDarkMode strTheme )
+
+        ToggleLanguage ->
+            let
+                newLang =
+                    case model.language of
+                        I18n.En ->
+                            I18n.Es
+
+                        I18n.Es ->
+                            I18n.En
+
+                newI18n =
+                    I18n.init newLang
+            in
+            update (WaitsMsg (Page.Waits.UpdateI18n newI18n)) { model | language = newLang, i18n = newI18n }
 
         -- ScoringMsg smsg ->
         --     let
@@ -166,6 +187,7 @@ view model =
               --         ]
               --     ]
               Html.h1 [ class "title" ] [ Html.text "Mahjong Waits Trainer" ]
+            , Html.a [ onClick ToggleLanguage, class "icon-link is-clickable", title (I18n.toggleThemeButtonTitle model.i18n) ] [ UI.icon "icon" Solid.language ]
             , Html.a [ onClick ToggleTheme, class "icon-link theme-toggle is-clickable", title (I18n.toggleThemeButtonTitle model.i18n) ] [ UI.icon "icon" (nextThemeIcon model) ]
             , Html.div [ class "main" ] [ content ]
             ]

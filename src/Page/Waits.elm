@@ -1,4 +1,4 @@
-port module Page.Waits exposing (Model, Msg, init, subscriptions, update, view)
+port module Page.Waits exposing (Model, Msg(..), init, subscriptions, update, view)
 
 import Browser.Events
 import FontAwesome.Regular as IconR
@@ -68,6 +68,7 @@ type Msg
     | StartWaitsAnimation ( Tile, List Group )
     | ResetWaitsAnimation
     | Tick Time.Posix
+    | UpdateI18n I18n.I18n
 
 
 type SuitSelection
@@ -250,6 +251,9 @@ update msg model =
 
             else
                 ( model, Cmd.none )
+
+        UpdateI18n i18n ->
+            ( { model | i18n = i18n }, Cmd.none )
 
 
 view : Model -> Html Msg
