@@ -1,4 +1,5 @@
 # fallback-language: en
+site-title = Entrenador de esperas de Mahjong
 toggle-theme-button-title = Cambia entre modo claro y oscuro
 
 suit-selector-title = Pinta

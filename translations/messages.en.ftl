@@ -1,3 +1,4 @@
+site-title = Mahjong Waits Trainer
 toggle-theme-button-title = Toggle light/dark mode
 
 suit-selector-title = Suit
