@@ -6,6 +6,7 @@ module UI exposing
     , drawTile
     , drawTileSimple
     , icon
+    , label
     , renderTiles
     , tileGap
     , tileGapCss
@@ -352,3 +353,11 @@ tileTitle i18n tile =
 
             _ ->
                 "?"
+
+
+label : String -> Html.Html msg -> Html.Html msg
+label labelText content =
+    Html.div [ class "field is-horizontal" ]
+        [ Html.div [ class "field-label" ] [ Html.label [ class "label" ] [ Html.text labelText ] ]
+        , Html.div [ class "field-body" ] [ content ]
+        ]

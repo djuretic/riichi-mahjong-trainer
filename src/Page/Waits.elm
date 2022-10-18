@@ -4,7 +4,7 @@ import Browser.Events
 import FontAwesome.Regular as IconR
 import FontAwesome.Solid as IconS
 import Group exposing (Group)
-import Html exposing (Html, a, button, div, label, li, span, text, ul)
+import Html exposing (Html, a, button, div, li, span, text, ul)
 import Html.Attributes exposing (class, classList, disabled, style)
 import Html.Events exposing (onClick)
 import I18n
@@ -277,10 +277,10 @@ view model =
     in
     div []
         [ div [ class "block" ]
-            [ renderLabel (I18n.suitSelectorTitle model.i18n) (renderSuitSelection model)
-            , renderLabel (I18n.numTilesSelectorTitle model.i18n) (renderNumberTilesSelector model)
-            , renderLabel (I18n.minWaitsSelectorTitle model.i18n) (renderMinWaitsSelector model)
-            , renderLabel (I18n.numberedTilesSelector model.i18n) (renderNumberedTilesSelector model)
+            [ UI.label (I18n.suitSelectorTitle model.i18n) (renderSuitSelection model)
+            , UI.label (I18n.numTilesSelectorTitle model.i18n) (renderNumberTilesSelector model)
+            , UI.label (I18n.minWaitsSelectorTitle model.i18n) (renderMinWaitsSelector model)
+            , UI.label (I18n.numberedTilesSelector model.i18n) (renderNumberedTilesSelector model)
             ]
         , div [ class "block" ] [ UI.renderTiles model.i18n model.numberedTiles model.tiles ]
         , div [ class "block" ]
@@ -297,14 +297,6 @@ view model =
             ]
         , div [ class "block mb-5" ]
             (renderWinningTilesSection model)
-        ]
-
-
-renderLabel : String -> Html Msg -> Html Msg
-renderLabel labelText content =
-    div [ class "field is-horizontal" ]
-        [ div [ class "field-label" ] [ label [ class "label" ] [ text labelText ] ]
-        , div [ class "field-body" ] [ content ]
         ]
 
 

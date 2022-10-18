@@ -2,6 +2,12 @@
 siteTitle = Entrenador de esperas de Mahjong
 toggleThemeButtonTitle = Cambia entre modo claro y oscuro
 
+settingsButtonTitle = Configuración
+languageSelectorTitle = Idioma
+themeSelectorTitle = Tema
+    .light = Claro
+    .dark = Oscuro
+
 suitSelectorTitle = Pinta
     .random = Al azar
     .man = Caracteres

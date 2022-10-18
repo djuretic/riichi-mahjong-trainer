@@ -1,5 +1,11 @@
 siteTitle = Mahjong Waits Trainer
 
+settingsButtonTitle = Settings
+languageSelectorTitle = Language
+themeSelectorTitle = Theme
+    .light = Light
+    .dark = Dark
+
 toggleThemeButtonTitle = Toggle light/dark mode
 
 suitSelectorTitle = Suit

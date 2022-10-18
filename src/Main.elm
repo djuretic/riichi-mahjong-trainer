@@ -6,8 +6,8 @@ import Browser
 import FontAwesome
 import FontAwesome.Brands as Brands
 import FontAwesome.Solid as Solid
-import Html
-import Html.Attributes exposing (class, href, target, title)
+import Html exposing (a, button, div, footer, h1, p, span, text)
+import Html.Attributes as HtmlA exposing (class, classList, href, id, target, title)
 import Html.Events exposing (onClick)
 import I18n
 import Json.Decode as D
@@ -37,6 +37,7 @@ type alias Model =
 
     -- , scoring : Page.Scoring.Model
     , waits : Page.Waits.Model
+    , languageDropdownOpen : Bool
     }
 
 
@@ -48,6 +49,15 @@ type Theme
 type Page
     = ScoringPage
     | WaitsPage
+
+
+type Msg
+    = SetPage Page
+    | ToggleTheme
+    | SetLanguage I18n.Language
+      -- | ScoringMsg Page.Scoring.Msg
+    | WaitsMsg Page.Waits.Msg
+    | ToggleLanguageDropdown
 
 
 init : E.Value -> ( Model, Cmd Msg )
@@ -84,17 +94,10 @@ init flags =
 
       --   , scoring = scoring
       , waits = waits
+      , languageDropdownOpen = False
       }
     , Cmd.map WaitsMsg waitsCmd
     )
-
-
-type Msg
-    = SetPage Page
-    | ToggleTheme
-    | ToggleLanguage
-      -- | ScoringMsg Page.Scoring.Msg
-    | WaitsMsg Page.Waits.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -115,20 +118,12 @@ update msg model =
             in
             ( { model | theme = newTheme }, setDarkMode strTheme )
 
-        ToggleLanguage ->
+        SetLanguage lang ->
             let
-                newLang =
-                    case model.language of
-                        I18n.En ->
-                            I18n.Es
-
-                        I18n.Es ->
-                            I18n.En
-
                 newI18n =
-                    I18n.init newLang
+                    I18n.init lang
             in
-            update (WaitsMsg (Page.Waits.UpdateI18n newI18n)) { model | language = newLang, i18n = newI18n }
+            update (WaitsMsg (Page.Waits.UpdateI18n newI18n)) { model | language = lang, i18n = newI18n }
 
         -- ScoringMsg smsg ->
         --     let
@@ -142,6 +137,9 @@ update msg model =
                     Page.Waits.update wmsg model.waits
             in
             ( { model | waits = waits }, Cmd.map WaitsMsg waitsCmd )
+
+        ToggleLanguageDropdown ->
+            ( { model | languageDropdownOpen = not model.languageDropdownOpen }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -159,50 +157,54 @@ view model =
         content =
             case model.page of
                 ScoringPage ->
-                    Html.div [] []
+                    div [] []
 
-                -- Html.map ScoringMsg (Page.Scoring.view model.scoring)
                 WaitsPage ->
                     Html.map WaitsMsg (Page.Waits.view model.waits)
-
-        -- isActive targetPage =
-        --     if model.page == targetPage then
-        --         class "is-active"
-        --     else
-        --         class ""
     in
-    Html.div
+    div
         [ class "base-container"
         , themeClass model
         ]
-        [ Html.div [ class "container" ]
-            [ -- , Html.nav [ class "navbar" ]
-              --     [ Html.div [ class "navbar-menu" ]
-              --         [ Html.div [ class "navbar-brand" ]
-              --             [ Html.a [ class "navbar-item" ] [ Html.text "Mahjong" ] ]
-              --         , Html.div [ class "navbar-start" ]
-              --             [ Html.a [ class "navbar-item", onClick (SetPage ScoringPage), isActive ScoringPage ] [ Html.text "Scoring" ]
-              --             , Html.a [ class "navbar-item", onClick (SetPage WaitsPage), isActive WaitsPage ] [ Html.text "Waits" ]
-              --             ]
-              --         ]
-              --     ]
-              Html.h1 [ class "title" ] [ Html.text "Mahjong Waits Trainer" ]
-            , Html.a [ onClick ToggleLanguage, class "icon-link is-clickable", title (I18n.toggleThemeButtonTitle model.i18n) ] [ UI.icon "icon" Solid.language ]
-            , Html.a [ onClick ToggleTheme, class "icon-link theme-toggle is-clickable", title (I18n.toggleThemeButtonTitle model.i18n) ] [ UI.icon "icon" (nextThemeIcon model) ]
-            , Html.div [ class "main" ] [ content ]
+        [ div [ class "container" ]
+            [ h1 [ class "title is-size-4" ] [ text (I18n.siteTitle model.i18n) ]
+            , a [ onClick ToggleTheme, class "icon-link theme-toggle is-clickable", title (I18n.toggleThemeButtonTitle model.i18n) ] [ UI.icon "icon" (nextThemeIcon model) ]
+            , renderSettings model
+            , div [ class "main" ] [ content ]
             ]
-        , Html.footer [ class "footer" ]
-            [ Html.div [ class "has-text-centered" ]
+        , footer [ class "footer" ]
+            [ div [ class "has-text-centered" ]
                 [ Html.map never <|
-                    Html.p [ class "content" ]
+                    p [ class "content" ]
                         (I18n.mahjongImageCredits { author = "Martin Persson", href = "https://www.martinpersson.org/" } [] model.i18n)
                 , Html.map never <|
-                    Html.p [ class "content" ]
+                    p [ class "content" ]
                         (I18n.faviconCredits { author = "Freepik - Flaticon", href = "https://www.flaticon.com/free-icons/mahjong" } [] model.i18n)
-                , Html.p [ class "mt-2" ] [ Html.a [ class "icon-link", href "https://github.com/djuretic/riichi-mahjong-trainer", target "_blank" ] [ UI.icon "icon" Brands.github ] ]
+                , p [ class "mt-2" ] [ a [ class "icon-link", href "https://github.com/djuretic/riichi-mahjong-trainer", target "_blank" ] [ UI.icon "icon" Brands.github ] ]
                 ]
             ]
         ]
+
+
+renderSettings : Model -> Html.Html Msg
+renderSettings model =
+    let
+        langSelector =
+            div [ classList [ ( "dropdown", True ), ( "is-active", model.languageDropdownOpen ) ], onClick ToggleLanguageDropdown ]
+                [ div [ class "dropdown-trigger" ]
+                    [ button [ class "button", HtmlA.attribute "aria-haspopup" "true", HtmlA.attribute "aria-controls" "dropdown-menu" ]
+                        [ span [] [ text (languageName model.language) ]
+                        , UI.icon "icon is-small" Solid.angleDown
+                        ]
+                    ]
+                , div [ id "dropdown-menu", class "dropdown-menu", HtmlA.attribute "role" "menu" ]
+                    [ div [ class "dropdown-content" ]
+                        (List.map (\lang -> a [ href "#", class "dropdown-item", onClick (SetLanguage lang) ] [ text (languageName lang) ]) I18n.languages)
+                    ]
+                ]
+    in
+    div [ class "box" ]
+        [ UI.label (I18n.languageSelectorTitle model.i18n) langSelector ]
 
 
 themeClass : Model -> Html.Attribute msg
@@ -230,3 +232,13 @@ flagsDecoder =
     D.map2 (\a b -> ( a, b ))
         (D.field "waits" D.value)
         (D.field "darkMode" D.string)
+
+
+languageName : I18n.Language -> String
+languageName lang =
+    case lang of
+        I18n.En ->
+            "English"
+
+        I18n.Es ->
+            "Español"
