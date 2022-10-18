@@ -87,6 +87,27 @@ html {
         background-color: $dark-mode-bg-color;
         border-color: #363636;
     }
+
+    .dropdown-content {
+        background-color: $dark-mode-bg-color;
+        box-shadow: 0 2px 3px rgba(#fff, 0.1), 0 0 0 1px rgba(#fff, 0.1);
+    }
+
+    .dropdown-item {
+        color: #b5b5b5;
+    }
+
+    a.dropdown-item, button.dropdown-item {
+        &:hover {
+            background-color: #242424;
+            color: white;
+        }
+
+        &.is-active {
+            background-color: #5ea3e4;
+            color: #fff;
+        }
+    }
 }
 
 .main, .title {
