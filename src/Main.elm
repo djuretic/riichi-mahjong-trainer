@@ -1,14 +1,11 @@
 port module Main exposing (main)
 
--- import Page.Scoring
-
 import Browser
-import FontAwesome
 import FontAwesome.Brands as Brands
 import FontAwesome.Solid as Solid
 import Html exposing (a, button, div, footer, h1, p, span, text)
 import Html.Attributes as HtmlA exposing (class, classList, href, id, target, title)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, stopPropagationOn)
 import I18n
 import Json.Decode as D
 import Json.Encode as E
@@ -57,7 +54,7 @@ type Msg
     | SetLanguage I18n.Language
       -- | ScoringMsg Page.Scoring.Msg
     | WaitsMsg Page.Waits.Msg
-    | ToggleLanguageDropdown
+    | SetLanguageDropdownOpen Bool
 
 
 init : E.Value -> ( Model, Cmd Msg )
@@ -138,8 +135,8 @@ update msg model =
             in
             ( { model | waits = waits }, Cmd.map WaitsMsg waitsCmd )
 
-        ToggleLanguageDropdown ->
-            ( { model | languageDropdownOpen = not model.languageDropdownOpen }, Cmd.none )
+        SetLanguageDropdownOpen value ->
+            ( { model | languageDropdownOpen = value }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -165,6 +162,7 @@ view model =
     div
         [ class "base-container"
         , themeClass model
+        , onClick (SetLanguageDropdownOpen False)
         ]
         [ div [ class "container" ]
             [ h1 [ class "title is-size-4" ] [ text (I18n.siteTitle model.i18n) ]
@@ -190,7 +188,13 @@ renderSettings : Model -> Html.Html Msg
 renderSettings model =
     let
         langSelector =
-            div [ classList [ ( "dropdown", True ), ( "is-active", model.languageDropdownOpen ) ], onClick ToggleLanguageDropdown ]
+            div
+                [ classList
+                    [ ( "dropdown", True )
+                    , ( "is-active", model.languageDropdownOpen )
+                    ]
+                , stopPropagationOn "click" (D.succeed ( SetLanguageDropdownOpen (not model.languageDropdownOpen), True ))
+                ]
                 [ div [ class "dropdown-trigger" ]
                     [ button [ class "button", HtmlA.attribute "aria-haspopup" "true", HtmlA.attribute "aria-controls" "dropdown-menu" ]
                         [ span [] [ text (languageName model.language) ]
@@ -241,16 +245,6 @@ themeClass model =
 
         DarkMode ->
             class "dark-mode"
-
-
-nextThemeIcon : Model -> FontAwesome.Icon FontAwesome.WithoutId
-nextThemeIcon model =
-    case model.theme of
-        LightMode ->
-            Solid.moon
-
-        DarkMode ->
-            Solid.sun
 
 
 flagsDecoder : D.Decoder ( D.Value, String )
