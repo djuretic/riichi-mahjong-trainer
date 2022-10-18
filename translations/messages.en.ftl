@@ -1,51 +1,52 @@
-site-title = Mahjong Waits Trainer
-toggle-theme-button-title = Toggle light/dark mode
+siteTitle = Mahjong Waits Trainer
 
-suit-selector-title = Suit
+toggleThemeButtonTitle = Toggle light/dark mode
+
+suitSelectorTitle = Suit
     .random = Random
     .man = Characters
     .pin = Circles
     .sou = Bamboos 
-num-tiles-selector-title = Number of tiles
-min-waits-selector-title = Min. number of waits
-numbered-tiles-selector = Numbered tiles
+numTilesSelectorTitle = Number of tiles
+minWaitsSelectorTitle = Min. number of waits
+numberedTilesSelector = Numbered tiles
     .yes = Yes
     .no = No
 
-select-wait-tiles-text = Select wait tiles:
-show-wait-tiles-text = Wait tiles:
+selectWaitTilesText = Select wait tiles:
+showWaitTilesText = Wait tiles:
 
-correct-answer = Correct!
-wrong-answer = Wrong
+correctAnswer = Correct!
+wrongAnswer = Wrong
 
-confirm-tiles-button = Confirm
-new-hand-button = New hand
+confirmTilesButton = Confirm
+newHandButton = New hand
 
-animation-tab = Animation
-table-tab = Table
+animationTab = Animation
+tableTab = Table
 
-groups-content-placeholder = Select waits to view possible groups
+groupsContentPlaceholder = Select waits to view possible groups
 
-mahjong-image-credits = Mahjong tile images by <a href="{$href}" target="_blank">{$author}</a>
-favicon-credits = Favicon by <a href="{$href}" target="_blank">{$author}</a>
+mahjongImageCredits = Mahjong tile images by <a href="{$href}" target="_blank">{$author}</a>
+faviconCredits = Favicon by <a href="{$href}" target="_blank">{$author}</a>
 
-tile-number-1 = one
-tile-number-2 = two
-tile-number-3 = three
-tile-number-4 = four
-tile-number-5 = five
-tile-number-6 = six
-tile-number-7 = seven
-tile-number-8 = eight
-tile-number-9 = nine
+tileNumber1 = one
+tileNumber2 = two
+tileNumber3 = three
+tileNumber4 = four
+tileNumber5 = five
+tileNumber6 = six
+tileNumber7 = seven
+tileNumber8 = eight
+tileNumber9 = nine
 
-man-tile-description = {$number} of characters
-pin-tile-description = {$number} of circles
-sou-tile-description = {$number} of bamboo
-east-wind-description = east wind
-south-wind-description = south wind
-west-wind-description = west wind
-north-wind-description = north wind
-white-dragon-description = white dragon
-green-dragon-description = green dragon
-red-dragon-description = red dragon
+manTileDescription = {$number} of characters
+pinTileDescription = {$number} of circles
+souTileDescription = {$number} of bamboo
+eastWindDescription = east wind
+southWindDescription = south wind
+westWindDescription = west wind
+northWindDescription = north wind
+whiteDragonDescription = white dragon
+greenDragonDescription = green dragon
+redDragonDescription = red dragon

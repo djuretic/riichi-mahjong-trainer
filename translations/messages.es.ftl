@@ -1,52 +1,52 @@
 # fallback-language: en
-site-title = Entrenador de esperas de Mahjong
-toggle-theme-button-title = Cambia entre modo claro y oscuro
+siteTitle = Entrenador de esperas de Mahjong
+toggleThemeButtonTitle = Cambia entre modo claro y oscuro
 
-suit-selector-title = Pinta
+suitSelectorTitle = Pinta
     .random = Al azar
     .man = Caracteres
     .pin = Círculos
     .sou = Bambúes
-num-tiles-selector-title = Cantidad de fichas
-min-waits-selector-title = Cantidad mín. de esperas
-numbered-tiles-selector = Fichas numeradas
+numTilesSelectorTitle = Cantidad de fichas
+minWaitsSelectorTitle = Cantidad mín. de esperas
+numberedTilesSelector = Fichas numeradas
     .yes = Sí
     .no = No
 
-select-wait-tiles-text = Selecciona las esperas:
-show-wait-tiles-text = Esperas:
+selectWaitTilesText = Selecciona las esperas:
+showWaitTilesText = Esperas:
 
-correct-answer = ¡Correcto!
-wrong-answer = Incorrecto
+correctAnswer = ¡Correcto!
+wrongAnswer = Incorrecto
 
-confirm-tiles-button = Confirmar
-new-hand-button = Nueva mano
+confirmTilesButton = Confirmar
+newHandButton = Nueva mano
 
-animation-tab = Animación
-table-tab = Tabla
+animationTab = Animación
+tableTab = Tabla
 
-groups-content-placeholder = Seleciona las esperas para ver los grupos posibles
+groupsContentPlaceholder = Seleciona las esperas para ver los grupos posibles
 
-mahjong-image-credits = Imágenes de fichas de mahjong por <a href="{$href}" target="_blank">{$author}</a>
-favicon-credits = Favicon por <a href="{$href}" target="_blank">{$author}</a>
+mahjongImageCredits = Imágenes de fichas de mahjong por <a href="{$href}" target="_blank">{$author}</a>
+faviconCredits = Favicon por <a href="{$href}" target="_blank">{$author}</a>
 
-tile-number-1 = uno
-tile-number-2 = dos
-tile-number-3 = tres
-tile-number-4 = cuatro
-tile-number-5 = cinco
-tile-number-6 = seis
-tile-number-7 = siete
-tile-number-8 = ocho
-tile-number-9 = nueve
+tileNumber1 = uno
+tileNumber2 = dos
+tileNumber3 = tres
+tileNumber4 = cuatro
+tileNumber5 = cinco
+tileNumber6 = seis
+tileNumber7 = siete
+tileNumber8 = ocho
+tileNumber9 = nueve
 
-man-tile-description = {$number} de caracteres
-pin-tile-description = {$number} de círculos
-sou-tile-description = {$number} de bambú
-east-wind-description = viento este
-south-wind-description = viento sur
-west-wind-description = viento oeste
-north-wind-description = viento norte
-white-dragon-description = dragón blanco
-green-dragon-description = dragón verde
-red-dragon-description = dragón rojo
+manTileDescription = {$number} de caracteres
+pinTileDescription = {$number} de círculos
+souTileDescription = {$number} de bambú
+eastWindDescription = viento este
+southWindDescription = viento sur
+westWindDescription = viento oeste
+northWindDescription = viento norte
+whiteDragonDescription = dragón blanco
+greenDragonDescription = dragón verde
+redDragonDescription = dragón rojo
