@@ -53,7 +53,7 @@ type Page
 
 type Msg
     = SetPage Page
-    | ToggleTheme
+    | SetTheme Theme
     | SetLanguage I18n.Language
       -- | ScoringMsg Page.Scoring.Msg
     | WaitsMsg Page.Waits.Msg
@@ -106,17 +106,17 @@ update msg model =
         SetPage page ->
             ( { model | page = page }, Cmd.none )
 
-        ToggleTheme ->
+        SetTheme theme ->
             let
-                ( strTheme, newTheme ) =
+                strTheme =
                     case model.theme of
                         LightMode ->
-                            ( "t", DarkMode )
+                            "f"
 
                         DarkMode ->
-                            ( "f", LightMode )
+                            "t"
             in
-            ( { model | theme = newTheme }, setDarkMode strTheme )
+            ( { model | theme = theme }, setDarkMode strTheme )
 
         SetLanguage lang ->
             let
@@ -168,7 +168,7 @@ view model =
         ]
         [ div [ class "container" ]
             [ h1 [ class "title is-size-4" ] [ text (I18n.siteTitle model.i18n) ]
-            , a [ onClick ToggleTheme, class "icon-link theme-toggle is-clickable", title (I18n.toggleThemeButtonTitle model.i18n) ] [ UI.icon "icon" (nextThemeIcon model) ]
+            , a [ class "icon-link theme-toggle is-clickable", title (I18n.toggleThemeButtonTitle model.i18n) ] [ UI.icon "icon" Solid.gear ]
             , renderSettings model
             , div [ class "main" ] [ content ]
             ]
@@ -199,12 +199,38 @@ renderSettings model =
                     ]
                 , div [ id "dropdown-menu", class "dropdown-menu", HtmlA.attribute "role" "menu" ]
                     [ div [ class "dropdown-content" ]
-                        (List.map (\lang -> a [ href "#", class "dropdown-item", onClick (SetLanguage lang) ] [ text (languageName lang) ]) I18n.languages)
+                        (List.map
+                            (\lang ->
+                                a
+                                    [ href "#", class "dropdown-item", classList [ ( "is-active", model.language == lang ) ], onClick (SetLanguage lang) ]
+                                    [ text (languageName lang) ]
+                            )
+                            I18n.languages
+                        )
                     ]
+                ]
+
+        themeButton txt theme =
+            button
+                [ classList
+                    [ ( "button", True )
+                    , ( "is-primary", model.theme == theme )
+                    , ( "is-selected", model.theme == theme )
+                    ]
+                , onClick (SetTheme theme)
+                ]
+                [ text txt ]
+
+        themeSelector =
+            div [ class "buttons has-addons" ]
+                [ themeButton (I18n.themeSelectorTitleLight model.i18n) LightMode
+                , themeButton (I18n.themeSelectorTitleDark model.i18n) DarkMode
                 ]
     in
     div [ class "box" ]
-        [ UI.label (I18n.languageSelectorTitle model.i18n) langSelector ]
+        [ UI.label (I18n.languageSelectorTitle model.i18n) langSelector
+        , UI.label (I18n.themeSelectorTitle model.i18n) themeSelector
+        ]
 
 
 themeClass : Model -> Html.Attribute msg
