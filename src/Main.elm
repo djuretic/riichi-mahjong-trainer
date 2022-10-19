@@ -13,7 +13,7 @@ import Page.Waits
 import UI
 
 
-port setDarkMode : String -> Cmd msg
+port setStorageConfig : E.Value -> Cmd msg
 
 
 main : Program E.Value Model Msg
@@ -38,6 +38,12 @@ type alias Model =
     }
 
 
+type alias ConfigModel =
+    { language : String
+    , darkTheme : Bool
+    }
+
+
 type Theme
     = LightMode
     | DarkMode
@@ -52,7 +58,6 @@ type Msg
     = SetPage Page
     | SetTheme Theme
     | SetLanguage I18n.Language
-      -- | ScoringMsg Page.Scoring.Msg
     | WaitsMsg Page.Waits.Msg
     | SetLanguageDropdownOpen Bool
 
@@ -60,22 +65,21 @@ type Msg
 init : E.Value -> ( Model, Cmd Msg )
 init flags =
     let
-        lang =
-            I18n.Es
-
-        i18n =
-            I18n.init lang
-
-        ( waitsFlags, darkTheme ) =
+        ( waitsFlags, configModel ) =
             case D.decodeValue flagsDecoder flags of
                 Ok res ->
                     res
 
                 Err _ ->
-                    ( E.null, "f" )
+                    ( E.null, { language = "en", darkTheme = False } )
 
-        -- ( scoring, scoringCmd ) =
-        --     Page.Scoring.init
+        lang =
+            I18n.languageFromString configModel.language
+                |> Maybe.withDefault I18n.En
+
+        i18n =
+            I18n.init lang
+
         ( waits, waitsCmd ) =
             Page.Waits.init i18n waitsFlags
     in
@@ -83,13 +87,11 @@ init flags =
       , i18n = i18n
       , page = WaitsPage
       , theme =
-            if darkTheme == "t" then
+            if configModel.darkTheme then
                 DarkMode
 
             else
                 LightMode
-
-      --   , scoring = scoring
       , waits = waits
       , languageDropdownOpen = False
       }
@@ -105,29 +107,21 @@ update msg model =
 
         SetTheme theme ->
             let
-                strTheme =
-                    case model.theme of
-                        LightMode ->
-                            "f"
-
-                        DarkMode ->
-                            "t"
+                newModel =
+                    { model | theme = theme }
             in
-            ( { model | theme = theme }, setDarkMode strTheme )
+            ( newModel, setStorageConfig (encode newModel) )
 
         SetLanguage lang ->
             let
                 newI18n =
                     I18n.init lang
-            in
-            update (WaitsMsg (Page.Waits.UpdateI18n newI18n)) { model | language = lang, i18n = newI18n }
 
-        -- ScoringMsg smsg ->
-        --     let
-        --         ( scoring, scoringCmd ) =
-        --             Page.Scoring.update smsg model.scoring
-        --     in
-        --     ( { model | scoring = scoring }, Cmd.map ScoringMsg scoringCmd )
+                ( newModel, newCmd ) =
+                    update (WaitsMsg (Page.Waits.UpdateI18n newI18n)) { model | language = lang, i18n = newI18n }
+            in
+            ( newModel, Cmd.batch [ newCmd, setStorageConfig (encode newModel) ] )
+
         WaitsMsg wmsg ->
             let
                 ( waits, waitsCmd ) =
@@ -247,11 +241,18 @@ themeClass model =
             class "dark-mode"
 
 
-flagsDecoder : D.Decoder ( D.Value, String )
+flagsDecoder : D.Decoder ( D.Value, ConfigModel )
 flagsDecoder =
     D.map2 (\a b -> ( a, b ))
         (D.field "waits" D.value)
-        (D.field "darkMode" D.string)
+        (D.field "config" configDecoder)
+
+
+configDecoder : D.Decoder ConfigModel
+configDecoder =
+    D.map2 ConfigModel
+        (D.field "lang" D.string)
+        (D.field "darkMode" D.bool)
 
 
 languageName : I18n.Language -> String
@@ -262,3 +263,11 @@ languageName lang =
 
         I18n.Es ->
             "Español"
+
+
+encode : Model -> E.Value
+encode model =
+    E.object
+        [ ( "lang", E.string (I18n.languageToString model.language) )
+        , ( "darkMode", E.bool (model.theme == DarkMode) )
+        ]

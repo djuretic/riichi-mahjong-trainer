@@ -8,7 +8,7 @@ themeSelectorTitle = Tema
     .light = Claro
     .dark = Oscuro
 
-suitSelectorTitle = Pinta
+suitSelectorTitle = Palo
     .random = Al azar
     .man = Caracteres
     .pin = Círculos

@@ -36,19 +36,20 @@
 
 var waitsDataRaw = localStorage.getItem('waits');
 var waitsData = waitsDataRaw ? JSON.parse(waitsDataRaw) : null;
-var darkMode = localStorage.getItem('darkMode') || 'f';
+var configDataRaw = localStorage.getItem('config');
+var configData = configDataRaw ? JSON.parse(configDataRaw) : null;
 
 var app = Elm.Main.init({
 	node: document.getElementById('main-app'),
-	flags: {darkMode: darkMode, waits: waitsData}
+	flags: {config: configData, waits: waitsData}
 });
 
 app.ports.setStorageWaits.subscribe(function(state) {
   localStorage.setItem('waits', JSON.stringify(state));
 });
 
-app.ports.setDarkMode.subscribe(function(state) {
-  localStorage.setItem('darkMode', state);
+app.ports.setStorageConfig.subscribe(function(state) {
+  localStorage.setItem('config', JSON.stringify(state));
 });
 </script>
 
