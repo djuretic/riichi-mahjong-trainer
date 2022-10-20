@@ -1,6 +1,6 @@
 siteTitle = Mahjong Waits Trainer
 
-settingsButtonTitle = Settings
+settingsTitle = Settings
 languageSelectorTitle = Language
 themeSelectorTitle = Theme
     .light = Light

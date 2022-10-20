@@ -35,6 +35,7 @@ type alias Model =
     -- , scoring : Page.Scoring.Model
     , waits : Page.Waits.Model
     , languageDropdownOpen : Bool
+    , showConfig : Bool
     }
 
 
@@ -60,6 +61,7 @@ type Msg
     | SetLanguage I18n.Language
     | WaitsMsg Page.Waits.Msg
     | SetLanguageDropdownOpen Bool
+    | ToggleShowConfig
 
 
 init : E.Value -> ( Model, Cmd Msg )
@@ -94,6 +96,7 @@ init flags =
                 LightMode
       , waits = waits
       , languageDropdownOpen = False
+      , showConfig = False
       }
     , Cmd.map WaitsMsg waitsCmd
     )
@@ -132,6 +135,9 @@ update msg model =
         SetLanguageDropdownOpen value ->
             ( { model | languageDropdownOpen = value }, Cmd.none )
 
+        ToggleShowConfig ->
+            ( { model | showConfig = not model.showConfig }, Cmd.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -160,9 +166,14 @@ view model =
         ]
         [ div [ class "container" ]
             [ h1 [ class "title is-size-4" ] [ text (I18n.siteTitle model.i18n) ]
-            , a [ class "icon-link theme-toggle is-clickable", title (I18n.toggleThemeButtonTitle model.i18n) ] [ UI.icon "icon" Solid.gear ]
-            , renderSettings model
-            , div [ class "main" ] [ content ]
+            , a [ class "icon-link theme-toggle is-clickable", title (I18n.settingsTitle model.i18n), onClick ToggleShowConfig ] [ UI.icon "icon" Solid.gear ]
+            , div [ class "main" ]
+                [ if model.showConfig then
+                    renderSettings model
+
+                  else
+                    content
+                ]
             ]
         , footer [ class "footer" ]
             [ div [ class "has-text-centered" ]
@@ -226,7 +237,8 @@ renderSettings model =
                 ]
     in
     div [ class "box" ]
-        [ UI.label (I18n.languageSelectorTitle model.i18n) langSelector
+        [ Html.h3 [ class "title is-5" ] [ text (I18n.settingsTitle model.i18n) ]
+        , UI.label (I18n.languageSelectorTitle model.i18n) langSelector
         , UI.label (I18n.themeSelectorTitle model.i18n) themeSelector
         ]
 
