@@ -166,7 +166,9 @@ view model =
         ]
         [ div [ class "container" ]
             [ h1 [ class "title is-size-4" ] [ text (I18n.siteTitle model.i18n) ]
-            , a [ class "icon-link theme-toggle is-clickable", title (I18n.settingsTitle model.i18n), onClick ToggleShowConfig ] [ UI.icon "icon" Solid.gear ]
+            , a
+                [ class "icon-link config-toggle is-clickable p-1 rounded", classList [ ( "has-background-primary", model.showConfig ) ], title (I18n.settingsTitle model.i18n), onClick ToggleShowConfig ]
+                [ UI.icon "icon" Solid.gear ]
             , div [ class "main" ]
                 [ if model.showConfig then
                     renderSettings model
@@ -175,7 +177,7 @@ view model =
                     content
                 ]
             ]
-        , footer [ class "footer" ]
+        , footer [ class "footer pb-6" ]
             [ div [ class "has-text-centered" ]
                 [ Html.map never <|
                     p [ class "content" ]
