@@ -458,7 +458,7 @@ renderWinningTilesSection model =
 
         resetAnimButton =
             button
-                [ class "button is-large animation-button"
+                [ class "button is-large animation-button pl-2 pr-2"
                 , classList [ ( "is-primary", model.currentAnimatedTile == Nothing ) ]
                 , onClick ResetWaitsAnimation
                 ]
@@ -472,7 +472,7 @@ renderWinningTilesSection model =
                     (resetAnimButton
                         :: List.map
                             (\( t, g ) ->
-                                button [ class "button is-large animation-button", classList [ ( "is-primary", model.currentAnimatedTile == Just t ) ], onClick (StartWaitsAnimation ( t, g )) ]
+                                button [ class "button is-large animation-button pl-2 pr-2", classList [ ( "is-primary", model.currentAnimatedTile == Just t ) ], onClick (StartWaitsAnimation ( t, g )) ]
                                     [ UI.drawTile model.i18n model.numberedTiles [] t ]
                             )
                             model.waits

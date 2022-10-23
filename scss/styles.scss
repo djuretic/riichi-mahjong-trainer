@@ -12,9 +12,6 @@ html {
     &.dark-mode {
         background-color: $dark-mode-bg-color;
     }
-    .container {
-        padding: 0.5rem;
-    }
 }
 
 .config-toggle {

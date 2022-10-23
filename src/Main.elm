@@ -164,7 +164,7 @@ view model =
         , themeClass model
         , onClick (SetLanguageDropdownOpen False)
         ]
-        [ div [ class "container" ]
+        [ div [ class "container p-2" ]
             [ h1 [ class "title is-size-4" ] [ text (I18n.siteTitle model.i18n) ]
             , a
                 [ class "icon-link config-toggle is-clickable p-1 rounded", classList [ ( "has-background-primary", model.showConfig ) ], title (I18n.settingsTitle model.i18n), onClick ToggleShowConfig ]
@@ -238,7 +238,7 @@ renderSettings model =
                 , themeButton (I18n.themeSelectorTitleDark model.i18n) DarkMode
                 ]
     in
-    div [ class "box" ]
+    div [ class "box mb-5" ]
         [ Html.h3 [ class "title is-5" ] [ text (I18n.settingsTitle model.i18n) ]
         , UI.label (I18n.languageSelectorTitle model.i18n) langSelector
         , UI.label (I18n.themeSelectorTitle model.i18n) themeSelector
