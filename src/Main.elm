@@ -188,10 +188,10 @@ view model =
 
 renderNavbar : Model -> Html.Html Msg
 renderNavbar model =
-    div [ class "navbar container p-2" ]
-        [ h1 [ class "title is-size-4" ] [ text (I18n.siteTitle model.i18n) ]
+    div [ class "navbar container is-flex is-flex-direction-row is-justify-content-space-between p-2" ]
+        [ h1 [ class "title is-size-4 mb-0" ] [ text (I18n.siteTitle model.i18n) ]
         , a
-            [ class "icon-link config-toggle is-clickable p-1 rounded", classList [ ( "has-background-primary", model.showConfig ) ], title (I18n.settingsTitle model.i18n), onClick ToggleShowConfig ]
+            [ class "icon-link is-clickable p-1 rounded", classList [ ( "has-background-primary", model.showConfig ) ], title (I18n.settingsTitle model.i18n), onClick ToggleShowConfig ]
             [ UI.icon "icon" Solid.gear ]
         ]
 
