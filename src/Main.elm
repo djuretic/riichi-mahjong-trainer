@@ -164,18 +164,13 @@ view model =
         , themeClass model
         , onClick (SetLanguageDropdownOpen False)
         ]
-        [ div [ class "container p-2" ]
-            [ h1 [ class "title is-size-4" ] [ text (I18n.siteTitle model.i18n) ]
-            , a
-                [ class "icon-link config-toggle is-clickable p-1 rounded", classList [ ( "has-background-primary", model.showConfig ) ], title (I18n.settingsTitle model.i18n), onClick ToggleShowConfig ]
-                [ UI.icon "icon" Solid.gear ]
-            , div [ class "main" ]
-                [ if model.showConfig then
-                    renderSettings model
+        [ renderNavbar model
+        , div [ class "container p-2" ]
+            [ if model.showConfig then
+                renderSettings model
 
-                  else
-                    content
-                ]
+              else
+                content
             ]
         , footer [ class "footer pb-6" ]
             [ div [ class "has-text-centered" ]
@@ -188,6 +183,16 @@ view model =
                 , p [ class "mt-2" ] [ a [ class "icon-link", href "https://github.com/djuretic/riichi-mahjong-trainer", target "_blank" ] [ UI.icon "icon" Brands.github ] ]
                 ]
             ]
+        ]
+
+
+renderNavbar : Model -> Html.Html Msg
+renderNavbar model =
+    div [ class "navbar container p-2" ]
+        [ h1 [ class "title is-size-4" ] [ text (I18n.siteTitle model.i18n) ]
+        , a
+            [ class "icon-link config-toggle is-clickable p-1 rounded", classList [ ( "has-background-primary", model.showConfig ) ], title (I18n.settingsTitle model.i18n), onClick ToggleShowConfig ]
+            [ UI.icon "icon" Solid.gear ]
         ]
 
 
