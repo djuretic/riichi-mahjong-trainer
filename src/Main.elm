@@ -280,6 +280,9 @@ languageName lang =
         I18n.En ->
             "English"
 
+        I18n.Eo ->
+            "Esperanto"
+
         I18n.Es ->
             "Español"
 

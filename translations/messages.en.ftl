@@ -6,8 +6,6 @@ themeSelectorTitle = Theme
     .light = Light
     .dark = Dark
 
-toggleThemeButtonTitle = Toggle light/dark mode
-
 suitSelectorTitle = Suit
     .random = Random
     .man = Characters

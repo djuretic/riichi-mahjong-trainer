@@ -1,6 +1,5 @@
 # fallback-language: en
 siteTitle = Entrenador de esperas de Mahjong
-toggleThemeButtonTitle = Cambia entre modo claro y oscuro
 
 settingsTitle = Configuración
 languageSelectorTitle = Idioma
