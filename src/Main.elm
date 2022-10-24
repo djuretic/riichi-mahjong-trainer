@@ -16,6 +16,9 @@ import UI
 port setStorageConfig : E.Value -> Cmd msg
 
 
+port setHtmlClass : String -> Cmd msg
+
+
 main : Program E.Value Model Msg
 main =
     Browser.element
@@ -84,21 +87,23 @@ init flags =
 
         ( waits, waitsCmd ) =
             Page.Waits.init i18n waitsFlags
-    in
-    ( { language = lang
-      , i18n = i18n
-      , page = WaitsPage
-      , theme =
+
+        theme =
             if configModel.darkTheme then
                 DarkMode
 
             else
                 LightMode
+    in
+    ( { language = lang
+      , i18n = i18n
+      , page = WaitsPage
+      , theme = theme
       , waits = waits
       , languageDropdownOpen = False
       , showConfig = False
       }
-    , Cmd.map WaitsMsg waitsCmd
+    , Cmd.batch [ Cmd.map WaitsMsg waitsCmd, setHtmlClass (themeClassName theme) ]
     )
 
 
@@ -113,7 +118,7 @@ update msg model =
                 newModel =
                     { model | theme = theme }
             in
-            ( newModel, setStorageConfig (encode newModel) )
+            ( newModel, Cmd.batch [ setStorageConfig (encode newModel), setHtmlClass (themeClassName newModel.theme) ] )
 
         SetLanguage lang ->
             let
@@ -161,7 +166,6 @@ view model =
     in
     div
         [ class "base-container"
-        , themeClass model
         , onClick (SetLanguageDropdownOpen False)
         ]
         [ renderNavbar model
@@ -250,14 +254,14 @@ renderSettings model =
         ]
 
 
-themeClass : Model -> Html.Attribute msg
-themeClass model =
-    case model.theme of
+themeClassName : Theme -> String
+themeClassName theme =
+    case theme of
         LightMode ->
-            class "light-mode"
+            "light-mode"
 
         DarkMode ->
-            class "dark-mode"
+            "dark-mode"
 
 
 flagsDecoder : D.Decoder ( D.Value, ConfigModel )

@@ -2,10 +2,6 @@ $dark-mode-color: #C9D1D9;
 $dark-mode-bg-color: #0a0a0a;
 
 html {
-    background-color: #fafafa;
-}
-
-.base-container {
     &.light-mode {
         background-color: #ffffff;
     }

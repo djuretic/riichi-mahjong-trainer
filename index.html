@@ -51,6 +51,11 @@ app.ports.setStorageWaits.subscribe(function(state) {
 app.ports.setStorageConfig.subscribe(function(state) {
   localStorage.setItem('config', JSON.stringify(state));
 });
+
+app.ports.setHtmlClass.subscribe(function(classes) {
+  document.documentElement.className = classes;
+})
+
 </script>
 
 </html>
