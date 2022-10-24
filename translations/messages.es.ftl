@@ -1,5 +1,5 @@
 # fallback-language: en
-siteTitle = Entrenador de esperas de Mahjong
+siteTitle = Práctica de esperas de mahjong
 
 settingsTitle = Configuración
 languageSelectorTitle = Idioma

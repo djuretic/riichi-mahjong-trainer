@@ -1,5 +1,5 @@
 # fallback-language: en
-siteTitle = Trejnisto de atendoj de maĝango
+siteTitle = Ekzercilo de atendoj de maĝango
 
 settingsTitle = Agordoj
 languageSelectorTitle = Lingvo
