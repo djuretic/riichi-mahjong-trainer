@@ -403,17 +403,17 @@ eo =
     , languageSelectorTitle_ = "Lingvo"
     , mahjongImageCredits_ =
         \data aAttrs ->
-            [ Html.text "Bildoj de pecoj de maĝango el "
+            [ Html.text "Bildoj de maĝangaj pecoj el "
             , Html.node
                 "a"
                 ([ Html.Attributes.attribute "href" data.href, Html.Attributes.attribute "target" "_blank" ] ++ aAttrs)
                 [ Html.text data.author ]
             ]
     , manTileDescription_ = \number -> number ++ " de signoj"
-    , minWaitsSelectorTitle_ = "Min. nombro de atendoj"
+    , minWaitsSelectorTitle_ = "Min. nombro da atendoj"
     , newHandButton_ = "Nova mano"
     , northWindDescription_ = "norda vento"
-    , numTilesSelectorTitle_ = "Nombro de pecoj"
+    , numTilesSelectorTitle_ = "Nombro da pecoj"
     , numberedTilesSelector_ = "Numeritaj pecoj"
     , numberedTilesSelectorNo_ = "Ne"
     , numberedTilesSelectorYes_ = "Jes"
@@ -425,10 +425,10 @@ eo =
     , siteTitle_ = "Trejnisto de atendoj de maĝango"
     , souTileDescription_ = \number -> number ++ " de bambuoj"
     , southWindDescription_ = "suda vento"
-    , suitSelectorTitle_ = "Emblemo"
+    , suitSelectorTitle_ = "Emblemoj"
     , suitSelectorTitleMan_ = "Signoj"
     , suitSelectorTitlePin_ = "Cirkloj"
-    , suitSelectorTitleRandom_ = "Hazarda"
+    , suitSelectorTitleRandom_ = "Hazardaj"
     , suitSelectorTitleSou_ = "Bambuoj"
     , tableTab_ = "Tabelo"
     , themeSelectorTitle_ = "Reĝimo"

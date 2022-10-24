@@ -7,13 +7,13 @@ themeSelectorTitle = Reĝimo
     .light = Hela
     .dark = Malhela
 
-suitSelectorTitle = Emblemo
-    .random = Hazarda
+suitSelectorTitle = Emblemoj
+    .random = Hazardaj
     .man = Signoj
     .pin = Cirkloj
     .sou = Bambuoj
-numTilesSelectorTitle = Nombro de pecoj
-minWaitsSelectorTitle = Min. nombro de atendoj
+numTilesSelectorTitle = Nombro da pecoj
+minWaitsSelectorTitle = Min. nombro da atendoj
 numberedTilesSelector = Numeritaj pecoj
     .yes = Jes
     .no = Ne
@@ -32,7 +32,7 @@ tableTab = Tabelo
 
 groupsContentPlaceholder = Elektu la atendojn por vidi la eblajn grupojn
 
-mahjongImageCredits = Bildoj de pecoj de maĝango el <a href="{$href}" target="_blank">{$author}</a>
+mahjongImageCredits = Bildoj de maĝangaj pecoj el <a href="{$href}" target="_blank">{$author}</a>
 faviconCredits = Retpaĝsimbolo el <a href="{$href}" target="_blank">{$author}</a>
 
 tileNumber1 = unu
