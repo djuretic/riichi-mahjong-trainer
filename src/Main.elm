@@ -45,7 +45,8 @@ type alias Model =
 type alias FlagsModel =
     { waits : D.Value
     , config : D.Value
-    , language : String
+    , browserLanguage : String
+    , urlLanguage : String
     }
 
 
@@ -85,22 +86,35 @@ init flags =
         ( flagsModel, configModel ) =
             case D.decodeValue flagsDecoder flags of
                 Ok res ->
+                    let
+                        languageFromQueryString =
+                            I18n.languageFromString res.urlLanguage
+                                |> Maybe.map I18n.languageToString
+                    in
                     case D.decodeValue configDecoder res.config of
                         Ok config ->
-                            ( res, config )
+                            case languageFromQueryString of
+                                Just language ->
+                                    ( res, { config | language = language } )
+
+                                Nothing ->
+                                    ( res, config )
 
                         Err _ ->
                             let
                                 languageFromBrowser =
-                                    I18n.languageFromString res.language
+                                    I18n.languageFromString res.browserLanguage
                                         |> Maybe.map I18n.languageToString
                                         |> Maybe.withDefault "en"
+
+                                language =
+                                    Maybe.withDefault languageFromBrowser languageFromQueryString
                             in
                             -- first visit to the site
-                            ( res, { defaultConfig | language = languageFromBrowser } )
+                            ( res, { defaultConfig | language = language } )
 
                 Err _ ->
-                    ( { waits = E.null, config = E.null, language = "en" }, defaultConfig )
+                    ( { waits = E.null, config = E.null, browserLanguage = "", urlLanguage = "" }, defaultConfig )
 
         lang =
             I18n.languageFromString configModel.language
@@ -290,10 +304,11 @@ themeClassName theme =
 
 flagsDecoder : D.Decoder FlagsModel
 flagsDecoder =
-    D.map3 FlagsModel
+    D.map4 FlagsModel
         (D.field "waits" D.value)
         (D.field "config" D.value)
-        (D.field "language" D.string)
+        (D.field "browserLanguage" D.string)
+        (D.field "urlLanguage" D.string)
 
 
 configDecoder : D.Decoder ConfigModel

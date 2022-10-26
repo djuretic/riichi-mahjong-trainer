@@ -39,11 +39,21 @@ var waitsData = waitsDataRaw ? JSON.parse(waitsDataRaw) : null;
 var configDataRaw = localStorage.getItem('config');
 var configData = configDataRaw ? JSON.parse(configDataRaw) : null;
 
-var language = (navigator.languages && navigator.languages.length) ? navigator.languages[0] : navigator.language;
+var browserLanguage = (navigator.languages && navigator.languages.length) ? navigator.languages[0] : navigator.language;
+var urlLanguage = '';
+if (window.URLSearchParams) {
+  var searchParams = new URLSearchParams(location.search);
+  urlLanguage = searchParams.get('lang');
+}
 
 var app = Elm.Main.init({
 	node: document.getElementById('main-app'),
-	flags: {config: configData, waits: waitsData, language: language || ''}
+	flags: {
+    config: configData,
+    waits: waitsData,
+    browserLanguage: browserLanguage || '',
+    urlLanguage: urlLanguage || ''
+  }
 });
 
 app.ports.setStorageWaits.subscribe(function(state) {
