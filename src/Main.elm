@@ -42,6 +42,13 @@ type alias Model =
     }
 
 
+type alias FlagsModel =
+    { waits : D.Value
+    , config : D.Value
+    , language : String
+    }
+
+
 type alias ConfigModel =
     { language : String
     , darkTheme : Bool
@@ -67,16 +74,33 @@ type Msg
     | ToggleShowConfig
 
 
+defaultConfig : ConfigModel
+defaultConfig =
+    { language = "en", darkTheme = False }
+
+
 init : E.Value -> ( Model, Cmd Msg )
 init flags =
     let
-        ( waitsFlags, configModel ) =
+        ( flagsModel, configModel ) =
             case D.decodeValue flagsDecoder flags of
                 Ok res ->
-                    res
+                    case D.decodeValue configDecoder res.config of
+                        Ok config ->
+                            ( res, config )
+
+                        Err _ ->
+                            let
+                                languageFromBrowser =
+                                    I18n.languageFromString res.language
+                                        |> Maybe.map I18n.languageToString
+                                        |> Maybe.withDefault "en"
+                            in
+                            -- first visit to the site
+                            ( res, { defaultConfig | language = languageFromBrowser } )
 
                 Err _ ->
-                    ( E.null, { language = "en", darkTheme = False } )
+                    ( { waits = E.null, config = E.null, language = "en" }, defaultConfig )
 
         lang =
             I18n.languageFromString configModel.language
@@ -86,7 +110,7 @@ init flags =
             I18n.init lang
 
         ( waits, waitsCmd ) =
-            Page.Waits.init i18n waitsFlags
+            Page.Waits.init i18n flagsModel.waits
 
         theme =
             if configModel.darkTheme then
@@ -264,11 +288,12 @@ themeClassName theme =
             "dark-mode"
 
 
-flagsDecoder : D.Decoder ( D.Value, ConfigModel )
+flagsDecoder : D.Decoder FlagsModel
 flagsDecoder =
-    D.map2 (\a b -> ( a, b ))
+    D.map3 FlagsModel
         (D.field "waits" D.value)
-        (D.field "config" configDecoder)
+        (D.field "config" D.value)
+        (D.field "language" D.string)
 
 
 configDecoder : D.Decoder ConfigModel
