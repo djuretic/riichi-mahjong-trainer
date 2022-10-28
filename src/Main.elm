@@ -132,16 +132,19 @@ init flags =
 
             else
                 LightMode
+
+        model =
+            { language = lang
+            , i18n = i18n
+            , page = WaitsPage
+            , theme = theme
+            , waits = waits
+            , languageDropdownOpen = False
+            , showConfig = False
+            }
     in
-    ( { language = lang
-      , i18n = i18n
-      , page = WaitsPage
-      , theme = theme
-      , waits = waits
-      , languageDropdownOpen = False
-      , showConfig = False
-      }
-    , Cmd.batch [ Cmd.map WaitsMsg waitsCmd, setHtmlClass (themeClassName theme) ]
+    ( model
+    , Cmd.batch [ Cmd.map WaitsMsg waitsCmd, setHtmlClass (themeClassName theme), setStorageConfig (encode model) ]
     )
 
 
