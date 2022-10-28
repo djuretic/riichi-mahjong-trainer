@@ -41,7 +41,7 @@ var configData = configDataRaw ? JSON.parse(configDataRaw) : null;
 
 var browserLanguage = (navigator.languages && navigator.languages.length) ? navigator.languages[0] : navigator.language;
 var urlLanguage = '';
-if (window.URLSearchParams) {
+if (typeof window.URLSearchParams !== 'undefined') {
   var searchParams = new URLSearchParams(location.search);
   urlLanguage = searchParams.get('lang');
 }
@@ -66,7 +66,10 @@ app.ports.setStorageConfig.subscribe(function(state) {
 
 app.ports.setHtmlClass.subscribe(function(classes) {
   document.documentElement.className = classes;
-})
+});
+
+window.history.replaceState({}, '', window.location.pathname);
+
 
 </script>
 
