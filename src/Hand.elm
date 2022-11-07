@@ -75,6 +75,7 @@ type alias HanSource =
 
 type FuDescription
     = BaseFu
+    | BaseChiitoitsuFu
     | TsumoNotPinfu
     | ClosedRon
     | ValuePair ValuePairBy
@@ -163,9 +164,12 @@ winByToString winBy =
 
 
 fuBase : Hand -> FuSource
-fuBase _ =
-    -- TODO seven pairs, 25 fu
-    FuSource 20 BaseFu []
+fuBase hand =
+    if List.any (\hs -> hs.description == Chiitoitsu) hand.hanSources then
+        FuSource 25 BaseChiitoitsuFu []
+
+    else
+        FuSource 20 BaseFu []
 
 
 fuTsumoNotPinfu : Hand -> Maybe FuSource
@@ -354,46 +358,50 @@ hanDescriptionToString hanSource =
 
 countFu : Hand -> Hand
 countFu hand =
-    if shouldCountFu hand then
-        let
-            base =
-                fuBase hand
+    let
+        base =
+            fuBase hand
 
-            tsumoNotPinfu =
-                fuTsumoNotPinfu hand
+        tsumoNotPinfu =
+            fuTsumoNotPinfu hand
 
-            closedRon =
-                fuClosedRon hand
+        closedRon =
+            fuClosedRon hand
 
-            valuePair =
-                fuValuePair hand
+        valuePair =
+            fuValuePair hand
 
-            waitFu =
-                fuWaitType hand
+        waitFu =
+            fuWaitType hand
 
-            triplets =
-                fuTriplets hand
+        triplets =
+            fuTriplets hand
 
-            allFu =
+        allFu =
+            if base.description == BaseChiitoitsuFu then
+                [ Just base ]
+
+            else
                 List.concat [ [ Just base, tsumoNotPinfu, closedRon, valuePair, waitFu ], triplets ]
 
-            allValidFu =
-                List.filterMap identity allFu
+        allValidFu =
+            List.filterMap identity allFu
 
-            sumFu =
-                List.map .fu allValidFu
-                    |> List.sum
+        sumFu =
+            List.map .fu allValidFu
+                |> List.sum
 
-            roundedFu =
+        roundedFu =
+            if base.description == BaseChiitoitsuFu then
+                sumFu
+
+            else
                 toFloat sumFu
                     / 10
                     |> ceiling
                     |> (*) 10
-        in
-        { hand | fuSources = allValidFu, fuCount = roundedFu, fuCountBeforeRounding = sumFu }
-
-    else
-        hand
+    in
+    { hand | fuSources = allValidFu, fuCount = roundedFu, fuCountBeforeRounding = sumFu }
 
 
 fuDescriptionToString : FuDescription -> String
@@ -401,6 +409,9 @@ fuDescriptionToString fuDescription =
     case fuDescription of
         BaseFu ->
             "Base hand value"
+
+        BaseChiitoitsuFu ->
+            "Base hand value (chiitoitsu)"
 
         TsumoNotPinfu ->
             "Tsumo (if not pinfu)"
