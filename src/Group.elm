@@ -1,6 +1,7 @@
 module Group exposing
     ( Group
     , GroupType(..)
+    , GroupsBreakdown
     , GroupsPerSuit
     , commonGroups
     , containsTerminal
@@ -56,6 +57,12 @@ type alias GroupsPerSuit =
     }
 
 
+type alias GroupsBreakdown =
+    { chiitoitsu : List Group
+    , perSuit : GroupsPerSuit
+    }
+
+
 toWind : Group -> Maybe Tile.Wind
 toWind group =
     let
@@ -91,17 +98,42 @@ toWind group =
             Nothing
 
 
-findGroups : List Tile.Tile -> GroupsPerSuit
+findGroups : List Tile.Tile -> GroupsBreakdown
 findGroups tiles =
     let
         part =
             Tile.partitionBySuit tiles
     in
-    { sou = findGroupsInSuit Tile.Sou part.sou
-    , man = findGroupsInSuit Tile.Man part.man
-    , pin = findGroupsInSuit Tile.Pin part.pin
-    , honor = findGroupsInSuit Tile.Honor part.honor
+    { chiitoitsu = findChiitoitsu (Tile.sort tiles)
+    , perSuit =
+        { sou = findGroupsInSuit Tile.Sou part.sou
+        , man = findGroupsInSuit Tile.Man part.man
+        , pin = findGroupsInSuit Tile.Pin part.pin
+        , honor = findGroupsInSuit Tile.Honor part.honor
+        }
     }
+
+
+findChiitoitsu : List Tile.Tile -> List Group
+findChiitoitsu tiles =
+    let
+        findPairsHelper : List Tile.Tile -> List Group -> List Group
+        findPairsHelper remainingTiles acc =
+            case remainingTiles of
+                [] ->
+                    acc
+
+                [ _ ] ->
+                    []
+
+                x :: y :: xs ->
+                    if x == y then
+                        findPairsHelper xs (Group Pair x.number x.suit :: acc)
+
+                    else
+                        []
+    in
+    findPairsHelper tiles [] |> List.reverse
 
 
 findGroupsInSuit : Tile.Suit -> List Tile.Tile -> List (List Group)
@@ -291,23 +323,23 @@ isClosed _ =
     True
 
 
-findWinningGroups : GroupsPerSuit -> List Group
+findWinningGroups : GroupsBreakdown -> List Group
 findWinningGroups groups =
     let
         firstItem =
             \g -> Maybe.withDefault [] (List.head g)
 
         man =
-            firstItem groups.man
+            firstItem groups.perSuit.man
 
         pin =
-            firstItem groups.pin
+            firstItem groups.perSuit.pin
 
         sou =
-            firstItem groups.sou
+            firstItem groups.perSuit.sou
 
         honor =
-            firstItem groups.honor
+            firstItem groups.perSuit.honor
 
         possibleGroups =
             List.concat [ man, pin, sou, honor ]

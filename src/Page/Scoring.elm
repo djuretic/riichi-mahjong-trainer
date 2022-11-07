@@ -1,5 +1,6 @@
 module Page.Scoring exposing (Model, Msg, init, update, view)
 
+import Browser
 import Group exposing (Group)
 import Hand exposing (Hand)
 import Html exposing (Html, a, button, div, input, li, p, table, tbody, td, text, tfoot, th, thead, tr, ul)
@@ -15,7 +16,7 @@ type alias Model =
     { i18n : I18n.I18n
     , handString : String
     , hand : Hand
-    , allGroups : Group.GroupsPerSuit
+    , allGroups : Group.GroupsBreakdown
     , activeTab : ActiveTab
     , guessedValue : GuessValue
     }
@@ -34,9 +35,25 @@ type ActiveTab
     | SummaryTab
 
 
+main : Program () Model Msg
+main =
+    Browser.element
+        { init = \_ -> init
+        , update = update
+        , view = \m -> div [ class "container" ] [ view m ]
+        , subscriptions = \_ -> Sub.none
+        }
+
+
 init : ( Model, Cmd Msg )
 init =
-    ( Model (I18n.init I18n.En) "" Hand.init (Group.GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ]) GuessTab guessValueInit
+    ( { i18n = I18n.init I18n.En
+      , handString = ""
+      , hand = Hand.init
+      , allGroups = { chiitoitsu = [], perSuit = Group.GroupsPerSuit [ [] ] [ [] ] [ [] ] [ [] ] }
+      , activeTab = GuessTab
+      , guessedValue = guessValueInit
+      }
     , Random.generate WinningHandGenerated Hand.randomWinningHand
     )
 
@@ -261,30 +278,34 @@ renderTabContent model =
 debugGroup : List Group -> Html Msg
 debugGroup listGroup =
     if List.isEmpty listGroup then
-        text "[]"
+        text "-"
 
     else
-        text "[]"
+        ul [] (List.map (\g -> li [] [ text (Group.toString g) ]) listGroup)
 
 
-
--- ul [] (List.map (\g -> li [] [ text (Debug.toString g) ]) listGroup)
-
-
-debugGroups : Group.GroupsPerSuit -> Html Msg
+debugGroups : Group.GroupsBreakdown -> Html Msg
 debugGroups groups =
     let
         generateTd l =
             List.map (\g -> td [] [ debugGroup g ]) l
+
+        sevenPairsTxt =
+            if List.isEmpty groups.chiitoitsu then
+                "no"
+
+            else
+                "yes"
     in
     table [ class "table is-striped" ]
         [ thead []
             [ tr [] [ th [] [ text "groupsPerSuit" ] ] ]
         , tbody []
-            [ tr [] (generateTd groups.man)
-            , tr [] (generateTd groups.pin)
-            , tr [] (generateTd groups.sou)
-            , tr [] (generateTd groups.honor)
+            [ tr [] (generateTd groups.perSuit.man)
+            , tr [] (generateTd groups.perSuit.pin)
+            , tr [] (generateTd groups.perSuit.sou)
+            , tr [] (generateTd groups.perSuit.honor)
+            , tr [] [ text ("Chiitoisu: " ++ sevenPairsTxt) ]
             ]
         ]
 
