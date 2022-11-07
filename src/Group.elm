@@ -13,6 +13,7 @@ module Group exposing
     , isPair
     , isRun
     , isTriplet
+    , isTripletOf
     , isWinningHand
     , member
     , random5SidedWait
@@ -220,6 +221,11 @@ toString group =
 isTriplet : Group -> Bool
 isTriplet group =
     group.type_ == Triplet
+
+
+isTripletOf : Tile.TileNumber -> Tile.Suit -> Group -> Bool
+isTripletOf tileNumber suit group =
+    isTriplet group && group.tileNumber == tileNumber && group.suit == suit
 
 
 isPair : Group -> Bool

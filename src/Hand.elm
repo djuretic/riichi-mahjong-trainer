@@ -26,6 +26,7 @@ module Hand exposing
 
 import Array
 import Group exposing (Group, GroupType(..))
+import List.Extra
 import Random
 import Score
 import Set
@@ -822,9 +823,17 @@ checkHonitsuTsuuiisou hand =
 checkSanankouAndSuuankou : Hand -> Maybe HanSource
 checkSanankouAndSuuankou hand =
     let
-        -- TODO filter out the group with the ron tile
+        containsRonTile : Group -> Bool
+        containsRonTile group =
+            case drawnTile hand of
+                Just tile ->
+                    hand.winBy == Ron && Group.isTripletOf tile.number tile.suit group
+
+                Nothing ->
+                    False
+
         triplets =
-            List.filter (\g -> Group.isTriplet g && Group.isClosed g) hand.groups
+            List.filter (\g -> Group.isTriplet g && Group.isClosed g && not (hand.winBy == Ron && containsRonTile g)) hand.groups
 
         countTriplets =
             List.length triplets
@@ -1150,3 +1159,8 @@ winningTiles hand =
 isWinningHand : Hand -> Bool
 isWinningHand hand =
     Group.isWinningHand hand.tiles hand.groups && hand.hanCount > 0
+
+
+drawnTile : Hand -> Maybe Tile
+drawnTile hand =
+    List.Extra.last hand.tiles
