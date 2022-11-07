@@ -16,6 +16,7 @@ suite =
         , testHandYaku [ Hand.HanSource 2 Hand.Chanta ] "123999m123s111p44z"
         , testHandYaku [ Hand.HanSource 2 Hand.Toitoi, Hand.HanSource 2 Hand.Sanankou ] "22888m333p111s444z"
         , testHandYaku [ Hand.HanSource 13 Hand.Suuankou ] "2888m333p111s444z2m"
+        , testHandYaku [ Hand.HanSource 2 Hand.Chiitoitsu ] "1122334455m1122p"
         ]
 
 

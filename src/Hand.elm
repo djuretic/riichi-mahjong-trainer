@@ -34,6 +34,7 @@ import Tile
     exposing
         ( Tile
         , Wind
+        , deduplicate
         , greenDragonNumber
         , redDragonNumber
         , whiteDragonNumber
@@ -480,6 +481,12 @@ checkTanyao hand =
                     ( Run, 7 ) ->
                         False
 
+                    ( Pair, 1 ) ->
+                        False
+
+                    ( Pair, 9 ) ->
+                        False
+
                     ( Pair, _ ) ->
                         True
 
@@ -688,6 +695,15 @@ checkPinfu hand =
 
         else
             Nothing
+
+    else
+        Nothing
+
+
+checkChiitoitsu : Hand -> Maybe HanSource
+checkChiitoitsu hand =
+    if List.length hand.groups == 7 && List.length (deduplicate hand.groups) == 7 && List.all Group.isPair hand.groups then
+        Just (HanSource 2 Chiitoitsu)
 
     else
         Nothing
@@ -952,6 +968,7 @@ waitTypeToString waitType =
 yakuChecks : List (Hand -> Maybe HanSource)
 yakuChecks =
     [ checkMenzenTsumo
+    , checkChiitoitsu
     , checkIipeikou
     , checkShousangen
     , checkDaisangen

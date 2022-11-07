@@ -132,8 +132,15 @@ findChiitoitsu tiles =
 
                     else
                         []
+
+        pairs =
+            findPairsHelper tiles [] |> List.reverse
     in
-    findPairsHelper tiles [] |> List.reverse
+    if List.length pairs == 7 && List.length (Tile.deduplicate pairs) == 7 then
+        pairs
+
+    else
+        []
 
 
 findGroupsInSuit : Tile.Suit -> List Tile.Tile -> List (List Group)
@@ -325,36 +332,41 @@ isClosed _ =
 
 findWinningGroups : GroupsBreakdown -> List Group
 findWinningGroups groups =
-    let
-        firstItem =
-            \g -> Maybe.withDefault [] (List.head g)
+    -- TODO consider chiitoitsu and other group configurations in the same hand
+    if List.isEmpty groups.chiitoitsu then
+        let
+            firstItem =
+                \g -> Maybe.withDefault [] (List.head g)
 
-        man =
-            firstItem groups.perSuit.man
+            man =
+                firstItem groups.perSuit.man
 
-        pin =
-            firstItem groups.perSuit.pin
+            pin =
+                firstItem groups.perSuit.pin
 
-        sou =
-            firstItem groups.perSuit.sou
+            sou =
+                firstItem groups.perSuit.sou
 
-        honor =
-            firstItem groups.perSuit.honor
+            honor =
+                firstItem groups.perSuit.honor
 
-        possibleGroups =
-            List.concat [ man, pin, sou, honor ]
+            possibleGroups =
+                List.concat [ man, pin, sou, honor ]
 
-        numberPairs =
-            List.filter (\g -> g.type_ == Pair) possibleGroups |> List.length
+            numberPairs =
+                List.filter (\g -> g.type_ == Pair) possibleGroups |> List.length
 
-        groupSort g =
-            ( Tile.suitToString g.suit, g.tileNumber )
-    in
-    if numberPairs == 1 then
-        List.sortBy groupSort possibleGroups
+            groupSort g =
+                ( Tile.suitToString g.suit, g.tileNumber )
+        in
+        if numberPairs == 1 then
+            List.sortBy groupSort possibleGroups
+
+        else
+            []
 
     else
-        []
+        groups.chiitoitsu
 
 
 commonGroups : List (List Group) -> List Group
