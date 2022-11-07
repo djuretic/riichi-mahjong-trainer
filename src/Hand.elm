@@ -138,7 +138,17 @@ type Yaku
 
 init : Hand
 init =
-    Hand [] [] Tsumo Tile.East Tile.East [] 0 [] 0 0
+    { tiles = []
+    , groups = []
+    , winBy = Tsumo
+    , seatWind = Tile.East
+    , roundWind = Tile.East
+    , hanSources = []
+    , hanCount = 0
+    , fuSources = []
+    , fuCount = 0
+    , fuCountBeforeRounding = 0
+    }
 
 
 winByToString : WinBy -> String
