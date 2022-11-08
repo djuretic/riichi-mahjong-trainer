@@ -1,4 +1,4 @@
-module Suit exposing (Suit(..), maxRange, randomNonHonorSuit, randomSuit, toString, fromString)
+module Suit exposing (Suit(..), fromString, maxRange, randomNonHonorSuit, randomSuit, toString)
 
 import Random
 

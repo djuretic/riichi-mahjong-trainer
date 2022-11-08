@@ -3,6 +3,7 @@ module Group exposing
     , GroupType(..)
     , GroupsBreakdown
     , GroupsPerSuit
+    , RandomSuitPreference(..)
     , commonGroups
     , containsTerminal
     , findGroups
@@ -97,6 +98,11 @@ toWind group =
 
         Run ->
             Nothing
+
+
+type RandomSuitPreference
+    = OneRandomSuit
+    | OneSuit Suit.Suit
 
 
 findGroups : List Tile.Tile -> GroupsBreakdown
@@ -479,7 +485,7 @@ randomWinningGroups =
     Random.map2 (\g p -> List.append g [ p ]) groups pair
 
 
-randomCompleteGroups : Int -> Int -> Maybe Suit.Suit -> Random.Generator (List Group)
+randomCompleteGroups : Int -> Int -> RandomSuitPreference -> Random.Generator (List Group)
 randomCompleteGroups numNonPairs tripletWeight wantedSuit =
     let
         otherGroups suit =
@@ -487,10 +493,10 @@ randomCompleteGroups numNonPairs tripletWeight wantedSuit =
 
         baseSuit =
             case wantedSuit of
-                Just s ->
+                OneSuit s ->
                     Random.constant s
 
-                Nothing ->
+                OneRandomSuit ->
                     Suit.randomNonHonorSuit
     in
     baseSuit
@@ -510,7 +516,7 @@ randomCompleteGroups numNonPairs tripletWeight wantedSuit =
             )
 
 
-randomTenpaiGroups : Int -> Int -> Maybe Suit.Suit -> Random.Generator (List Tile.Tile)
+randomTenpaiGroups : Int -> Int -> RandomSuitPreference -> Random.Generator (List Tile.Tile)
 randomTenpaiGroups numNonPairs tripletWeight wantedSuit =
     let
         posToRemove =
@@ -526,7 +532,7 @@ randomTenpaiGroups numNonPairs tripletWeight wantedSuit =
             posToRemove
 
 
-random5SidedWait : Maybe Suit.Suit -> Random.Generator (List Tile.Tile)
+random5SidedWait : RandomSuitPreference -> Random.Generator (List Tile.Tile)
 random5SidedWait wantedSuit =
     Random.uniform True [ False ]
         |> Random.andThen
@@ -541,15 +547,15 @@ random5SidedWait wantedSuit =
 
 {-| Example: 6667888p, waits 56789p
 -}
-randomTatsumaki : Maybe Suit.Suit -> Random.Generator (List Tile.Tile)
+randomTatsumaki : RandomSuitPreference -> Random.Generator (List Tile.Tile)
 randomTatsumaki wantedSuit =
     let
         baseSuit =
             case wantedSuit of
-                Just s ->
+                OneSuit s ->
                     Random.constant s
 
-                Nothing ->
+                OneRandomSuit ->
                     Suit.randomNonHonorSuit
     in
     baseSuit
@@ -569,15 +575,15 @@ randomTatsumaki wantedSuit =
 
 {-| Example: 3334567m, waits 24578p
 -}
-randomRyanmentenWithNobetan : Maybe Suit.Suit -> Random.Generator (List Tile.Tile)
+randomRyanmentenWithNobetan : RandomSuitPreference -> Random.Generator (List Tile.Tile)
 randomRyanmentenWithNobetan wantedSuit =
     let
         baseSuit =
             case wantedSuit of
-                Just s ->
+                OneSuit s ->
                     Random.constant s
 
-                Nothing ->
+                OneRandomSuit ->
                     Suit.randomNonHonorSuit
 
         tripletPart numA numB suit =

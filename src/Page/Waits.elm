@@ -560,20 +560,20 @@ renderSvg groupGapSvg zoom cssClass model =
         ]
 
 
-suitSelectionToSuit : SuitSelection -> Maybe Suit.Suit
+suitSelectionToSuit : SuitSelection -> Group.RandomSuitPreference
 suitSelectionToSuit suitSelection =
     case suitSelection of
         RandomSuit ->
-            Nothing
+            Group.OneRandomSuit
 
         FixedSuitMan ->
-            Just Suit.Man
+            Group.OneSuit Suit.Man
 
         FixedSuitPin ->
-            Just Suit.Pin
+            Group.OneSuit Suit.Pin
 
         FixedSuitSou ->
-            Just Suit.Sou
+            Group.OneSuit Suit.Sou
 
 
 initAnimatedTiles : Model -> Model
