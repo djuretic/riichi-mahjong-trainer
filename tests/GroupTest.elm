@@ -2,8 +2,9 @@ module GroupTest exposing (..)
 
 import Expect
 import Group exposing (Group, GroupType(..))
+import Suit exposing (Suit(..))
 import Test exposing (..)
-import Tile exposing (Suit(..))
+import Tile
 
 
 suite : Test

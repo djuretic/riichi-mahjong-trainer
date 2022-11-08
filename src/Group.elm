@@ -31,6 +31,7 @@ import Array
 import Counter
 import List.Extra
 import Random
+import Suit
 import Tile
 
 
@@ -45,7 +46,7 @@ type alias Group =
 
     -- for runs, is the first (lowest) tile
     , tileNumber : Tile.TileNumber
-    , suit : Tile.Suit
+    , suit : Suit.Suit
     }
 
 
@@ -67,7 +68,7 @@ toWind : Group -> Maybe Tile.Wind
 toWind group =
     let
         getWind g =
-            if g.suit == Tile.Honor then
+            if g.suit == Suit.Honor then
                 case group.tileNumber of
                     1 ->
                         Just Tile.East
@@ -106,10 +107,10 @@ findGroups tiles =
     in
     { chiitoitsu = findChiitoitsu (Tile.sort tiles)
     , perSuit =
-        { sou = findGroupsInSuit Tile.Sou part.sou
-        , man = findGroupsInSuit Tile.Man part.man
-        , pin = findGroupsInSuit Tile.Pin part.pin
-        , honor = findGroupsInSuit Tile.Honor part.honor
+        { sou = findGroupsInSuit Suit.Sou part.sou
+        , man = findGroupsInSuit Suit.Man part.man
+        , pin = findGroupsInSuit Suit.Pin part.pin
+        , honor = findGroupsInSuit Suit.Honor part.honor
         }
     }
 
@@ -143,7 +144,7 @@ findChiitoitsu tiles =
         []
 
 
-findGroupsInSuit : Tile.Suit -> List Tile.Tile -> List (List Group)
+findGroupsInSuit : Suit.Suit -> List Tile.Tile -> List (List Group)
 findGroupsInSuit suit tiles =
     List.map .number tiles
         |> List.sort
@@ -152,7 +153,7 @@ findGroupsInSuit suit tiles =
         |> Maybe.withDefault []
 
 
-findGroupsInSuitHelper : Tile.Suit -> Int -> Bool -> Counter.Counter -> Maybe (List (List Group))
+findGroupsInSuitHelper : Suit.Suit -> Int -> Bool -> Counter.Counter -> Maybe (List (List Group))
 findGroupsInSuitHelper suit n shouldFindPair counter =
     let
         count =
@@ -190,7 +191,7 @@ findGroupsInSuitHelper suit n shouldFindPair counter =
                     Nothing
 
             foundRun =
-                suit /= Tile.Honor && n < 7 && count >= 1 && Counter.getCount (n + 1) counter > 0 && Counter.getCount (n + 2) counter > 0
+                suit /= Suit.Honor && n < 7 && count >= 1 && Counter.getCount (n + 1) counter > 0 && Counter.getCount (n + 2) counter > 0
 
             run =
                 if foundRun then
@@ -243,17 +244,17 @@ toString : Group -> String
 toString group =
     case group.type_ of
         Triplet ->
-            String.repeat 3 (String.fromInt group.tileNumber) ++ Tile.suitToString group.suit
+            String.repeat 3 (String.fromInt group.tileNumber) ++ Suit.toString group.suit
 
         Pair ->
-            String.repeat 2 (String.fromInt group.tileNumber) ++ Tile.suitToString group.suit
+            String.repeat 2 (String.fromInt group.tileNumber) ++ Suit.toString group.suit
 
         Run ->
             String.concat
                 [ String.fromInt group.tileNumber
                 , String.fromInt (group.tileNumber + 1)
                 , String.fromInt (group.tileNumber + 2)
-                , Tile.suitToString group.suit
+                , Suit.toString group.suit
                 ]
 
 
@@ -262,7 +263,7 @@ isTriplet group =
     group.type_ == Triplet
 
 
-isTripletOf : Tile.TileNumber -> Tile.Suit -> Group -> Bool
+isTripletOf : Tile.TileNumber -> Suit.Suit -> Group -> Bool
 isTripletOf tileNumber suit group =
     isTriplet group && group.tileNumber == tileNumber && group.suit == suit
 
@@ -283,17 +284,17 @@ isDragon group =
         isTripletOrPair =
             isTriplet group || isPair group
     in
-    isTripletOrPair && group.suit == Tile.Honor && List.member group.tileNumber [ Tile.whiteDragonNumber, Tile.greenDragonNumber, Tile.redDragonNumber ]
+    isTripletOrPair && group.suit == Suit.Honor && List.member group.tileNumber [ Tile.whiteDragonNumber, Tile.greenDragonNumber, Tile.redDragonNumber ]
 
 
 isHonor : Group -> Bool
 isHonor group =
-    group.suit == Tile.Honor
+    group.suit == Suit.Honor
 
 
 containsTerminal : Group -> Bool
 containsTerminal group =
-    if group.suit == Tile.Honor then
+    if group.suit == Suit.Honor then
         False
 
     else
@@ -357,7 +358,7 @@ findWinningGroups groups =
                 List.filter (\g -> g.type_ == Pair) possibleGroups |> List.length
 
             groupSort g =
-                ( Tile.suitToString g.suit, g.tileNumber )
+                ( Suit.toString g.suit, g.tileNumber )
         in
         if numberPairs == 1 then
             List.sortBy groupSort possibleGroups
@@ -403,14 +404,14 @@ commonGroupsHelper baseGroups listGroups res =
 
 randomPair : Random.Generator Group
 randomPair =
-    Random.uniform Tile.Man [ Tile.Pin, Tile.Sou, Tile.Honor ]
-        |> Random.andThen (\s -> Random.pair (Random.int 1 (Tile.maxRange s)) (Random.constant s))
+    Random.uniform Suit.Man [ Suit.Pin, Suit.Sou, Suit.Honor ]
+        |> Random.andThen (\s -> Random.pair (Random.int 1 (Suit.maxRange s)) (Random.constant s))
         |> Random.map (\( n, suit ) -> Group Pair n suit)
 
 
-randomPairOf : Tile.Suit -> Random.Generator Group
+randomPairOf : Suit.Suit -> Random.Generator Group
 randomPairOf suit =
-    Random.int 1 (Tile.maxRange suit)
+    Random.int 1 (Suit.maxRange suit)
         |> Random.map (\n -> Group Pair n suit)
 
 
@@ -418,13 +419,13 @@ randomTripletOrRun : Random.Generator Group
 randomTripletOrRun =
     let
         maxRange suit =
-            if suit == Tile.Honor then
+            if suit == Suit.Honor then
                 7
 
             else
                 9 + 7
     in
-    Tile.randomSuit
+    Suit.randomSuit
         |> Random.andThen (\s -> Random.pair (Random.constant s) (Random.int 1 (maxRange s)))
         |> Random.map
             (\( suit, n ) ->
@@ -436,9 +437,9 @@ randomTripletOrRun =
             )
 
 
-randomTripletOrRunOf : Int -> Tile.Suit -> Random.Generator Group
+randomTripletOrRunOf : Int -> Suit.Suit -> Random.Generator Group
 randomTripletOrRunOf tripletWeight suit =
-    if suit == Tile.Honor then
+    if suit == Suit.Honor then
         Random.int 1 7
             |> Random.map (\n -> Group Triplet n suit)
 
@@ -454,13 +455,13 @@ randomTripletOrRunOf tripletWeight suit =
                 )
 
 
-randomTripletOf : Tile.Suit -> Random.Generator Group
+randomTripletOf : Suit.Suit -> Random.Generator Group
 randomTripletOf suit =
     Random.int 1 9
         |> Random.map (\n -> Group Triplet n suit)
 
 
-randomRunOf : Tile.Suit -> Random.Generator Group
+randomRunOf : Suit.Suit -> Random.Generator Group
 randomRunOf suit =
     Random.int 1 7
         |> Random.map (\n -> Group Run n suit)
@@ -478,7 +479,7 @@ randomWinningGroups =
     Random.map2 (\g p -> List.append g [ p ]) groups pair
 
 
-randomCompleteGroups : Int -> Int -> Maybe Tile.Suit -> Random.Generator (List Group)
+randomCompleteGroups : Int -> Int -> Maybe Suit.Suit -> Random.Generator (List Group)
 randomCompleteGroups numNonPairs tripletWeight wantedSuit =
     let
         otherGroups suit =
@@ -490,7 +491,7 @@ randomCompleteGroups numNonPairs tripletWeight wantedSuit =
                     Random.constant s
 
                 Nothing ->
-                    Tile.randomNonHonorSuit
+                    Suit.randomNonHonorSuit
     in
     baseSuit
         |> Random.andThen (\s -> Random.pair (randomPairOf s) (otherGroups s))
@@ -509,7 +510,7 @@ randomCompleteGroups numNonPairs tripletWeight wantedSuit =
             )
 
 
-randomTenpaiGroups : Int -> Int -> Maybe Tile.Suit -> Random.Generator (List Tile.Tile)
+randomTenpaiGroups : Int -> Int -> Maybe Suit.Suit -> Random.Generator (List Tile.Tile)
 randomTenpaiGroups numNonPairs tripletWeight wantedSuit =
     let
         posToRemove =
@@ -525,7 +526,7 @@ randomTenpaiGroups numNonPairs tripletWeight wantedSuit =
             posToRemove
 
 
-random5SidedWait : Maybe Tile.Suit -> Random.Generator (List Tile.Tile)
+random5SidedWait : Maybe Suit.Suit -> Random.Generator (List Tile.Tile)
 random5SidedWait wantedSuit =
     Random.uniform True [ False ]
         |> Random.andThen
@@ -540,7 +541,7 @@ random5SidedWait wantedSuit =
 
 {-| Example: 6667888p, waits 56789p
 -}
-randomTatsumaki : Maybe Tile.Suit -> Random.Generator (List Tile.Tile)
+randomTatsumaki : Maybe Suit.Suit -> Random.Generator (List Tile.Tile)
 randomTatsumaki wantedSuit =
     let
         baseSuit =
@@ -549,7 +550,7 @@ randomTatsumaki wantedSuit =
                     Random.constant s
 
                 Nothing ->
-                    Tile.randomNonHonorSuit
+                    Suit.randomNonHonorSuit
     in
     baseSuit
         |> Random.andThen (\s -> Random.pair (Random.constant s) (Random.int 2 5))
@@ -568,7 +569,7 @@ randomTatsumaki wantedSuit =
 
 {-| Example: 3334567m, waits 24578p
 -}
-randomRyanmentenWithNobetan : Maybe Tile.Suit -> Random.Generator (List Tile.Tile)
+randomRyanmentenWithNobetan : Maybe Suit.Suit -> Random.Generator (List Tile.Tile)
 randomRyanmentenWithNobetan wantedSuit =
     let
         baseSuit =
@@ -577,7 +578,7 @@ randomRyanmentenWithNobetan wantedSuit =
                     Random.constant s
 
                 Nothing ->
-                    Tile.randomNonHonorSuit
+                    Suit.randomNonHonorSuit
 
         tripletPart numA numB suit =
             Random.uniform (Tile.Tile numA suit) [ Tile.Tile numB suit ]

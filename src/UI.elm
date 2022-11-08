@@ -25,6 +25,7 @@ import Html
 import Html.Attributes exposing (class, src, style, title)
 import I18n exposing (I18n)
 import List.Extra
+import Suit
 import Svg.Attributes as SvgA
 import Tile
 
@@ -92,16 +93,16 @@ tilePath addNumbers { number, suit } =
                 n
     in
     case suit of
-        Tile.Sou ->
+        Suit.Sou ->
             "/img/128px_v2/bamboo/bamboo" ++ n_and_version ++ ".png"
 
-        Tile.Pin ->
+        Suit.Pin ->
             "/img/128px_v2/pin/pin" ++ n_and_version ++ ".png"
 
-        Tile.Man ->
+        Suit.Man ->
             "/img/128px_v2/man/man" ++ n_and_version ++ ".png"
 
-        Tile.Honor ->
+        Suit.Honor ->
             pathHonorTile number
 
 
@@ -281,7 +282,7 @@ icon classes icn =
 
 tileTitle : I18n -> Tile.Tile -> String
 tileTitle i18n tile =
-    if tile.suit == Tile.Honor then
+    if tile.suit == Suit.Honor then
         case tile.number of
             1 ->
                 I18n.eastWindDescription i18n
@@ -342,13 +343,13 @@ tileTitle i18n tile =
                         "?"
         in
         case tile.suit of
-            Tile.Man ->
+            Suit.Man ->
                 I18n.manTileDescription n i18n
 
-            Tile.Pin ->
+            Suit.Pin ->
                 I18n.pinTileDescription n i18n
 
-            Tile.Sou ->
+            Suit.Sou ->
                 I18n.souTileDescription n i18n
 
             _ ->

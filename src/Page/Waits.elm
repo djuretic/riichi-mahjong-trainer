@@ -14,6 +14,7 @@ import List.Extra
 import Point
 import Random
 import Set exposing (Set)
+import Suit
 import Svg exposing (image, svg)
 import Svg.Attributes as SvgA
 import Tile exposing (Tile)
@@ -94,7 +95,7 @@ type AnimState
 
 dummyTile : Tile
 dummyTile =
-    Tile 0 Tile.Man
+    Tile 0 Suit.Man
 
 
 init : I18n.I18n -> E.Value -> ( Model, Cmd Msg )
@@ -397,7 +398,7 @@ renderWaitButtons model =
         tileSuits =
             List.map .suit model.tiles
                 |> List.Extra.unique
-                |> List.sortBy Tile.suitToString
+                |> List.sortBy Suit.toString
 
         selectedCss tile =
             if Set.member (Tile.toComparable tile) model.selectedWaits then
@@ -559,20 +560,20 @@ renderSvg groupGapSvg zoom cssClass model =
         ]
 
 
-suitSelectionToSuit : SuitSelection -> Maybe Tile.Suit
+suitSelectionToSuit : SuitSelection -> Maybe Suit.Suit
 suitSelectionToSuit suitSelection =
     case suitSelection of
         RandomSuit ->
             Nothing
 
         FixedSuitMan ->
-            Just Tile.Man
+            Just Suit.Man
 
         FixedSuitPin ->
-            Just Tile.Pin
+            Just Suit.Pin
 
         FixedSuitSou ->
-            Just Tile.Sou
+            Just Suit.Sou
 
 
 initAnimatedTiles : Model -> Model

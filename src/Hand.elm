@@ -30,6 +30,7 @@ import List.Extra
 import Random
 import Score
 import Set
+import Suit
 import Tile
     exposing
         ( Tile
@@ -211,7 +212,7 @@ fuValuePair hand =
                 n =
                     pair.tileNumber
             in
-            if (n == whiteDragonNumber || n == greenDragonNumber || n == redDragonNumber) && pair.suit == Tile.Honor then
+            if (n == whiteDragonNumber || n == greenDragonNumber || n == redDragonNumber) && pair.suit == Suit.Honor then
                 Just (FuSource 2 (ValuePair ByDragon) [ pair ])
 
             else if isRoundWind && isSeatWind then
@@ -261,7 +262,7 @@ fuTriplet group =
         if group.tileNumber == 1 || group.tileNumber == 9 then
             Just (FuSource 8 (TripletFu Closed IsTerminal) [ group ])
 
-        else if group.suit == Tile.Honor then
+        else if group.suit == Suit.Honor then
             Just (FuSource 8 (TripletFu Closed IsHonor) [ group ])
 
         else
@@ -475,7 +476,7 @@ checkTanyao : Hand -> Maybe HanSource
 checkTanyao hand =
     let
         isSimple group =
-            if group.suit == Tile.Honor then
+            if group.suit == Suit.Honor then
                 False
 
             else
@@ -532,10 +533,10 @@ checkYakuhai : Hand -> List HanSource
 checkYakuhai hand =
     let
         isRoundWind g =
-            g == Group Triplet (Tile.windToTileNumber hand.roundWind) Tile.Honor
+            g == Group Triplet (Tile.windToTileNumber hand.roundWind) Suit.Honor
 
         isSeatWind g =
-            g == Group Triplet (Tile.windToTileNumber hand.seatWind) Tile.Honor
+            g == Group Triplet (Tile.windToTileNumber hand.seatWind) Suit.Honor
 
         triplets =
             List.filter (\g -> Group.isTriplet g && (Group.isDragon g || isRoundWind g || isSeatWind g)) hand.groups
@@ -574,7 +575,7 @@ checkChanta : Hand -> Maybe HanSource
 checkChanta hand =
     let
         containsTerminalOrHonor g =
-            g.suit == Tile.Honor || Group.containsTerminal g
+            g.suit == Suit.Honor || Group.containsTerminal g
 
         numHonorGroups =
             List.filter Group.isHonor hand.groups
@@ -612,9 +613,9 @@ checkSanshokuDoujun : Hand -> Maybe HanSource
 checkSanshokuDoujun hand =
     let
         sameSequence n =
-            List.member (Group Run n Tile.Man) hand.groups
-                && List.member (Group Run n Tile.Pin) hand.groups
-                && List.member (Group Run n Tile.Sou) hand.groups
+            List.member (Group Run n Suit.Man) hand.groups
+                && List.member (Group Run n Suit.Pin) hand.groups
+                && List.member (Group Run n Suit.Sou) hand.groups
 
         checkRes =
             List.range 1 7
@@ -633,9 +634,9 @@ checkSanshokuDoukou : Hand -> Maybe HanSource
 checkSanshokuDoukou hand =
     let
         sameTriplet n =
-            List.member (Group Triplet n Tile.Man) hand.groups
-                && List.member (Group Triplet n Tile.Pin) hand.groups
-                && List.member (Group Triplet n Tile.Sou) hand.groups
+            List.member (Group Triplet n Suit.Man) hand.groups
+                && List.member (Group Triplet n Suit.Pin) hand.groups
+                && List.member (Group Triplet n Suit.Sou) hand.groups
 
         checkRes =
             List.range 1 9
@@ -654,7 +655,7 @@ checkIipeikou hand =
         let
             runs =
                 List.filter Group.isRun hand.groups
-                    |> List.sortBy (\g -> ( Tile.suitToString g.suit, g.tileNumber ))
+                    |> List.sortBy (\g -> ( Suit.toString g.suit, g.tileNumber ))
 
             res =
                 List.map2 (\g1 g2 -> g1 == g2) runs (List.tail runs |> Maybe.withDefault [])
@@ -740,7 +741,7 @@ checkShousangen hand =
                     List.filter (\d -> d /= dragonPair.tileNumber) allDragons
 
                 findTriplet tileNumber =
-                    List.filter (\n -> n == Group Triplet tileNumber Tile.Honor) hand.groups
+                    List.filter (\n -> n == Group Triplet tileNumber Suit.Honor) hand.groups
 
                 groups =
                     List.concatMap (\d -> findTriplet d) remainingDragons
@@ -758,9 +759,9 @@ checkShousangen hand =
 checkDaisangen : Hand -> Maybe HanSource
 checkDaisangen { groups } =
     if
-        List.member (Group Triplet whiteDragonNumber Tile.Honor) groups
-            && List.member (Group Triplet greenDragonNumber Tile.Honor) groups
-            && List.member (Group Triplet redDragonNumber Tile.Honor) groups
+        List.member (Group Triplet whiteDragonNumber Suit.Honor) groups
+            && List.member (Group Triplet greenDragonNumber Suit.Honor) groups
+            && List.member (Group Triplet redDragonNumber Suit.Honor) groups
     then
         Just (HanSource 13 Daisangen)
 
@@ -773,7 +774,7 @@ checkSousuushi { groups } =
     let
         isWindTripletOrPair group =
             group.suit
-                == Tile.Honor
+                == Suit.Honor
                 && (group.type_ == Group.Triplet || group.type_ == Group.Pair)
                 && group.tileNumber
                 <= 4
@@ -806,10 +807,10 @@ checkSousuushi { groups } =
 checkDaisuushi : Hand -> Maybe HanSource
 checkDaisuushi { groups } =
     if
-        List.member (Group Triplet 1 Tile.Honor) groups
-            && List.member (Group Triplet 2 Tile.Honor) groups
-            && List.member (Group Triplet 3 Tile.Honor) groups
-            && List.member (Group Triplet 4 Tile.Honor) groups
+        List.member (Group Triplet 1 Suit.Honor) groups
+            && List.member (Group Triplet 2 Suit.Honor) groups
+            && List.member (Group Triplet 3 Suit.Honor) groups
+            && List.member (Group Triplet 4 Suit.Honor) groups
     then
         -- TODO double yakuman
         Just (HanSource 13 Daisuushi)
@@ -826,7 +827,7 @@ checkIttsu hand =
                 && List.member (Group Run 4 suit) hand.groups
                 && List.member (Group Run 7 suit) hand.groups
     in
-    if hasIttsu Tile.Man || hasIttsu Tile.Pin || hasIttsu Tile.Sou then
+    if hasIttsu Suit.Man || hasIttsu Suit.Pin || hasIttsu Suit.Sou then
         Just (HanSource 1 Ittsu |> incrementHanIfClosed hand)
 
     else
@@ -838,11 +839,11 @@ checkHonitsuTsuuiisou hand =
     let
         suits =
             List.map .suit hand.groups
-                |> List.map Tile.suitToString
+                |> List.map Suit.toString
                 |> Set.fromList
 
         honor =
-            Tile.suitToString Tile.Honor
+            Suit.toString Suit.Honor
     in
     if Set.size suits == 1 && Set.member honor suits then
         Just (HanSource 13 Tsuuiisou)

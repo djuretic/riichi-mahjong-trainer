@@ -1,8 +1,9 @@
 module TileTest exposing (..)
 
 import Expect
+import Suit exposing (Suit(..))
 import Test exposing (..)
-import Tile exposing (Suit(..), Tile)
+import Tile exposing (Tile)
 
 
 suite : Test

@@ -1,6 +1,5 @@
 module Tile exposing
     ( ComparableTile
-    , Suit(..)
     , Tile
     , TileNumber
     , Wind(..)
@@ -12,18 +11,14 @@ module Tile exposing
     , hasMoreThan4Tiles
     , isRun
     , isTriplet
-    , maxRange
     , moveWinningTileToEnd
     , partitionBySuit
     , push
-    , randomNonHonorSuit
-    , randomSuit
     , randomWind
     , redDragonNumber
     , removeTileAtPosFromArray
     , removeTileAtPosFromList
     , sort
-    , suitToString
     , toArrayCounter
     , toComparable
     , toString
@@ -36,13 +31,7 @@ import Array
 import Counter
 import Parser exposing ((|.), (|=))
 import Random
-
-
-type Suit
-    = Sou
-    | Man
-    | Pin
-    | Honor
+import Suit exposing (Suit(..))
 
 
 type Wind
@@ -91,7 +80,7 @@ type alias TilesPerSuit =
 
 toComparable : Tile -> ComparableTile
 toComparable tile =
-    ( suitToString tile.suit, tile.number )
+    ( Suit.toString tile.suit, tile.number )
 
 
 partitionBySuit : List Tile -> TilesPerSuit
@@ -170,22 +159,6 @@ windToString wind =
 
         North ->
             "North"
-
-
-suitToString : Suit -> String
-suitToString suit =
-    case suit of
-        Man ->
-            "m"
-
-        Pin ->
-            "p"
-
-        Sou ->
-            "s"
-
-        Honor ->
-            "z"
 
 
 windToTileNumber : Wind -> TileNumber
@@ -308,31 +281,12 @@ push tile tiles =
 
 toString : Tile -> String
 toString tile =
-    String.fromInt tile.number ++ suitToString tile.suit
-
-
-randomSuit : Random.Generator Suit
-randomSuit =
-    Random.uniform Man [ Pin, Sou, Honor ]
-
-
-randomNonHonorSuit : Random.Generator Suit
-randomNonHonorSuit =
-    Random.uniform Man [ Pin, Sou ]
+    String.fromInt tile.number ++ Suit.toString tile.suit
 
 
 randomWind : Random.Generator Wind
 randomWind =
     Random.uniform East [ South, West, North ]
-
-
-maxRange : Suit -> Int
-maxRange suit =
-    if suit == Honor then
-        7
-
-    else
-        9
 
 
 handSuit : Parser.Parser (List Tile)
@@ -373,7 +327,7 @@ tilesFromSuitString : String -> List Tile
 tilesFromSuitString parsedSuit =
     let
         suit =
-            String.right 1 parsedSuit |> toSuit
+            String.right 1 parsedSuit |> Suit.fromString
 
         tiles =
             String.dropRight 1 parsedSuit
@@ -387,22 +341,3 @@ tilesFromSuitString parsedSuit =
 
         Nothing ->
             []
-
-
-toSuit : String -> Maybe Suit
-toSuit s =
-    case s of
-        "p" ->
-            Just Pin
-
-        "s" ->
-            Just Sou
-
-        "m" ->
-            Just Man
-
-        "z" ->
-            Just Honor
-
-        _ ->
-            Nothing
