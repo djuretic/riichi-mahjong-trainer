@@ -32,6 +32,7 @@ import Array
 import Counter
 import List.Extra
 import Random
+import Random.List
 import Suit
 import Tile
 
@@ -496,7 +497,7 @@ randomCompleteGroups numNonPairs tripletWeight wantedSuit =
             Random.list numNonPairs (tripletGen suit)
 
         otherGroupsTwoSuits suit1 suit2 =
-            Random.int 0 numNonPairs
+            Random.int 0 (numNonPairs - 1)
                 |> Random.andThen (\n -> Random.pair (Random.list n (tripletGen suit1)) (Random.list (numNonPairs - n) (tripletGen suit2)))
                 |> Random.map (\( p, g ) -> List.append p g)
 
@@ -513,7 +514,7 @@ randomCompleteGroups numNonPairs tripletWeight wantedSuit =
                         |> Random.map (\( p, g ) -> p :: g)
 
                 TwoRandomSuits ->
-                    Random.pair Suit.randomNonHonorSuit Suit.randomNonHonorSuit
+                    Suit.randomTwoHonorSuits
                         |> Random.andThen (\( s1, s2 ) -> Random.pair (randomPairOf s1) (otherGroupsTwoSuits s1 s2))
                         |> Random.map (\( p, g ) -> p :: g)
     in
