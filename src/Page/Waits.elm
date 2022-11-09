@@ -193,14 +193,16 @@ update msg model =
             let
                 waits =
                     Group.winningTiles tiles
-                
-                waitSuits = List.map (\w -> Tuple.first w |> .suit |> Suit.toString) waits |> Set.fromList
+
+                waitSuits =
+                    List.map (\w -> Tuple.first w |> .suit |> Suit.toString) waits |> Set.fromList
             in
             if List.length waits < model.minNumberOfWaits then
                 update (GenerateTiles (numTries + 1)) model
 
             else if model.suitSelection == TwoSuits && Set.size waitSuits < 2 then
                 update (GenerateTiles (numTries + 1)) model
+
             else
                 -- let
                 --     _ =
@@ -293,7 +295,7 @@ view model =
     in
     div []
         [ div [ class "block" ]
-            [ UI.label (I18n.suitSelectorTitle model.i18n) (renderSuitSelection model)
+            [ UI.label (I18n.trainWaitsMode model.i18n) (renderSuitSelection model)
             , UI.label (I18n.suitSelectorTitle model.i18n) (renderSingleSuitSelection model)
             , UI.label (I18n.numTilesSelectorTitle model.i18n) (renderNumberTilesSelector model)
             , UI.label (I18n.minWaitsSelectorTitle model.i18n) (renderMinWaitsSelector model)
@@ -332,8 +334,8 @@ renderSuitSelection model =
                 [ text txt ]
     in
     div [ class "buttons has-addons" ]
-        [ createButton (I18n.suitSelectorTitleRandom model.i18n) SingleSuit
-        , createButton (I18n.suitSelectorTitleMan model.i18n) TwoSuits
+        [ createButton (I18n.trainWaitsModeOne model.i18n) SingleSuit
+        , createButton (I18n.trainWaitsModeTwo model.i18n) TwoSuits
         ]
 
 

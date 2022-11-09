@@ -7,6 +7,10 @@ themeSelectorTitle = Tema
     .light = Claro
     .dark = Oscuro
 
+trainWaitsMode = Modo
+    .one = Un palo
+    .two = Dos palos
+
 suitSelectorTitle = Palo
     .random = Al azar
     .man = Caracteres

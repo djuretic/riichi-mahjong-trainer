@@ -3,9 +3,13 @@ siteTitle = Ekzercilo de atendoj de maĝango
 
 settingsTitle = Agordoj
 languageSelectorTitle = Lingvo
-themeSelectorTitle = Reĝimo
+themeSelectorTitle = Etoso
     .light = Hela
     .dark = Malhela
+
+trainWaitsMode = Reĝimo
+    .one = Unu emblemo
+    .two = Du emblemoj
 
 suitSelectorTitle = Emblemoj
     .random = Hazardaj

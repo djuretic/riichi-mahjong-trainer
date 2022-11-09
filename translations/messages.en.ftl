@@ -6,6 +6,10 @@ themeSelectorTitle = Theme
     .light = Light
     .dark = Dark
 
+trainWaitsMode = Mode
+    .one = One suit
+    .two = Two suits
+
 suitSelectorTitle = Suit
     .random = Random
     .man = Characters
