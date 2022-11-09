@@ -103,6 +103,7 @@ toWind group =
 type RandomSuitPreference
     = OneRandomSuit
     | OneSuit Suit.Suit
+    | TwoRandomSuits
 
 
 findGroups : List Tile.Tile -> GroupsBreakdown
@@ -488,20 +489,35 @@ randomWinningGroups =
 randomCompleteGroups : Int -> Int -> RandomSuitPreference -> Random.Generator (List Group)
 randomCompleteGroups numNonPairs tripletWeight wantedSuit =
     let
-        otherGroups suit =
-            Random.list numNonPairs (randomTripletOrRunOf 30 suit)
+        tripletGen suit =
+            randomTripletOrRunOf 30 suit
 
-        baseSuit =
+        otherGroups suit =
+            Random.list numNonPairs (tripletGen suit)
+
+        otherGroupsTwoSuits suit1 suit2 =
+            Random.int 0 numNonPairs
+                |> Random.andThen (\n -> Random.pair (Random.list n (tripletGen suit1)) (Random.list (numNonPairs - n) (tripletGen suit2)))
+                |> Random.map (\( p, g ) -> List.append p g)
+
+        baseGroups =
             case wantedSuit of
                 OneSuit s ->
                     Random.constant s
+                        |> Random.andThen (\ss -> Random.pair (randomPairOf ss) (otherGroups ss))
+                        |> Random.map (\( p, g ) -> p :: g)
 
                 OneRandomSuit ->
                     Suit.randomNonHonorSuit
+                        |> Random.andThen (\ss -> Random.pair (randomPairOf ss) (otherGroups ss))
+                        |> Random.map (\( p, g ) -> p :: g)
+
+                TwoRandomSuits ->
+                    Random.pair Suit.randomNonHonorSuit Suit.randomNonHonorSuit
+                        |> Random.andThen (\( s1, s2 ) -> Random.pair (randomPairOf s1) (otherGroupsTwoSuits s1 s2))
+                        |> Random.map (\( p, g ) -> p :: g)
     in
-    baseSuit
-        |> Random.andThen (\s -> Random.pair (randomPairOf s) (otherGroups s))
-        |> Random.map (\( p, g ) -> p :: g)
+    baseGroups
         |> Random.andThen
             (\g ->
                 let
@@ -557,6 +573,9 @@ randomTatsumaki wantedSuit =
 
                 OneRandomSuit ->
                     Suit.randomNonHonorSuit
+
+                TwoRandomSuits ->
+                    Suit.randomNonHonorSuit
     in
     baseSuit
         |> Random.andThen (\s -> Random.pair (Random.constant s) (Random.int 2 5))
@@ -584,6 +603,9 @@ randomRyanmentenWithNobetan wantedSuit =
                     Random.constant s
 
                 OneRandomSuit ->
+                    Suit.randomNonHonorSuit
+
+                TwoRandomSuits ->
                     Suit.randomNonHonorSuit
 
         tripletPart numA numB suit =
