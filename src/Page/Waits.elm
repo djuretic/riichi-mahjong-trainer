@@ -193,10 +193,14 @@ update msg model =
             let
                 waits =
                     Group.winningTiles tiles
+                
+                waitSuits = List.map (\w -> Tuple.first w |> .suit |> Suit.toString) waits |> Set.fromList
             in
             if List.length waits < model.minNumberOfWaits then
                 update (GenerateTiles (numTries + 1)) model
 
+            else if model.suitSelection == TwoSuits && Set.size waitSuits < 2 then
+                update (GenerateTiles (numTries + 1)) model
             else
                 -- let
                 --     _ =
@@ -811,7 +815,7 @@ numWaitsUpperBound { numberOfNonPairs, suitSelection } =
                 5
 
         TwoSuits ->
-            if numberOfNonPairs == 4 then
+            if numberOfNonPairs >= 3 then
                 4
 
             else if numberOfNonPairs >= 2 then
