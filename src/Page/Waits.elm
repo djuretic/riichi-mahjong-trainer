@@ -138,9 +138,12 @@ init i18n flags =
 
 cmdGenerateRandomTiles : Int -> Model -> Cmd Msg
 cmdGenerateRandomTiles numTries model =
+    -- for efficiency we avoid the brute force method
     if model.suitSelection == SingleSuit && model.numberOfNonPairs == 2 && model.minNumberOfWaits == 5 then
-        -- for efficiency we avoid the brute force method
         Random.generate (TilesGenerated numTries) (Group.random5SidedWait (suitSelectionToSuit SingleSuit model.singleSuitSelection))
+
+    else if model.suitSelection == TwoSuits && model.numberOfNonPairs == 3 && model.minNumberOfWaits == 4 then
+        Random.generate (TilesGenerated numTries) Group.random4SidedWaitTwoSuits
 
     else
         Random.generate (TilesGenerated numTries) (Group.randomTenpaiGroups model.numberOfNonPairs 30 (suitSelectionToSuit model.suitSelection model.singleSuitSelection))
