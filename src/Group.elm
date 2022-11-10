@@ -575,9 +575,27 @@ random5SidedWait wantedSuit =
             )
 
 
-random4SidedWaitTwoSuits : Random.Generator (List Tile.Tile)
-random4SidedWaitTwoSuits =
-    Random.pair Suit.randomTwoSuits (Random.uniform True [ False ])
+random4SidedWaitTwoSuits : RandomSuitPreference -> Random.Generator (List Tile.Tile)
+random4SidedWaitTwoSuits wantedSuit =
+    let
+        suits =
+            case wantedSuit of
+                OneRandomSuit ->
+                    Suit.randomTwoSuits
+
+                OneSuitFixed _ ->
+                    Suit.randomTwoSuits
+
+                TwoRandomSuits ->
+                    Suit.randomTwoSuits
+
+                TwoSuitsOneFixed s ->
+                    Random.pair (Random.constant s) (Suit.randomSuitExcludingOne s)
+
+                TwoSuitsTwoFixed s1 s2 ->
+                    Random.pair (Random.constant s1) (Random.constant s2)
+    in
+    Random.pair suits (Random.uniform True [ False ])
         |> Random.andThen
             (\( ( suit1, suit2 ), b ) ->
                 if b then
@@ -663,41 +681,45 @@ randomRyanmentenWithNobetan wantedSuit =
 -}
 randomSanmenchanWithShanpon : Suit.Suit -> Suit.Suit -> Random.Generator (List Tile.Tile)
 randomSanmenchanWithShanpon suit1 suit2 =
-    let
-        helper : Suit.Suit -> Random.Generator (List Tile.Tile)
-        helper suit =
-            Random.map2
-                (\n tripletStart ->
-                    if tripletStart then
-                        [ Tile.Tile n suit
-                        , Tile.Tile n suit
-                        , Tile.Tile n suit
-                        , Tile.Tile (n + 1) suit
-                        , Tile.Tile (n + 2) suit
-                        , Tile.Tile (n + 3) suit
-                        , Tile.Tile (n + 4) suit
-                        , Tile.Tile (n + 5) suit
-                        ]
+    if suit1 /= suit2 && suit1 == Suit.Honor then
+        randomSanmenchanWithShanpon suit2 suit1
 
-                    else
-                        [ Tile.Tile (n + 1) suit
-                        , Tile.Tile (n + 2) suit
-                        , Tile.Tile (n + 3) suit
-                        , Tile.Tile (n + 4) suit
-                        , Tile.Tile (n + 5) suit
-                        , Tile.Tile (n + 6) suit
-                        , Tile.Tile (n + 6) suit
-                        , Tile.Tile (n + 6) suit
-                        ]
-                )
-                (Random.int 1 3)
-                (Random.uniform True [ False ])
+    else
+        let
+            helper : Suit.Suit -> Random.Generator (List Tile.Tile)
+            helper suit =
+                Random.map2
+                    (\n tripletStart ->
+                        if tripletStart then
+                            [ Tile.Tile n suit
+                            , Tile.Tile n suit
+                            , Tile.Tile n suit
+                            , Tile.Tile (n + 1) suit
+                            , Tile.Tile (n + 2) suit
+                            , Tile.Tile (n + 3) suit
+                            , Tile.Tile (n + 4) suit
+                            , Tile.Tile (n + 5) suit
+                            ]
 
-        pair =
-            randomPairOf suit2
-                |> Random.map toTiles
-    in
-    Random.map2 (\t1 t2 -> List.append t1 t2) (helper suit1) pair
+                        else
+                            [ Tile.Tile (n + 1) suit
+                            , Tile.Tile (n + 2) suit
+                            , Tile.Tile (n + 3) suit
+                            , Tile.Tile (n + 4) suit
+                            , Tile.Tile (n + 5) suit
+                            , Tile.Tile (n + 6) suit
+                            , Tile.Tile (n + 6) suit
+                            , Tile.Tile (n + 6) suit
+                            ]
+                    )
+                    (Random.int 1 3)
+                    (Random.uniform True [ False ])
+
+            pair =
+                randomPairOf suit2
+                    |> Random.map toTiles
+        in
+        Random.map2 (\t1 t2 -> List.append t1 t2) (helper suit1) pair
 
 
 randomDoubleEntotsu : Suit.Suit -> Suit.Suit -> Random.Generator (List Tile.Tile)

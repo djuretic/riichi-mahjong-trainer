@@ -155,10 +155,10 @@ cmdGenerateRandomTiles : Int -> Model -> Cmd Msg
 cmdGenerateRandomTiles numTries model =
     -- for efficiency we avoid the brute force method
     if model.trainMode == SingleSuit && model.numberOfNonPairs == 2 && model.minNumberOfWaits == 5 then
-        Random.generate (TilesGenerated numTries) (Group.random5SidedWait (suitSelectionToPreference SingleSuit model.singleSuitSelection model.singleSuitSelectionAlt))
+        Random.generate (TilesGenerated numTries) (Group.random5SidedWait (suitSelectionToPreference model.trainMode model.singleSuitSelection model.singleSuitSelectionAlt))
 
     else if model.trainMode == TwoSuits && model.numberOfNonPairs == 3 && model.minNumberOfWaits == 4 then
-        Random.generate (TilesGenerated numTries) Group.random4SidedWaitTwoSuits
+        Random.generate (TilesGenerated numTries) (Group.random4SidedWaitTwoSuits (suitSelectionToPreference model.trainMode model.singleSuitSelection model.singleSuitSelectionAlt))
 
     else
         Random.generate (TilesGenerated numTries) (Group.randomTenpaiGroups model.numberOfNonPairs 30 (suitSelectionToPreference model.trainMode model.singleSuitSelection model.singleSuitSelectionAlt))
@@ -222,7 +222,10 @@ update msg model =
                 waitSuits =
                     List.map (\w -> Tuple.first w |> .suit |> Suit.toString) waits |> Set.fromList
             in
-            if List.length waits < model.minNumberOfWaits then
+            if numTries > 1000 then
+                Debug.todo "aaaa"
+
+            else if List.length waits < model.minNumberOfWaits then
                 update (GenerateTiles (numTries + 1)) model
 
             else if model.trainMode == TwoSuits && Set.size waitSuits < 2 then
