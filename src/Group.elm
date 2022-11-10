@@ -103,7 +103,9 @@ toWind group =
 
 type RandomSuitPreference
     = OneRandomSuit
-    | OneSuit Suit.Suit
+    | OneSuitFixed Suit.Suit
+    | TwoSuitsTwoFixed Suit.Suit Suit.Suit
+    | TwoSuitsOneFixed Suit.Suit
     | TwoRandomSuits
 
 
@@ -503,7 +505,7 @@ randomCompleteGroups numNonPairs tripletWeight wantedSuit =
 
         baseGroups =
             case wantedSuit of
-                OneSuit s ->
+                OneSuitFixed s ->
                     Random.constant s
                         |> Random.andThen (\ss -> Random.pair (randomPairOf ss) (otherGroups ss))
                         |> Random.map (\( p, g ) -> p :: g)
@@ -511,6 +513,17 @@ randomCompleteGroups numNonPairs tripletWeight wantedSuit =
                 OneRandomSuit ->
                     Suit.randomNonHonorSuit
                         |> Random.andThen (\ss -> Random.pair (randomPairOf ss) (otherGroups ss))
+                        |> Random.map (\( p, g ) -> p :: g)
+
+                TwoSuitsTwoFixed s1 s2 ->
+                    Random.uniform ( s1, s2 ) [ ( s2, s1 ) ]
+                        |> Random.andThen (\( ss1, ss2 ) -> Random.pair (randomPairOf ss1) (otherGroupsTwoSuits ss1 ss2))
+                        |> Random.map (\( p, g ) -> p :: g)
+
+                TwoSuitsOneFixed s1 ->
+                    Suit.randomSuitExcludingOne s1
+                        |> Random.andThen (\s2 -> Random.uniform ( s1, s2 ) [ ( s2, s1 ) ])
+                        |> Random.andThen (\( ss1, ss2 ) -> Random.pair (randomPairOf ss1) (otherGroupsTwoSuits ss1 ss2))
                         |> Random.map (\( p, g ) -> p :: g)
 
                 TwoRandomSuits ->
@@ -582,13 +595,13 @@ randomTatsumaki wantedSuit =
     let
         baseSuit =
             case wantedSuit of
-                OneSuit s ->
+                OneSuitFixed s ->
                     Random.constant s
 
                 OneRandomSuit ->
                     Suit.randomNonHonorSuit
 
-                TwoRandomSuits ->
+                _ ->
                     Suit.randomNonHonorSuit
     in
     baseSuit
@@ -613,13 +626,13 @@ randomRyanmentenWithNobetan wantedSuit =
     let
         baseSuit =
             case wantedSuit of
-                OneSuit s ->
+                OneSuitFixed s ->
                     Random.constant s
 
                 OneRandomSuit ->
                     Suit.randomNonHonorSuit
 
-                TwoRandomSuits ->
+                _ ->
                     Suit.randomNonHonorSuit
 
         tripletPart numA numB suit =

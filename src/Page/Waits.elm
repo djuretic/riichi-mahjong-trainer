@@ -29,7 +29,7 @@ type alias Model =
     { i18n : I18n.I18n
     , trainMode : TrainMode
     , singleSuitSelection : SingleSuitSelection
-    , singleSuitSelectionAlt : SingleSuitSelectionWithHonor
+    , singleSuitSelectionAlt : SingleSuitSelection
     , numberedTiles : Bool
     , tiles : List Tile
     , waits : List ( Tile, List Group )
@@ -52,7 +52,7 @@ type GroupsView
 type alias PreferencesModel =
     { trainMode : TrainMode
     , suitSelection : SingleSuitSelection
-    , suitSelectionAlt : SingleSuitSelectionWithHonor
+    , suitSelectionAlt : SingleSuitSelection
     , numberedTiles : Bool
     , numberOfNonPairs : Int
     , minNumberOfWaits : Int
@@ -64,7 +64,7 @@ type Msg
     = GenerateTiles Int
     | SetTrainMode TrainMode
     | SetSingleSuitSelection SingleSuitSelection
-    | SetSingleSuitSelectionAlt SingleSuitSelectionWithHonor
+    | SetSingleSuitSelectionAlt SingleSuitSelection
     | SetNumberNonPairs Int
     | SetNumberMinWaits Int
     | SetAddNumbersToTiles Bool
@@ -88,10 +88,6 @@ type SingleSuitSelection
     | FixedSuitMan
     | FixedSuitPin
     | FixedSuitSou
-
-
-type SingleSuitSelectionWithHonor
-    = SingleSuitOption SingleSuitSelection
     | FixedSuitHonor
 
 
@@ -125,7 +121,7 @@ init i18n flags =
                 Err _ ->
                     { trainMode = SingleSuit
                     , suitSelection = RandomSuit
-                    , suitSelectionAlt = SingleSuitOption RandomSuit
+                    , suitSelectionAlt = RandomSuit
                     , numberOfNonPairs = 1
                     , minNumberOfWaits = 1
                     , groupsView = GroupAnimation
@@ -158,13 +154,13 @@ cmdGenerateRandomTiles : Int -> Model -> Cmd Msg
 cmdGenerateRandomTiles numTries model =
     -- for efficiency we avoid the brute force method
     if model.trainMode == SingleSuit && model.numberOfNonPairs == 2 && model.minNumberOfWaits == 5 then
-        Random.generate (TilesGenerated numTries) (Group.random5SidedWait (suitSelectionToSuit SingleSuit model.singleSuitSelection))
+        Random.generate (TilesGenerated numTries) (Group.random5SidedWait (suitSelectionToPreference SingleSuit model.singleSuitSelection model.singleSuitSelectionAlt))
 
     else if model.trainMode == TwoSuits && model.numberOfNonPairs == 3 && model.minNumberOfWaits == 4 then
         Random.generate (TilesGenerated numTries) Group.random4SidedWaitTwoSuits
 
     else
-        Random.generate (TilesGenerated numTries) (Group.randomTenpaiGroups model.numberOfNonPairs 30 (suitSelectionToSuit model.trainMode model.singleSuitSelection))
+        Random.generate (TilesGenerated numTries) (Group.randomTenpaiGroups model.numberOfNonPairs 30 (suitSelectionToPreference model.trainMode model.singleSuitSelection model.singleSuitSelectionAlt))
 
 
 subscriptions : Model -> Sub Msg
@@ -391,6 +387,7 @@ renderSingleSuitSelection model =
         , createButton (I18n.suitSelectorTitleMan model.i18n) FixedSuitMan
         , createButton (I18n.suitSelectorTitlePin model.i18n) FixedSuitPin
         , createButton (I18n.suitSelectorTitleSou model.i18n) FixedSuitSou
+        , createButton (I18n.suitSelectorTitleSou model.i18n) FixedSuitHonor
         ]
 
 
@@ -409,10 +406,10 @@ renderSingleSuitSelectionAlt model =
                 [ text txt ]
     in
     div [ class "buttons has-addons" ]
-        [ createButton (I18n.suitSelectorTitleRandom model.i18n) (SingleSuitOption RandomSuit)
-        , createButton (I18n.suitSelectorTitleMan model.i18n) (SingleSuitOption FixedSuitMan)
-        , createButton (I18n.suitSelectorTitlePin model.i18n) (SingleSuitOption FixedSuitPin)
-        , createButton (I18n.suitSelectorTitleSou model.i18n) (SingleSuitOption FixedSuitSou)
+        [ createButton (I18n.suitSelectorTitleRandom model.i18n) RandomSuit
+        , createButton (I18n.suitSelectorTitleMan model.i18n) FixedSuitMan
+        , createButton (I18n.suitSelectorTitlePin model.i18n) FixedSuitPin
+        , createButton (I18n.suitSelectorTitleSou model.i18n) FixedSuitSou
         , createButton (I18n.suitSelectorTitleSou model.i18n) FixedSuitHonor
         ]
 
@@ -657,25 +654,60 @@ renderSvg groupGapSvg zoom cssClass model =
         ]
 
 
-suitSelectionToSuit : TrainMode -> SingleSuitSelection -> Group.RandomSuitPreference
-suitSelectionToSuit suitSelection singleSuitSelection =
-    case suitSelection of
+suitSelectionToPreference : TrainMode -> SingleSuitSelection -> SingleSuitSelection -> Group.RandomSuitPreference
+suitSelectionToPreference trainMode suitSelection suitSelectionAlt =
+    let
+        suitSelectionToSuit s =
+            case s of
+                RandomSuit ->
+                    Suit.Man
+
+                FixedSuitMan ->
+                    Suit.Man
+
+                FixedSuitPin ->
+                    Suit.Pin
+
+                FixedSuitSou ->
+                    Suit.Sou
+
+                FixedSuitHonor ->
+                    Suit.Honor
+    in
+    case trainMode of
         SingleSuit ->
-            case singleSuitSelection of
+            case suitSelection of
                 RandomSuit ->
                     Group.OneRandomSuit
 
                 FixedSuitMan ->
-                    Group.OneSuit Suit.Man
+                    Group.OneSuitFixed Suit.Man
 
                 FixedSuitPin ->
-                    Group.OneSuit Suit.Pin
+                    Group.OneSuitFixed Suit.Pin
 
                 FixedSuitSou ->
-                    Group.OneSuit Suit.Sou
+                    Group.OneSuitFixed Suit.Sou
 
+                FixedSuitHonor ->
+                    Group.OneRandomSuit
+
+        -- we don't allow honors
         TwoSuits ->
-            Group.TwoRandomSuits
+            let
+                noRandomOptions =
+                    List.Extra.remove RandomSuit [ suitSelection, suitSelectionAlt ]
+                        |> List.map suitSelectionToSuit
+            in
+            case noRandomOptions of
+                [ s1, s2 ] ->
+                    Group.TwoSuitsTwoFixed s1 s2
+
+                [ s ] ->
+                    Group.TwoSuitsOneFixed s
+
+                _ ->
+                    Group.TwoRandomSuits
 
 
 initAnimatedTiles : Model -> Model
@@ -818,6 +850,9 @@ singleSuitSelectionToString suitSel =
         FixedSuitSou ->
             "s"
 
+        FixedSuitHonor ->
+            "z"
+
 
 stringToSuitSelection : String -> SingleSuitSelection
 stringToSuitSelection s =
@@ -834,17 +869,11 @@ stringToSuitSelection s =
         "s" ->
             FixedSuitSou
 
+        "z" ->
+            FixedSuitHonor
+
         _ ->
             RandomSuit
-
-
-stringToSuitSelectionAlt : String -> SingleSuitSelectionWithHonor
-stringToSuitSelectionAlt s =
-    if s == "z" then
-        FixedSuitHonor
-
-    else
-        SingleSuitOption (stringToSuitSelection s)
 
 
 decoder : D.Decoder PreferencesModel
@@ -865,7 +894,7 @@ decoder =
             in
             { trainMode = stringToTrainMode (Maybe.withDefault "singleSuit" mode)
             , suitSelection = stringToSuitSelection suit
-            , suitSelectionAlt = stringToSuitSelectionAlt (Maybe.withDefault "" suitAlt)
+            , suitSelectionAlt = stringToSuitSelection (Maybe.withDefault "" suitAlt)
             , numberOfNonPairs = nonPairs
             , minNumberOfWaits = minWaits
             , groupsView = groupsView
@@ -895,6 +924,7 @@ encode model =
     E.object
         [ ( "mode", E.string (trainModeToString model.trainMode) )
         , ( "suit", E.string (singleSuitSelectionToString model.singleSuitSelection) )
+        , ( "suitAlt", E.string (singleSuitSelectionToString model.singleSuitSelectionAlt) )
         , ( "nonPairs", E.int model.numberOfNonPairs )
         , ( "minWaits", E.int model.minNumberOfWaits )
         , ( "groupsView", E.string groupsViewStr )

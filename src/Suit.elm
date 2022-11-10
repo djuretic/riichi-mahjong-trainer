@@ -1,5 +1,15 @@
-module Suit exposing (Suit(..), fromString, maxRange, randomNonHonorSuit, randomSuit, randomTwoHonorSuits, toString)
+module Suit exposing
+    ( Suit(..)
+    , fromString
+    , maxRange
+    , randomNonHonorSuit
+    , randomSuit
+    , randomSuitExcludingOne
+    , randomTwoHonorSuits
+    , toString
+    )
 
+import List.Extra
 import Random
 import Random.List
 
@@ -49,6 +59,15 @@ toString suit =
 randomSuit : Random.Generator Suit
 randomSuit =
     Random.uniform Man [ Pin, Sou, Honor ]
+
+
+randomSuitExcludingOne : Suit -> Random.Generator Suit
+randomSuitExcludingOne suit =
+    if suit == Honor then
+        randomSuit
+
+    else
+        Random.uniform Honor (List.Extra.remove suit [ Man, Pin, Sou ])
 
 
 randomNonHonorSuit : Random.Generator Suit
