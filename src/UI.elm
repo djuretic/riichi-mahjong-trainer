@@ -103,7 +103,7 @@ tilePath addNumbers { number, suit } =
             "/img/128px_v2/man/man" ++ n_and_version ++ ".png"
 
         Suit.Honor ->
-            pathHonorTile number
+            pathHonorTile addNumbers number
 
 
 drawBackTile : I18n -> Html.Html msg
@@ -169,29 +169,37 @@ tileCss i18n path tile =
     ]
 
 
-pathHonorTile : Int -> String
-pathHonorTile n =
+pathHonorTile : Bool -> Int -> String
+pathHonorTile addNumbers n =
+    let
+        extra =
+            if addNumbers then
+                "_annotated"
+
+            else
+                ""
+    in
     case n of
         1 ->
-            "/img/128px_v2/winds/wind-east.png"
+            "/img/128px_v2/winds/wind-east" ++ extra ++ ".png"
 
         2 ->
-            "/img/128px_v2/winds/wind-south.png"
+            "/img/128px_v2/winds/wind-south" ++ extra ++ ".png"
 
         3 ->
-            "/img/128px_v2/winds/wind-west.png"
+            "/img/128px_v2/winds/wind-west" ++ extra ++ ".png"
 
         4 ->
-            "/img/128px_v2/winds/wind-north.png"
+            "/img/128px_v2/winds/wind-north" ++ extra ++ ".png"
 
         5 ->
-            "/img/128px_v2/dragons/dragon-haku.png"
+            "/img/128px_v2/dragons/dragon-haku" ++ extra ++ ".png"
 
         6 ->
-            "/img/128px_v2/dragons/dragon-green.png"
+            "/img/128px_v2/dragons/dragon-green" ++ extra ++ ".png"
 
         7 ->
-            "/img/128px_v2/dragons/dragon-chun.png"
+            "/img/128px_v2/dragons/dragon-chun" ++ extra ++ ".png"
 
         _ ->
             ""
