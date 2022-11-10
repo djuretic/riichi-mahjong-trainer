@@ -527,7 +527,7 @@ randomCompleteGroups numNonPairs tripletWeight wantedSuit =
                         |> Random.map (\( p, g ) -> p :: g)
 
                 TwoRandomSuits ->
-                    Suit.randomTwoHonorSuits
+                    Suit.randomTwoSuits
                         |> Random.andThen (\( s1, s2 ) -> Random.pair (randomPairOf s1) (otherGroupsTwoSuits s1 s2))
                         |> Random.map (\( p, g ) -> p :: g)
     in
@@ -577,7 +577,7 @@ random5SidedWait wantedSuit =
 
 random4SidedWaitTwoSuits : Random.Generator (List Tile.Tile)
 random4SidedWaitTwoSuits =
-    Random.pair Suit.randomTwoHonorSuits (Random.uniform True [ False ])
+    Random.pair Suit.randomTwoSuits (Random.uniform True [ False ])
         |> Random.andThen
             (\( ( suit1, suit2 ), b ) ->
                 if b then

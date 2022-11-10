@@ -146,6 +146,7 @@ init i18n flags =
                 , currentAnimatedTile = Nothing
                 , groupsView = prefs.groupsView
                 }
+                |> avoidTwoEqualSuits
     in
     ( model, cmdGenerateRandomTiles 0 model )
 
@@ -191,10 +192,10 @@ update msg model =
             update (GenerateTiles 0) (clampMinNumberOfWaits newModel)
 
         SetSingleSuitSelection suitSelection ->
-            update (GenerateTiles 0) { model | singleSuitSelection = suitSelection }
+            update (GenerateTiles 0) (avoidTwoEqualSuits { model | singleSuitSelection = suitSelection })
 
         SetSingleSuitSelectionAlt suitSelectionAlt ->
-            update (GenerateTiles 0) { model | singleSuitSelectionAlt = suitSelectionAlt }
+            update (GenerateTiles 0) (avoidTwoEqualSuits { model | singleSuitSelectionAlt = suitSelectionAlt })
 
         SetNumberNonPairs num ->
             let
@@ -316,13 +317,20 @@ view model =
                     [ UI.icon "icon" IconS.ban
                     , span [] [ text (I18n.wrongAnswer model.i18n) ]
                     ]
+
+        suitSelector1Label =
+            if model.trainMode == TwoSuits then
+                I18n.suitSelectorTitleWithNumber "1" model.i18n
+
+            else
+                I18n.suitSelectorTitle model.i18n
     in
     div []
         [ div [ class "block" ]
             [ UI.label (I18n.trainWaitsMode model.i18n) (renderTrainMode model)
-            , UI.label (I18n.suitSelectorTitle model.i18n) (renderSingleSuitSelection model)
+            , UI.label suitSelector1Label (renderSingleSuitSelection model)
             , if model.trainMode == TwoSuits then
-                UI.label (I18n.suitSelectorTitle model.i18n) (renderSingleSuitSelectionAlt model)
+                UI.label (I18n.suitSelectorTitleWithNumber "2" model.i18n) (renderSingleSuitSelectionAlt model)
 
               else
                 div [] []
@@ -387,7 +395,7 @@ renderSingleSuitSelection model =
         , createButton (I18n.suitSelectorTitleMan model.i18n) FixedSuitMan
         , createButton (I18n.suitSelectorTitlePin model.i18n) FixedSuitPin
         , createButton (I18n.suitSelectorTitleSou model.i18n) FixedSuitSou
-        , createButton (I18n.suitSelectorTitleSou model.i18n) FixedSuitHonor
+        , createButton (I18n.suitSelectorTitleHonor model.i18n) FixedSuitHonor
         ]
 
 
@@ -410,7 +418,7 @@ renderSingleSuitSelectionAlt model =
         , createButton (I18n.suitSelectorTitleMan model.i18n) FixedSuitMan
         , createButton (I18n.suitSelectorTitlePin model.i18n) FixedSuitPin
         , createButton (I18n.suitSelectorTitleSou model.i18n) FixedSuitSou
-        , createButton (I18n.suitSelectorTitleSou model.i18n) FixedSuitHonor
+        , createButton (I18n.suitSelectorTitleHonor model.i18n) FixedSuitHonor
         ]
 
 
@@ -966,3 +974,12 @@ numWaitsLowerBound { trainMode } =
 clampMinNumberOfWaits : Model -> Model
 clampMinNumberOfWaits model =
     { model | minNumberOfWaits = clamp (numWaitsLowerBound model) (numWaitsUpperBound model) model.minNumberOfWaits }
+
+
+avoidTwoEqualSuits : Model -> Model
+avoidTwoEqualSuits model =
+    if model.singleSuitSelection == model.singleSuitSelectionAlt && model.singleSuitSelection /= RandomSuit then
+        { model | singleSuitSelection = RandomSuit }
+
+    else
+        model

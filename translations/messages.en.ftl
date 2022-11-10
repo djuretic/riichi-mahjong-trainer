@@ -11,10 +11,12 @@ trainWaitsMode = Mode
     .two = Two suits
 
 suitSelectorTitle = Suit
+    .withNumber = Suit {$number}
     .random = Random
     .man = Characters
     .pin = Circles
     .sou = Bamboos 
+    .honor = Honors
 numTilesSelectorTitle = Number of tiles
 minWaitsSelectorTitle = Min. number of waits
 numberedTilesSelector = Numbered tiles

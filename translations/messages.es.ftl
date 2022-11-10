@@ -12,10 +12,12 @@ trainWaitsMode = Modo
     .two = Dos palos
 
 suitSelectorTitle = Palo
+    .withNumber = Palo {$number}
     .random = Al azar
     .man = Caracteres
     .pin = Círculos
     .sou = Bambúes
+    .honor = Honores
 numTilesSelectorTitle = Cantidad de fichas
 minWaitsSelectorTitle = Cantidad mín. de esperas
 numberedTilesSelector = Fichas numeradas

@@ -5,7 +5,7 @@ module Suit exposing
     , randomNonHonorSuit
     , randomSuit
     , randomSuitExcludingOne
-    , randomTwoHonorSuits
+    , randomTwoSuits
     , toString
     )
 
@@ -77,9 +77,9 @@ randomNonHonorSuit =
 
 {-| Two different suits
 -}
-randomTwoHonorSuits : Random.Generator ( Suit, Suit )
-randomTwoHonorSuits =
-    Random.List.choices 2 [ Man, Pin, Sou ]
+randomTwoSuits : Random.Generator ( Suit, Suit )
+randomTwoSuits =
+    Random.List.choices 2 [ Man, Pin, Sou, Honor ]
         |> Random.map
             (\( suits, _ ) ->
                 case suits of

@@ -12,10 +12,12 @@ trainWaitsMode = Reĝimo
     .two = Du emblemoj
 
 suitSelectorTitle = Emblemoj
+    .withNumber = Emblemoj {$number}
     .random = Hazardaj
     .man = Signoj
     .pin = Cirkloj
     .sou = Bambuoj
+    .honor = Honoroj
 numTilesSelectorTitle = Nombro da pecoj
 minWaitsSelectorTitle = Min. nombro da atendoj
 numberedTilesSelector = Numeritaj pecoj
