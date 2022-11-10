@@ -27,7 +27,7 @@ port setStorageWaits : E.Value -> Cmd msg
 
 type alias Model =
     { i18n : I18n.I18n
-    , suitSelection : SuitSelection
+    , trainMode : TrainMode
     , singleSuitSelection : SingleSuitSelection
     , numberedTiles : Bool
     , tiles : List Tile
@@ -49,7 +49,8 @@ type GroupsView
 
 
 type alias PreferencesModel =
-    { suitSelection : SingleSuitSelection
+    { trainMode : TrainMode
+    , suitSelection : SingleSuitSelection
     , numberedTiles : Bool
     , numberOfNonPairs : Int
     , minNumberOfWaits : Int
@@ -59,7 +60,7 @@ type alias PreferencesModel =
 
 type Msg
     = GenerateTiles Int
-    | SetSuitSelection SuitSelection
+    | SetTrainMode TrainMode
     | SetSingleSuitSelection SingleSuitSelection
     | SetNumberNonPairs Int
     | SetNumberMinWaits Int
@@ -74,7 +75,7 @@ type Msg
     | UpdateI18n I18n.I18n
 
 
-type SuitSelection
+type TrainMode
     = SingleSuit
     | TwoSuits
 
@@ -114,12 +115,18 @@ init i18n flags =
                     pref
 
                 Err _ ->
-                    { suitSelection = RandomSuit, numberOfNonPairs = 1, minNumberOfWaits = 1, groupsView = GroupAnimation, numberedTiles = False }
+                    { trainMode = SingleSuit
+                    , suitSelection = RandomSuit
+                    , numberOfNonPairs = 1
+                    , minNumberOfWaits = 1
+                    , groupsView = GroupAnimation
+                    , numberedTiles = False
+                    }
 
         model =
             clampMinNumberOfWaits
                 { i18n = i18n
-                , suitSelection = TwoSuits
+                , trainMode = prefs.trainMode
                 , singleSuitSelection = prefs.suitSelection
                 , numberedTiles = prefs.numberedTiles
                 , tiles = []
@@ -140,14 +147,14 @@ init i18n flags =
 cmdGenerateRandomTiles : Int -> Model -> Cmd Msg
 cmdGenerateRandomTiles numTries model =
     -- for efficiency we avoid the brute force method
-    if model.suitSelection == SingleSuit && model.numberOfNonPairs == 2 && model.minNumberOfWaits == 5 then
+    if model.trainMode == SingleSuit && model.numberOfNonPairs == 2 && model.minNumberOfWaits == 5 then
         Random.generate (TilesGenerated numTries) (Group.random5SidedWait (suitSelectionToSuit SingleSuit model.singleSuitSelection))
 
-    else if model.suitSelection == TwoSuits && model.numberOfNonPairs == 3 && model.minNumberOfWaits == 4 then
+    else if model.trainMode == TwoSuits && model.numberOfNonPairs == 3 && model.minNumberOfWaits == 4 then
         Random.generate (TilesGenerated numTries) Group.random4SidedWaitTwoSuits
 
     else
-        Random.generate (TilesGenerated numTries) (Group.randomTenpaiGroups model.numberOfNonPairs 30 (suitSelectionToSuit model.suitSelection model.singleSuitSelection))
+        Random.generate (TilesGenerated numTries) (Group.randomTenpaiGroups model.numberOfNonPairs 30 (suitSelectionToSuit model.trainMode model.singleSuitSelection))
 
 
 subscriptions : Model -> Sub Msg
@@ -170,10 +177,10 @@ update msg model =
                 ]
             )
 
-        SetSuitSelection suitSelection ->
+        SetTrainMode suitSelection ->
             let
                 newModel =
-                    { model | suitSelection = suitSelection }
+                    { model | trainMode = suitSelection }
             in
             update (GenerateTiles 0) (clampMinNumberOfWaits newModel)
 
@@ -208,7 +215,7 @@ update msg model =
             if List.length waits < model.minNumberOfWaits then
                 update (GenerateTiles (numTries + 1)) model
 
-            else if model.suitSelection == TwoSuits && Set.size waitSuits < 2 then
+            else if model.trainMode == TwoSuits && Set.size waitSuits < 2 then
                 update (GenerateTiles (numTries + 1)) model
 
             else
@@ -303,7 +310,7 @@ view model =
     in
     div []
         [ div [ class "block" ]
-            [ UI.label (I18n.trainWaitsMode model.i18n) (renderSuitSelection model)
+            [ UI.label (I18n.trainWaitsMode model.i18n) (renderTrainMode model)
             , UI.label (I18n.suitSelectorTitle model.i18n) (renderSingleSuitSelection model)
             , UI.label (I18n.numTilesSelectorTitle model.i18n) (renderNumberTilesSelector model)
             , UI.label (I18n.minWaitsSelectorTitle model.i18n) (renderMinWaitsSelector model)
@@ -327,17 +334,17 @@ view model =
         ]
 
 
-renderSuitSelection : Model -> Html Msg
-renderSuitSelection model =
+renderTrainMode : Model -> Html Msg
+renderTrainMode model =
     let
         createButton txt suitSel =
             button
                 [ classList
                     [ ( "button", True )
-                    , ( "is-primary", model.suitSelection == suitSel )
-                    , ( "is-selected", model.suitSelection == suitSel )
+                    , ( "is-primary", model.trainMode == suitSel )
+                    , ( "is-selected", model.trainMode == suitSel )
                     ]
-                , onClick (SetSuitSelection suitSel)
+                , onClick (SetTrainMode suitSel)
                 ]
                 [ text txt ]
     in
@@ -609,7 +616,7 @@ renderSvg groupGapSvg zoom cssClass model =
         ]
 
 
-suitSelectionToSuit : SuitSelection -> SingleSuitSelection -> Group.RandomSuitPreference
+suitSelectionToSuit : TrainMode -> SingleSuitSelection -> Group.RandomSuitPreference
 suitSelectionToSuit suitSelection singleSuitSelection =
     case suitSelection of
         SingleSuit ->
@@ -732,8 +739,31 @@ hideUnusedAnimatedTiles tiles =
         tiles
 
 
-suitSelectionToString : SingleSuitSelection -> String
-suitSelectionToString suitSel =
+trainModeToString : TrainMode -> String
+trainModeToString mode =
+    case mode of
+        SingleSuit ->
+            "singleSuit"
+
+        TwoSuits ->
+            "twoSuits"
+
+
+stringToTrainMode : String -> TrainMode
+stringToTrainMode string =
+    case string of
+        "singleSuit" ->
+            SingleSuit
+
+        "twoSuits" ->
+            TwoSuits
+
+        _ ->
+            SingleSuit
+
+
+singleSuitSelectionToString : SingleSuitSelection -> String
+singleSuitSelectionToString suitSel =
     case suitSel of
         RandomSuit ->
             "r"
@@ -769,8 +799,8 @@ stringToSuitSelection s =
 
 decoder : D.Decoder PreferencesModel
 decoder =
-    D.map5
-        (\suit nonPairs minWaits gView addNumbersToTiles ->
+    D.map6
+        (\mode suit nonPairs minWaits gView addNumbersToTiles ->
             let
                 groupsView =
                     case gView of
@@ -783,13 +813,15 @@ decoder =
                         _ ->
                             GroupAnimation
             in
-            { suitSelection = stringToSuitSelection suit
+            { trainMode = stringToTrainMode (Maybe.withDefault "singleSuit" mode)
+            , suitSelection = stringToSuitSelection suit
             , numberOfNonPairs = nonPairs
             , minNumberOfWaits = minWaits
             , groupsView = groupsView
             , numberedTiles = Maybe.withDefault False addNumbersToTiles
             }
         )
+        (D.maybe (D.field "mode" D.string))
         (D.field "suit" D.string)
         (D.field "nonPairs" D.int)
         (D.field "minWaits" D.int)
@@ -809,7 +841,8 @@ encode model =
                     "t"
     in
     E.object
-        [ ( "suit", E.string (suitSelectionToString model.singleSuitSelection) )
+        [ ( "mode", E.string (trainModeToString model.trainMode) )
+        , ( "suit", E.string (singleSuitSelectionToString model.singleSuitSelection) )
         , ( "nonPairs", E.int model.numberOfNonPairs )
         , ( "minWaits", E.int model.minNumberOfWaits )
         , ( "groupsView", E.string groupsViewStr )
@@ -818,8 +851,8 @@ encode model =
 
 
 numWaitsUpperBound : Model -> Int
-numWaitsUpperBound { numberOfNonPairs, suitSelection } =
-    case suitSelection of
+numWaitsUpperBound { numberOfNonPairs, trainMode } =
+    case trainMode of
         SingleSuit ->
             if numberOfNonPairs == 1 then
                 3
@@ -839,8 +872,8 @@ numWaitsUpperBound { numberOfNonPairs, suitSelection } =
 
 
 numWaitsLowerBound : Model -> Int
-numWaitsLowerBound { suitSelection } =
-    case suitSelection of
+numWaitsLowerBound { trainMode } =
+    case trainMode of
         SingleSuit ->
             1
 
