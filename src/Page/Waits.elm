@@ -29,6 +29,7 @@ type alias Model =
     { i18n : I18n.I18n
     , trainMode : TrainMode
     , singleSuitSelection : SingleSuitSelection
+    , singleSuitSelectionAlt : SingleSuitSelectionWithHonor
     , numberedTiles : Bool
     , tiles : List Tile
     , waits : List ( Tile, List Group )
@@ -51,6 +52,7 @@ type GroupsView
 type alias PreferencesModel =
     { trainMode : TrainMode
     , suitSelection : SingleSuitSelection
+    , suitSelectionAlt : SingleSuitSelectionWithHonor
     , numberedTiles : Bool
     , numberOfNonPairs : Int
     , minNumberOfWaits : Int
@@ -62,6 +64,7 @@ type Msg
     = GenerateTiles Int
     | SetTrainMode TrainMode
     | SetSingleSuitSelection SingleSuitSelection
+    | SetSingleSuitSelectionAlt SingleSuitSelectionWithHonor
     | SetNumberNonPairs Int
     | SetNumberMinWaits Int
     | SetAddNumbersToTiles Bool
@@ -85,6 +88,11 @@ type SingleSuitSelection
     | FixedSuitMan
     | FixedSuitPin
     | FixedSuitSou
+
+
+type SingleSuitSelectionWithHonor
+    = SingleSuitOption SingleSuitSelection
+    | FixedSuitHonor
 
 
 type alias AnimatedTile =
@@ -117,6 +125,7 @@ init i18n flags =
                 Err _ ->
                     { trainMode = SingleSuit
                     , suitSelection = RandomSuit
+                    , suitSelectionAlt = SingleSuitOption RandomSuit
                     , numberOfNonPairs = 1
                     , minNumberOfWaits = 1
                     , groupsView = GroupAnimation
@@ -128,6 +137,7 @@ init i18n flags =
                 { i18n = i18n
                 , trainMode = prefs.trainMode
                 , singleSuitSelection = prefs.suitSelection
+                , singleSuitSelectionAlt = prefs.suitSelectionAlt
                 , numberedTiles = prefs.numberedTiles
                 , tiles = []
                 , waits = []
@@ -186,6 +196,9 @@ update msg model =
 
         SetSingleSuitSelection suitSelection ->
             update (GenerateTiles 0) { model | singleSuitSelection = suitSelection }
+
+        SetSingleSuitSelectionAlt suitSelectionAlt ->
+            update (GenerateTiles 0) { model | singleSuitSelectionAlt = suitSelectionAlt }
 
         SetNumberNonPairs num ->
             let
@@ -312,6 +325,11 @@ view model =
         [ div [ class "block" ]
             [ UI.label (I18n.trainWaitsMode model.i18n) (renderTrainMode model)
             , UI.label (I18n.suitSelectorTitle model.i18n) (renderSingleSuitSelection model)
+            , if model.trainMode == TwoSuits then
+                UI.label (I18n.suitSelectorTitle model.i18n) (renderSingleSuitSelectionAlt model)
+
+              else
+                div [] []
             , UI.label (I18n.numTilesSelectorTitle model.i18n) (renderNumberTilesSelector model)
             , UI.label (I18n.minWaitsSelectorTitle model.i18n) (renderMinWaitsSelector model)
             , UI.label (I18n.numberedTilesSelector model.i18n) (renderNumberedTilesSelector model)
@@ -373,6 +391,29 @@ renderSingleSuitSelection model =
         , createButton (I18n.suitSelectorTitleMan model.i18n) FixedSuitMan
         , createButton (I18n.suitSelectorTitlePin model.i18n) FixedSuitPin
         , createButton (I18n.suitSelectorTitleSou model.i18n) FixedSuitSou
+        ]
+
+
+renderSingleSuitSelectionAlt : Model -> Html Msg
+renderSingleSuitSelectionAlt model =
+    let
+        createButton txt suitSel =
+            button
+                [ classList
+                    [ ( "button", True )
+                    , ( "is-primary", model.singleSuitSelectionAlt == suitSel )
+                    , ( "is-selected", model.singleSuitSelectionAlt == suitSel )
+                    ]
+                , onClick (SetSingleSuitSelectionAlt suitSel)
+                ]
+                [ text txt ]
+    in
+    div [ class "buttons has-addons" ]
+        [ createButton (I18n.suitSelectorTitleRandom model.i18n) (SingleSuitOption RandomSuit)
+        , createButton (I18n.suitSelectorTitleMan model.i18n) (SingleSuitOption FixedSuitMan)
+        , createButton (I18n.suitSelectorTitlePin model.i18n) (SingleSuitOption FixedSuitPin)
+        , createButton (I18n.suitSelectorTitleSou model.i18n) (SingleSuitOption FixedSuitSou)
+        , createButton (I18n.suitSelectorTitleSou model.i18n) FixedSuitHonor
         ]
 
 
@@ -797,10 +838,19 @@ stringToSuitSelection s =
             RandomSuit
 
 
+stringToSuitSelectionAlt : String -> SingleSuitSelectionWithHonor
+stringToSuitSelectionAlt s =
+    if s == "z" then
+        FixedSuitHonor
+
+    else
+        SingleSuitOption (stringToSuitSelection s)
+
+
 decoder : D.Decoder PreferencesModel
 decoder =
-    D.map6
-        (\mode suit nonPairs minWaits gView addNumbersToTiles ->
+    D.map7
+        (\mode suit suitAlt nonPairs minWaits gView addNumbersToTiles ->
             let
                 groupsView =
                     case gView of
@@ -815,6 +865,7 @@ decoder =
             in
             { trainMode = stringToTrainMode (Maybe.withDefault "singleSuit" mode)
             , suitSelection = stringToSuitSelection suit
+            , suitSelectionAlt = stringToSuitSelectionAlt (Maybe.withDefault "" suitAlt)
             , numberOfNonPairs = nonPairs
             , minNumberOfWaits = minWaits
             , groupsView = groupsView
@@ -823,6 +874,7 @@ decoder =
         )
         (D.maybe (D.field "mode" D.string))
         (D.field "suit" D.string)
+        (D.maybe (D.field "suitAlt" D.string))
         (D.field "nonPairs" D.int)
         (D.field "minWaits" D.int)
         (D.field "groupsView" D.string)
