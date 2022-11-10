@@ -117,21 +117,22 @@ init i18n flags =
                     { suitSelection = RandomSuit, numberOfNonPairs = 1, minNumberOfWaits = 1, groupsView = GroupAnimation, numberedTiles = False }
 
         model =
-            { i18n = i18n
-            , suitSelection = TwoSuits
-            , singleSuitSelection = prefs.suitSelection
-            , numberedTiles = prefs.numberedTiles
-            , tiles = []
-            , waits = []
-            , numberOfNonPairs = prefs.numberOfNonPairs
-            , minNumberOfWaits = prefs.minNumberOfWaits
-            , selectedWaits = Set.empty
-            , confirmedSelected = False
-            , lastTick = 0
-            , animatedTiles = []
-            , currentAnimatedTile = Nothing
-            , groupsView = prefs.groupsView
-            }
+            clampMinNumberOfWaits
+                { i18n = i18n
+                , suitSelection = TwoSuits
+                , singleSuitSelection = prefs.suitSelection
+                , numberedTiles = prefs.numberedTiles
+                , tiles = []
+                , waits = []
+                , numberOfNonPairs = prefs.numberOfNonPairs
+                , minNumberOfWaits = prefs.minNumberOfWaits
+                , selectedWaits = Set.empty
+                , confirmedSelected = False
+                , lastTick = 0
+                , animatedTiles = []
+                , currentAnimatedTile = Nothing
+                , groupsView = prefs.groupsView
+                }
     in
     ( model, cmdGenerateRandomTiles 0 model )
 
@@ -170,7 +171,11 @@ update msg model =
             )
 
         SetSuitSelection suitSelection ->
-            update (GenerateTiles 0) { model | suitSelection = suitSelection }
+            let
+                newModel =
+                    { model | suitSelection = suitSelection }
+            in
+            update (GenerateTiles 0) (clampMinNumberOfWaits newModel)
 
         SetSingleSuitSelection suitSelection ->
             update (GenerateTiles 0) { model | singleSuitSelection = suitSelection }
@@ -180,7 +185,7 @@ update msg model =
                 newModel =
                     { model | numberOfNonPairs = num }
             in
-            update (GenerateTiles 0) { newModel | minNumberOfWaits = min newModel.minNumberOfWaits (numWaitsUpperBound newModel) }
+            update (GenerateTiles 0) (clampMinNumberOfWaits newModel)
 
         SetNumberMinWaits num ->
             update (GenerateTiles 0) { model | minNumberOfWaits = num }
@@ -391,6 +396,9 @@ renderMinWaitsSelector model =
     let
         createButton txt minNumberOfWaits =
             if numWaitsUpperBound model < minNumberOfWaits then
+                text ""
+
+            else if minNumberOfWaits < numWaitsLowerBound model then
                 text ""
 
             else
@@ -828,3 +836,18 @@ numWaitsUpperBound { numberOfNonPairs, suitSelection } =
 
             else
                 2
+
+
+numWaitsLowerBound : Model -> Int
+numWaitsLowerBound { suitSelection } =
+    case suitSelection of
+        SingleSuit ->
+            1
+
+        TwoSuits ->
+            2
+
+
+clampMinNumberOfWaits : Model -> Model
+clampMinNumberOfWaits model =
+    { model | minNumberOfWaits = clamp (numWaitsLowerBound model) (numWaitsUpperBound model) model.minNumberOfWaits }
