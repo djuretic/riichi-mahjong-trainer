@@ -7,6 +7,7 @@ import Group exposing (Group)
 import Html exposing (Html, a, button, div, li, span, text, ul)
 import Html.Attributes exposing (class, classList, disabled, style)
 import Html.Events exposing (onClick)
+import Html.Keyed
 import I18n
 import Json.Decode as D
 import Json.Encode as E
@@ -514,22 +515,26 @@ renderWaitButtons model =
 
         addGhostTiles tiles htmlDivs =
             if List.length tiles == 7 then
-                UI.drawBackTile model.i18n [ class "is-invisible" ] :: List.append htmlDivs [ UI.drawBackTile model.i18n [ class "is-invisible" ] ]
+                ( "g1", UI.drawBackTile model.i18n [ class "is-invisible" ] ) :: List.append htmlDivs [ ( "g2", UI.drawBackTile model.i18n [ class "is-invisible" ] ) ]
 
             else
                 htmlDivs
 
+        -- without Keyed, the ghost tiles will be shown as back tiles for a brief moment when changing suits
         renderRow tiles =
-            div [ class "waits-buttons is-flex is-flex-direction-row", UI.tileGapCss ]
+            Html.Keyed.node "div"
+                [ class "waits-buttons is-flex is-flex-direction-row", UI.tileGapCss ]
                 (List.map
                     (\t ->
-                        UI.drawTile model.i18n
+                        ( Tile.toString t
+                        , UI.drawTile model.i18n
                             model.numberedTiles
                             [ onClick (ToggleWaitTile t)
                             , selectedCss t
                             , classList [ ( "is-clickable", not model.confirmedSelected ) ]
                             ]
                             t
+                        )
                     )
                     tiles
                     |> addGhostTiles tiles
