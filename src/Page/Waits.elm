@@ -190,7 +190,7 @@ update msg model =
                 newModel =
                     { model | trainMode = suitSelection }
             in
-            update (GenerateTiles 0) (clampMinNumberOfWaits newModel)
+            update (GenerateTiles 0) (clampMinNumberOfWaits newModel |> avoidHonorSuitInSingleSuitMode)
 
         SetSingleSuitSelection suitSelection ->
             update (GenerateTiles 0) (avoidTwoEqualSuits True { model | singleSuitSelection = suitSelection })
@@ -223,10 +223,9 @@ update msg model =
                 waitSuits =
                     List.map (\w -> Tuple.first w |> .suit |> Suit.toString) waits |> Set.fromList
             in
-            if numTries > 1000 then
-                Debug.todo "aaaa"
-
-            else if List.length waits < model.minNumberOfWaits then
+            -- if numTries > 1000 then
+            --     Debug.todo "Too many tries"
+            if List.length waits < model.minNumberOfWaits then
                 update (GenerateTiles (numTries + 1)) model
 
             else if model.trainMode == TwoSuits && Set.size waitSuits < 2 then
@@ -399,7 +398,11 @@ renderSingleSuitSelection model =
         , createButton (I18n.suitSelectorTitleMan model.i18n) FixedSuitMan
         , createButton (I18n.suitSelectorTitlePin model.i18n) FixedSuitPin
         , createButton (I18n.suitSelectorTitleSou model.i18n) FixedSuitSou
-        , createButton (I18n.suitSelectorTitleHonor model.i18n) FixedSuitHonor
+        , if model.trainMode == TwoSuits then
+            createButton (I18n.suitSelectorTitleHonor model.i18n) FixedSuitHonor
+
+          else
+            text ""
         ]
 
 
@@ -1001,6 +1004,15 @@ avoidTwoEqualSuits isFromSuit1 model =
 
         else
             { model | singleSuitSelection = RandomSuit }
+
+    else
+        model
+
+
+avoidHonorSuitInSingleSuitMode : Model -> Model
+avoidHonorSuitInSingleSuitMode model =
+    if model.trainMode == SingleSuit && model.singleSuitSelection == FixedSuitHonor then
+        { model | singleSuitSelection = RandomSuit }
 
     else
         model
