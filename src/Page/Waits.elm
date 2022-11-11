@@ -159,7 +159,11 @@ cmdGenerateRandomTiles numTries model =
         Random.generate (TilesGenerated numTries) (Group.random5SidedWait (suitSelectionToPreference model.trainMode model.singleSuitSelection model.singleSuitSelectionAlt))
 
     else if model.trainMode == TwoSuits && model.numberOfNonPairs == 3 && model.minNumberOfWaits == 4 then
-        Random.generate (TilesGenerated numTries) (Group.random4SidedWaitTwoSuits (suitSelectionToPreference model.trainMode model.singleSuitSelection model.singleSuitSelectionAlt))
+        Random.generate (TilesGenerated numTries) (Group.random4SidedWaitTwoSuits10Tiles (suitSelectionToPreference model.trainMode model.singleSuitSelection model.singleSuitSelectionAlt))
+
+    else if model.trainMode == TwoSuits && numTries > 50 && model.numberOfNonPairs == 4 && model.minNumberOfWaits == 4 then
+        -- because we don't know all the possible configurations for 4-tiled hands we give room to generate random ones until some tries
+        Random.generate (TilesGenerated numTries) (Group.random4SidedWaitTwoSuits13Tiles (suitSelectionToPreference model.trainMode model.singleSuitSelection model.singleSuitSelectionAlt))
 
     else
         Random.generate (TilesGenerated numTries) (Group.randomTenpaiGroups model.numberOfNonPairs 30 (suitSelectionToPreference model.trainMode model.singleSuitSelection model.singleSuitSelectionAlt))

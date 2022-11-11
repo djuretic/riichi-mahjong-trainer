@@ -18,7 +18,8 @@ module Group exposing
     , isTripletOf
     , isWinningHand
     , member
-    , random4SidedWaitTwoSuits
+    , random4SidedWaitTwoSuits10Tiles
+    , random4SidedWaitTwoSuits13Tiles
     , random5SidedWait
     , randomCompleteGroups
     , randomTenpaiGroups
@@ -33,6 +34,7 @@ import Array
 import Counter
 import List.Extra
 import Random
+import Random.List
 import Suit
 import Tile
 
@@ -575,8 +577,8 @@ random5SidedWait wantedSuit =
             )
 
 
-random4SidedWaitTwoSuits : RandomSuitPreference -> Random.Generator (List Tile.Tile)
-random4SidedWaitTwoSuits wantedSuit =
+random4SidedWaitTwoSuits10Tiles : RandomSuitPreference -> Random.Generator (List Tile.Tile)
+random4SidedWaitTwoSuits10Tiles wantedSuit =
     let
         suits =
             case wantedSuit of
@@ -603,6 +605,40 @@ random4SidedWaitTwoSuits wantedSuit =
 
                 else
                     randomDoubleEntotsu suit1 suit2
+            )
+
+
+random4SidedWaitTwoSuits13Tiles : RandomSuitPreference -> Random.Generator (List Tile.Tile)
+random4SidedWaitTwoSuits13Tiles wantedSuit =
+    let
+        hand10Tiles =
+            random4SidedWaitTwoSuits10Tiles wantedSuit
+    in
+    -- add one group to the 10-tiles hand
+    hand10Tiles
+        |> Random.andThen
+            (\tiles ->
+                let
+                    suits =
+                        List.map .suit tiles |> List.Extra.unique
+                in
+                Random.pair (Random.List.choose suits) (Random.constant tiles)
+            )
+        |> Random.andThen
+            (\( ( suit, _ ), tiles ) ->
+                Random.pair (randomTripletOrRunOf 50 (Maybe.withDefault Suit.Man suit)) (Random.constant tiles)
+            )
+        |> Random.andThen
+            (\( group, tiles ) ->
+                let
+                    finalTiles =
+                        List.append (toTiles group) tiles |> Tile.sort
+                in
+                if Tile.hasMoreThan4Tiles finalTiles then
+                    random4SidedWaitTwoSuits13Tiles wantedSuit
+
+                else
+                    Random.constant finalTiles
             )
 
 
