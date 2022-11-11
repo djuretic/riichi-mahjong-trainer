@@ -512,6 +512,13 @@ renderWaitButtons model =
             else
                 style "opacity" "0.5"
 
+        addGhostTiles tiles htmlDivs =
+            if List.length tiles == 7 then
+                UI.drawBackTile model.i18n [ class "is-invisible" ] :: List.append htmlDivs [ UI.drawBackTile model.i18n [ class "is-invisible" ] ]
+
+            else
+                htmlDivs
+
         renderRow tiles =
             div [ class "waits-buttons is-flex is-flex-direction-row", UI.tileGapCss ]
                 (List.map
@@ -525,6 +532,7 @@ renderWaitButtons model =
                             t
                     )
                     tiles
+                    |> addGhostTiles tiles
                 )
     in
     div []
@@ -568,7 +576,7 @@ renderWinningTilesSection model =
                 , classList [ ( "is-primary", model.currentAnimatedTile == Nothing ) ]
                 , onClick ResetWaitsAnimation
                 ]
-                [ UI.drawBackTile model.i18n ]
+                [ UI.drawBackTile model.i18n [] ]
 
         groupsSvgAnimation =
             if model.groupsView == GroupAnimation && model.confirmedSelected then

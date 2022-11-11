@@ -106,9 +106,9 @@ tilePath addNumbers { number, suit } =
             pathHonorTile addNumbers number
 
 
-drawBackTile : I18n -> Html.Html msg
-drawBackTile i18n =
-    Html.img (tileCss i18n "/img/128px_v2/face-down-128px.png" Nothing) []
+drawBackTile : I18n -> List (Html.Attribute msg) -> Html.Html msg
+drawBackTile i18n attrs =
+    Html.img (List.append attrs (tileCss i18n "/img/128px_v2/face-down-128px.png" Nothing)) []
 
 
 tileScale : Float
