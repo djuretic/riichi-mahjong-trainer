@@ -147,7 +147,7 @@ init i18n flags =
                 , currentAnimatedTile = Nothing
                 , groupsView = prefs.groupsView
                 }
-                |> avoidTwoEqualSuits True
+                |> avoidTwoEqualSuits True RandomSuit
     in
     ( model, cmdGenerateRandomTiles 0 model )
 
@@ -197,10 +197,10 @@ update msg model =
             update (GenerateTiles 0) (clampMinNumberOfWaits newModel |> avoidHonorSuitInSingleSuitMode)
 
         SetSingleSuitSelection suitSelection ->
-            update (GenerateTiles 0) (avoidTwoEqualSuits True { model | singleSuitSelection = suitSelection })
+            update (GenerateTiles 0) (avoidTwoEqualSuits True model.singleSuitSelection { model | singleSuitSelection = suitSelection })
 
         SetSingleSuitSelectionAlt suitSelectionAlt ->
-            update (GenerateTiles 0) (avoidTwoEqualSuits False { model | singleSuitSelectionAlt = suitSelectionAlt })
+            update (GenerateTiles 0) (avoidTwoEqualSuits False model.singleSuitSelectionAlt { model | singleSuitSelectionAlt = suitSelectionAlt })
 
         SetNumberNonPairs num ->
             let
@@ -999,15 +999,15 @@ clampMinNumberOfWaits model =
     { model | minNumberOfWaits = clamp (numWaitsLowerBound model) (numWaitsUpperBound model) model.minNumberOfWaits }
 
 
-avoidTwoEqualSuits : Bool -> Model -> Model
-avoidTwoEqualSuits isFromSuit1 model =
+avoidTwoEqualSuits : Bool -> SingleSuitSelection -> Model -> Model
+avoidTwoEqualSuits isFromSuit1 prevSuitSelection model =
     if model.singleSuitSelection == model.singleSuitSelectionAlt && model.singleSuitSelection /= RandomSuit then
         -- avoid changing the option the user has just clicked in
         if isFromSuit1 then
-            { model | singleSuitSelectionAlt = RandomSuit }
+            { model | singleSuitSelectionAlt = prevSuitSelection }
 
         else
-            { model | singleSuitSelection = RandomSuit }
+            { model | singleSuitSelection = prevSuitSelection }
 
     else
         model
