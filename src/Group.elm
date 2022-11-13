@@ -497,41 +497,15 @@ randomCompleteGroups numNonPairs tripletWeight wantedSuit =
         tripletGen suit =
             randomTripletOrRunOf 30 suit
 
-        otherGroups suit =
-            Random.list numNonPairs (tripletGen suit)
-
         otherGroupsTwoSuits suit1 suit2 =
             Random.int 0 (numNonPairs - 1)
                 |> Random.andThen (\n -> Random.pair (Random.list n (tripletGen suit1)) (Random.list (numNonPairs - n) (tripletGen suit2)))
                 |> Random.map (\( p, g ) -> List.append p g)
 
         baseGroups =
-            case wantedSuit of
-                OneSuitFixed s ->
-                    Random.constant s
-                        |> Random.andThen (\ss -> Random.pair (randomPairOf ss) (otherGroups ss))
-                        |> Random.map (\( p, g ) -> p :: g)
-
-                OneRandomSuit ->
-                    Suit.randomNonHonorSuit
-                        |> Random.andThen (\ss -> Random.pair (randomPairOf ss) (otherGroups ss))
-                        |> Random.map (\( p, g ) -> p :: g)
-
-                TwoSuitsTwoFixed s1 s2 ->
-                    Random.uniform ( s1, s2 ) [ ( s2, s1 ) ]
-                        |> Random.andThen (\( ss1, ss2 ) -> Random.pair (randomPairOf ss1) (otherGroupsTwoSuits ss1 ss2))
-                        |> Random.map (\( p, g ) -> p :: g)
-
-                TwoSuitsOneFixed s1 ->
-                    Suit.randomSuitExcludingOne s1
-                        |> Random.andThen (\s2 -> Random.uniform ( s1, s2 ) [ ( s2, s1 ) ])
-                        |> Random.andThen (\( ss1, ss2 ) -> Random.pair (randomPairOf ss1) (otherGroupsTwoSuits ss1 ss2))
-                        |> Random.map (\( p, g ) -> p :: g)
-
-                TwoRandomSuits ->
-                    Suit.randomTwoSuits
-                        |> Random.andThen (\( s1, s2 ) -> Random.pair (randomPairOf s1) (otherGroupsTwoSuits s1 s2))
-                        |> Random.map (\( p, g ) -> p :: g)
+            randomSuitsFromPreference wantedSuit
+                |> Random.andThen (\( s1, s2 ) -> Random.pair (randomPairOf s1) (otherGroupsTwoSuits s1 s2))
+                |> Random.map (\( p, g ) -> p :: g)
     in
     baseGroups
         |> Random.andThen
@@ -579,25 +553,7 @@ random5SidedWait wantedSuit =
 
 random4SidedWaitTwoSuits10Tiles : RandomSuitPreference -> Random.Generator (List Tile.Tile)
 random4SidedWaitTwoSuits10Tiles wantedSuit =
-    let
-        suits =
-            case wantedSuit of
-                OneRandomSuit ->
-                    Suit.randomTwoSuits
-
-                OneSuitFixed _ ->
-                    Suit.randomTwoSuits
-
-                TwoRandomSuits ->
-                    Suit.randomTwoSuits
-
-                TwoSuitsOneFixed s ->
-                    Random.pair (Random.constant s) (Suit.randomSuitExcludingOne s)
-
-                TwoSuitsTwoFixed s1 s2 ->
-                    Random.pair (Random.constant s1) (Random.constant s2)
-    in
-    Random.pair suits (Random.uniform True [ False ])
+    Random.pair (randomSuitsFromPreference wantedSuit) (Random.uniform True [ False ])
         |> Random.andThen
             (\( ( suit1, suit2 ), b ) ->
                 if b then
@@ -611,34 +567,41 @@ random4SidedWaitTwoSuits10Tiles wantedSuit =
 random4SidedWaitTwoSuits13Tiles : RandomSuitPreference -> Random.Generator (List Tile.Tile)
 random4SidedWaitTwoSuits13Tiles wantedSuit =
     let
-        hand10Tiles =
+        hand10TilesWithExtraGroup =
             random4SidedWaitTwoSuits10Tiles wantedSuit
+                |> Random.andThen
+                    (\tiles ->
+                        let
+                            suits =
+                                List.map .suit tiles |> List.Extra.unique
+                        in
+                        Random.pair (Random.List.choose suits) (Random.constant tiles)
+                    )
+                |> Random.andThen
+                    (\( ( suit, _ ), tiles ) ->
+                        Random.pair (randomTripletOrRunOf 50 (Maybe.withDefault Suit.Man suit)) (Random.constant tiles)
+                    )
+                |> Random.map
+                    (\( group, tiles ) ->
+                        List.append (toTiles group) tiles |> Tile.sort
+                    )
     in
-    -- add one group to the 10-tiles hand
-    hand10Tiles
+    Random.weighted ( 30, True ) [ ( 70, False ) ]
+        |> Random.andThen
+            (\generate13Tiles ->
+                if generate13Tiles then
+                    randomRyanmenWithNestedShanpon wantedSuit
+
+                else
+                    hand10TilesWithExtraGroup
+            )
         |> Random.andThen
             (\tiles ->
-                let
-                    suits =
-                        List.map .suit tiles |> List.Extra.unique
-                in
-                Random.pair (Random.List.choose suits) (Random.constant tiles)
-            )
-        |> Random.andThen
-            (\( ( suit, _ ), tiles ) ->
-                Random.pair (randomTripletOrRunOf 50 (Maybe.withDefault Suit.Man suit)) (Random.constant tiles)
-            )
-        |> Random.andThen
-            (\( group, tiles ) ->
-                let
-                    finalTiles =
-                        List.append (toTiles group) tiles |> Tile.sort
-                in
-                if Tile.hasMoreThan4Tiles finalTiles then
+                if Tile.hasMoreThan4Tiles tiles then
                     random4SidedWaitTwoSuits13Tiles wantedSuit
 
                 else
-                    Random.constant finalTiles
+                    Random.constant tiles
             )
 
 
@@ -758,32 +721,60 @@ randomSanmenchanWithShanpon suit1 suit2 =
         Random.map2 (\t1 t2 -> List.append t1 t2) (helper suit1) pair
 
 
+{-| Example: 34555s, base pattern for other complex waits involving more suits
+-}
+randomEntotsu : Suit.Suit -> Random.Generator (List Tile.Tile)
+randomEntotsu suit =
+    Random.map2
+        (\n tripletStart ->
+            if tripletStart then
+                [ Tile.Tile n suit
+                , Tile.Tile n suit
+                , Tile.Tile n suit
+                , Tile.Tile (n + 1) suit
+                , Tile.Tile (n + 2) suit
+                ]
+
+            else
+                [ Tile.Tile (n + 1) suit
+                , Tile.Tile (n + 2) suit
+                , Tile.Tile (n + 3) suit
+                , Tile.Tile (n + 3) suit
+                , Tile.Tile (n + 3) suit
+                ]
+        )
+        (Random.int 1 6)
+        (Random.uniform True [ False ])
+
+
 randomDoubleEntotsu : Suit.Suit -> Suit.Suit -> Random.Generator (List Tile.Tile)
 randomDoubleEntotsu suit1 suit2 =
-    let
-        entotsu suit =
-            Random.map2
-                (\n tripletStart ->
-                    if tripletStart then
-                        [ Tile.Tile n suit
-                        , Tile.Tile n suit
-                        , Tile.Tile n suit
-                        , Tile.Tile (n + 1) suit
-                        , Tile.Tile (n + 2) suit
-                        ]
+    Random.map2 List.append (randomEntotsu suit1) (randomEntotsu suit2)
 
-                    else
-                        [ Tile.Tile (n + 1) suit
-                        , Tile.Tile (n + 2) suit
-                        , Tile.Tile (n + 3) suit
-                        , Tile.Tile (n + 3) suit
-                        , Tile.Tile (n + 3) suit
-                        ]
+
+{-| Example: 22334455p34555s, waits 25p25s
+-}
+randomRyanmenWithNestedShanpon : RandomSuitPreference -> Random.Generator (List Tile.Tile)
+randomRyanmenWithNestedShanpon wantedSuit =
+    let
+        helper suit =
+            Random.map
+                (\n ->
+                    [ Tile.Tile n suit
+                    , Tile.Tile n suit
+                    , Tile.Tile (n + 1) suit
+                    , Tile.Tile (n + 1) suit
+                    , Tile.Tile (n + 2) suit
+                    , Tile.Tile (n + 2) suit
+                    , Tile.Tile (n + 3) suit
+                    , Tile.Tile (n + 3) suit
+                    ]
                 )
                 (Random.int 1 6)
-                (Random.uniform True [ False ])
     in
-    Random.map2 List.append (entotsu suit1) (entotsu suit2)
+    randomSuitsFromPreference wantedSuit
+        |> Random.andThen (\( s1, s2 ) -> Random.pair (helper s1) (randomEntotsu s2))
+        |> Random.map (\( t1, t2 ) -> List.append t1 t2)
 
 
 winningTiles : List Tile.Tile -> List ( Tile.Tile, List Group )
@@ -821,3 +812,25 @@ isWinningHand tiles groups =
 member : Tile.Tile -> Group -> Bool
 member tile group =
     List.member tile (toTiles group)
+
+
+{-| For one-suit preferences, both members of the tuple are equal
+-}
+randomSuitsFromPreference : RandomSuitPreference -> Random.Generator ( Suit.Suit, Suit.Suit )
+randomSuitsFromPreference wantedSuit =
+    case wantedSuit of
+        OneRandomSuit ->
+            Suit.randomNonHonorSuit |> Random.map (\s -> ( s, s ))
+
+        OneSuitFixed s ->
+            Random.constant ( s, s )
+
+        TwoRandomSuits ->
+            Suit.randomTwoSuits
+
+        TwoSuitsOneFixed s1 ->
+            Suit.randomSuitExcludingOne s1
+                |> Random.andThen (\s2 -> Random.uniform ( s1, s2 ) [ ( s2, s1 ) ])
+
+        TwoSuitsTwoFixed s1 s2 ->
+            Random.uniform ( s1, s2 ) [ ( s2, s1 ) ]
