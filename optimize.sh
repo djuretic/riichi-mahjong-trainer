@@ -21,3 +21,5 @@ cp -r img/128px_v2 public/img/
 cp img/favicon.ico public/img/
 
 sed "s#../css/app.css#app.min.css#; s/app.js/app.min.js/; s/YOUR_PROJECT_ID/$SWETRIX_PROJECT_ID/; s/disabled: *true/disabled: false/" index.html > public/index.html
+
+echo "google-site-verification: google$GOOGLE_SITE_VERIFICATION.html" > "public/google$GOOGLE_SITE_VERIFICATION.html"
