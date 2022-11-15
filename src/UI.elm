@@ -32,7 +32,6 @@ import Tile
 
 type alias GroupData =
     { group : Group.Group
-    , isRepeated : Bool
     , winningTile : Maybe Tile.Tile
     }
 
@@ -208,19 +207,6 @@ pathHonorTile addNumbers n =
 groups : I18n -> Bool -> Tile.Tile -> List Group.Group -> Html.Html msg
 groups i18n addNumbers winTile baseGroups =
     let
-        -- unused
-        addGroupIsRepeatedData sg lg =
-            case lg of
-                [] ->
-                    []
-
-                x :: xs ->
-                    if List.Extra.find (\e -> e == x) sg /= Nothing then
-                        { group = x, isRepeated = True, winningTile = Nothing } :: addGroupIsRepeatedData (List.Extra.remove x sg) xs
-
-                    else
-                        { group = x, isRepeated = False, winningTile = Nothing } :: addGroupIsRepeatedData sg xs
-
         addCointainsWinningTile : List GroupData -> List GroupData
         addCointainsWinningTile groupsData =
             let
@@ -236,7 +222,7 @@ groups i18n addNumbers winTile baseGroups =
                     groupsData
 
         groupsWithRepeatedInfo =
-            addGroupIsRepeatedData [] baseGroups
+            List.map (\g -> { group = g, winningTile = Nothing }) baseGroups
                 |> addCointainsWinningTile
     in
     Html.div [ class "groups is-flex is-flex-direction-row", groupGapAttr ]

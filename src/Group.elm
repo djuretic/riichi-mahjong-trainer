@@ -495,7 +495,7 @@ randomCompleteGroups : Int -> Int -> RandomSuitPreference -> Random.Generator (L
 randomCompleteGroups numNonPairs tripletWeight wantedSuit =
     let
         tripletGen suit =
-            randomTripletOrRunOf 30 suit
+            randomTripletOrRunOf tripletWeight suit
 
         otherGroupsTwoSuits suit1 suit2 =
             Random.int 0 (numNonPairs - 1)
