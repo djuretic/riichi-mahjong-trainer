@@ -334,24 +334,24 @@ view model =
     in
     div []
         [ div [ class "block" ]
-            [ UI.label (I18n.trainWaitsMode model.i18n) (renderTrainMode model)
-            , UI.label suitSelector1Label (renderSingleSuitSelection model)
+            [ UI.label (I18n.trainWaitsMode model.i18n) (trainModeSelector model)
+            , UI.label suitSelector1Label (singleSuitSelector model)
             , if model.trainMode == TwoSuits then
-                UI.label (I18n.suitSelectorTitleWithNumber "2" model.i18n) (renderSingleSuitSelectionAlt model)
+                UI.label (I18n.suitSelectorTitleWithNumber "2" model.i18n) (singleSuitSelectorAlt model)
 
               else
                 div [] []
-            , UI.label (I18n.numTilesSelectorTitle model.i18n) (renderNumberTilesSelector model)
-            , UI.label (I18n.minWaitsSelectorTitle model.i18n) (renderMinWaitsSelector model)
-            , UI.label (I18n.numberedTilesSelector model.i18n) (renderNumberedTilesSelector model)
+            , UI.label (I18n.numTilesSelectorTitle model.i18n) (numberTilesSelector model)
+            , UI.label (I18n.minWaitsSelectorTitle model.i18n) (minWaitsSelector model)
+            , UI.label (I18n.numberedTilesSelector model.i18n) (numberedTilesSelector model)
             ]
-        , div [ class "block" ] [ UI.renderTiles model.i18n model.numberedTiles model.tiles ]
+        , div [ class "block" ] [ UI.tiles model.i18n model.numberedTiles model.tiles ]
         , div [ class "block" ]
             [ text (I18n.selectWaitTilesText model.i18n)
-            , renderWaitButtons model
+            , waitButtons model
             , div [ class "mt-3", classList [ ( "is-invisible", not model.confirmedSelected ) ] ] [ feedbackMsg ]
             ]
-        , div [ class "block", classList [ ( "is-invisible", not model.confirmedSelected ) ] ] (renderWinningTiles model)
+        , div [ class "block", classList [ ( "is-invisible", not model.confirmedSelected ) ] ] (winningTiles model)
         , div [ class "buttons" ]
             [ button
                 [ class "button is-primary", onClick ConfirmSelected, disabled (Set.isEmpty model.selectedWaits || model.confirmedSelected) ]
@@ -359,14 +359,14 @@ view model =
             , button [ class "button", onClick (GenerateTiles 0) ] [ text (I18n.newHandButton model.i18n) ]
             ]
         , div [ class "block mb-5" ]
-            (renderWinningTilesSection model)
+            (winningTilesSection model)
         ]
 
 
-renderTrainMode : Model -> Html Msg
-renderTrainMode model =
+trainModeSelector : Model -> Html Msg
+trainModeSelector model =
     let
-        createButton txt suitSel =
+        buttonUI txt suitSel =
             button
                 [ classList
                     [ ( "button", True )
@@ -378,15 +378,15 @@ renderTrainMode model =
                 [ text txt ]
     in
     div [ class "buttons has-addons" ]
-        [ createButton (I18n.trainWaitsModeOne model.i18n) SingleSuit
-        , createButton (I18n.trainWaitsModeTwo model.i18n) TwoSuits
+        [ buttonUI (I18n.trainWaitsModeOne model.i18n) SingleSuit
+        , buttonUI (I18n.trainWaitsModeTwo model.i18n) TwoSuits
         ]
 
 
-renderSingleSuitSelection : Model -> Html Msg
-renderSingleSuitSelection model =
+singleSuitSelector : Model -> Html Msg
+singleSuitSelector model =
     let
-        createButton txt suitSel =
+        buttonUI txt suitSel =
             button
                 [ classList
                     [ ( "button", True )
@@ -398,22 +398,22 @@ renderSingleSuitSelection model =
                 [ text txt ]
     in
     div [ class "buttons has-addons" ]
-        [ createButton (I18n.suitSelectorTitleRandom model.i18n) RandomSuit
-        , createButton (I18n.suitSelectorTitleMan model.i18n) FixedSuitMan
-        , createButton (I18n.suitSelectorTitlePin model.i18n) FixedSuitPin
-        , createButton (I18n.suitSelectorTitleSou model.i18n) FixedSuitSou
+        [ buttonUI (I18n.suitSelectorTitleRandom model.i18n) RandomSuit
+        , buttonUI (I18n.suitSelectorTitleMan model.i18n) FixedSuitMan
+        , buttonUI (I18n.suitSelectorTitlePin model.i18n) FixedSuitPin
+        , buttonUI (I18n.suitSelectorTitleSou model.i18n) FixedSuitSou
         , if model.trainMode == TwoSuits then
-            createButton (I18n.suitSelectorTitleHonor model.i18n) FixedSuitHonor
+            buttonUI (I18n.suitSelectorTitleHonor model.i18n) FixedSuitHonor
 
           else
             text ""
         ]
 
 
-renderSingleSuitSelectionAlt : Model -> Html Msg
-renderSingleSuitSelectionAlt model =
+singleSuitSelectorAlt : Model -> Html Msg
+singleSuitSelectorAlt model =
     let
-        createButton txt suitSel =
+        buttonUI txt suitSel =
             button
                 [ classList
                     [ ( "button", True )
@@ -425,18 +425,18 @@ renderSingleSuitSelectionAlt model =
                 [ text txt ]
     in
     div [ class "buttons has-addons" ]
-        [ createButton (I18n.suitSelectorTitleRandom model.i18n) RandomSuit
-        , createButton (I18n.suitSelectorTitleMan model.i18n) FixedSuitMan
-        , createButton (I18n.suitSelectorTitlePin model.i18n) FixedSuitPin
-        , createButton (I18n.suitSelectorTitleSou model.i18n) FixedSuitSou
-        , createButton (I18n.suitSelectorTitleHonor model.i18n) FixedSuitHonor
+        [ buttonUI (I18n.suitSelectorTitleRandom model.i18n) RandomSuit
+        , buttonUI (I18n.suitSelectorTitleMan model.i18n) FixedSuitMan
+        , buttonUI (I18n.suitSelectorTitlePin model.i18n) FixedSuitPin
+        , buttonUI (I18n.suitSelectorTitleSou model.i18n) FixedSuitSou
+        , buttonUI (I18n.suitSelectorTitleHonor model.i18n) FixedSuitHonor
         ]
 
 
-renderNumberTilesSelector : Model -> Html Msg
-renderNumberTilesSelector model =
+numberTilesSelector : Model -> Html Msg
+numberTilesSelector model =
     let
-        createButton txt numberOfNonPairs =
+        buttonUI txt numberOfNonPairs =
             button
                 [ classList
                     [ ( "button", True )
@@ -448,17 +448,17 @@ renderNumberTilesSelector model =
                 [ text txt ]
     in
     div [ class "buttons has-addons" ]
-        [ createButton "4" 1
-        , createButton "7" 2
-        , createButton "10" 3
-        , createButton "13" 4
+        [ buttonUI "4" 1
+        , buttonUI "7" 2
+        , buttonUI "10" 3
+        , buttonUI "13" 4
         ]
 
 
-renderMinWaitsSelector : Model -> Html Msg
-renderMinWaitsSelector model =
+minWaitsSelector : Model -> Html Msg
+minWaitsSelector model =
     let
-        createButton txt minNumberOfWaits =
+        buttonUI txt minNumberOfWaits =
             if numWaitsUpperBound model < minNumberOfWaits then
                 text ""
 
@@ -477,18 +477,18 @@ renderMinWaitsSelector model =
                     [ text txt ]
     in
     div [ class "buttons has-addons" ]
-        [ createButton "1" 1
-        , createButton "2" 2
-        , createButton "3" 3
-        , createButton "4" 4
-        , createButton "5" 5
+        [ buttonUI "1" 1
+        , buttonUI "2" 2
+        , buttonUI "3" 3
+        , buttonUI "4" 4
+        , buttonUI "5" 5
         ]
 
 
-renderNumberedTilesSelector : Model -> Html Msg
-renderNumberedTilesSelector model =
+numberedTilesSelector : Model -> Html Msg
+numberedTilesSelector model =
     let
-        createButton txt addNumbersToTiles =
+        buttonUI txt addNumbersToTiles =
             button
                 [ classList
                     [ ( "button", True )
@@ -500,13 +500,13 @@ renderNumberedTilesSelector model =
                 [ text txt ]
     in
     div [ class "buttons has-addons" ]
-        [ createButton (I18n.numberedTilesSelectorYes model.i18n) True
-        , createButton (I18n.numberedTilesSelectorNo model.i18n) False
+        [ buttonUI (I18n.numberedTilesSelectorYes model.i18n) True
+        , buttonUI (I18n.numberedTilesSelectorNo model.i18n) False
         ]
 
 
-renderWaitButtons : Model -> Html Msg
-renderWaitButtons model =
+waitButtons : Model -> Html Msg
+waitButtons model =
     let
         tileSuits =
             List.map .suit model.tiles
@@ -522,7 +522,7 @@ renderWaitButtons model =
 
         addGhostTiles tiles htmlDivs =
             if List.length tiles == 7 then
-                ( "g1", UI.drawBackTile model.i18n [ class "is-invisible" ] ) :: List.append htmlDivs [ ( "g2", UI.drawBackTile model.i18n [ class "is-invisible" ] ) ]
+                ( "g1", UI.backTile model.i18n [ class "is-invisible" ] ) :: List.append htmlDivs [ ( "g2", UI.backTile model.i18n [ class "is-invisible" ] ) ]
 
             else
                 htmlDivs
@@ -530,11 +530,11 @@ renderWaitButtons model =
         -- without Keyed, the ghost tiles will be shown as back tiles for a brief moment when changing suits
         renderRow tiles =
             Html.Keyed.node "div"
-                [ class "waits-buttons is-flex is-flex-direction-row", UI.tileGapCss ]
+                [ class "waits-buttons is-flex is-flex-direction-row", UI.tileGapAttr ]
                 (List.map
                     (\t ->
                         ( Tile.toString t
-                        , UI.drawTile model.i18n
+                        , UI.tile model.i18n
                             model.numberedTiles
                             [ onClick (ToggleWaitTile t)
                             , selectedCss t
@@ -551,8 +551,8 @@ renderWaitButtons model =
         (List.map (\t -> renderRow (Tile.allSuitTiles t)) tileSuits)
 
 
-renderWinningTilesSection : Model -> List (Html Msg)
-renderWinningTilesSection model =
+winningTilesSection : Model -> List (Html Msg)
+winningTilesSection model =
     let
         groupGapSvg =
             15
@@ -573,7 +573,7 @@ renderWinningTilesSection model =
                     (List.map
                         (\( t, g ) ->
                             div []
-                                [ UI.drawGroups model.i18n model.numberedTiles t g ]
+                                [ UI.groups model.i18n model.numberedTiles t g ]
                         )
                         model.waits
                     )
@@ -588,18 +588,18 @@ renderWinningTilesSection model =
                 , classList [ ( "is-primary", model.currentAnimatedTile == Nothing ) ]
                 , onClick ResetWaitsAnimation
                 ]
-                [ UI.drawBackTile model.i18n [] ]
+                [ UI.backTile model.i18n [] ]
 
         groupsSvgAnimation =
             if model.groupsView == GroupAnimation && model.confirmedSelected then
-                [ renderSvg groupGapSvg 1 "is-hidden-mobile" model
-                , renderSvg groupGapSvg 0.8 "is-hidden-tablet" model
-                , div [ class "tiles block is-flex is-flex-direction-row is-flex-wrap-wrap", UI.tileGapCss ]
+                [ animationSvg groupGapSvg 1 "is-hidden-mobile" model
+                , animationSvg groupGapSvg 0.8 "is-hidden-tablet" model
+                , div [ class "tiles block is-flex is-flex-direction-row is-flex-wrap-wrap", UI.tileGapAttr ]
                     (resetAnimButton
                         :: List.map
                             (\( t, g ) ->
                                 button [ class "button is-large animation-button pl-2 pr-2", classList [ ( "is-primary", model.currentAnimatedTile == Just t ) ], onClick (StartWaitsAnimation ( t, g )) ]
-                                    [ UI.drawTile model.i18n model.numberedTiles [] t ]
+                                    [ UI.tile model.i18n model.numberedTiles [] t ]
                             )
                             model.waits
                     )
@@ -624,15 +624,15 @@ renderWinningTilesSection model =
            )
 
 
-renderWinningTiles : Model -> List (Html Msg)
-renderWinningTiles model =
+winningTiles : Model -> List (Html Msg)
+winningTiles model =
     [ text (I18n.showWaitTilesText model.i18n)
-    , UI.renderTiles model.i18n model.numberedTiles (List.map Tuple.first model.waits)
+    , UI.tiles model.i18n model.numberedTiles (List.map Tuple.first model.waits)
     ]
 
 
-renderSvg : Int -> Float -> String -> Model -> Html Msg
-renderSvg groupGapSvg zoom cssClass model =
+animationSvg : Int -> Float -> String -> Model -> Html Msg
+animationSvg groupGapSvg zoom cssClass model =
     let
         heightStr =
             String.fromInt UI.tileHeight

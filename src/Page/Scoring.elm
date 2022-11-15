@@ -227,7 +227,7 @@ view model =
     div []
         [ input [ class "input", type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
         , button [ class "button is-primary", onClick GenerateRandomWinningHand ] [ text "Random winning hand" ]
-        , p [] [ UI.renderTiles model.i18n True model.hand.tiles ]
+        , p [] [ UI.tiles model.i18n True model.hand.tiles ]
         , renderWinBy model.hand
         , renderWinds model.hand
         , div [ class "tabs" ]
@@ -257,8 +257,8 @@ renderTabContent model =
                         (List.map
                             (\( t, g ) ->
                                 tr []
-                                    [ td [] [ UI.renderTiles model.i18n False [ t ] ]
-                                    , td [] [ UI.drawGroups model.i18n True t g ]
+                                    [ td [] [ UI.tiles model.i18n False [ t ] ]
+                                    , td [] [ UI.groups model.i18n True t g ]
                                     ]
                             )
                             winningTiles
@@ -268,7 +268,7 @@ renderTabContent model =
             else
                 div []
                     [ debugGroups model.allGroups
-                    , UI.drawGroupsSimple model.i18n True model.hand.groups
+                    , UI.groupsSimple model.i18n True model.hand.groups
                     , renderHanDetails model.hand
                     , renderFuDetails model.i18n model.hand
                     , renderScore model.hand
@@ -376,7 +376,7 @@ renderFuSource i18n fuSource =
     tr []
         [ td [] [ text explanation ]
         , td [] [ text (String.fromInt fuSource.fu ++ " fu") ]
-        , td [] [ UI.drawGroupsSimple i18n True fuSource.groups ]
+        , td [] [ UI.groupsSimple i18n True fuSource.groups ]
         ]
 
 

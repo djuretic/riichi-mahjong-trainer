@@ -209,10 +209,10 @@ view model =
         [ class "base-container"
         , onClick (SetLanguageDropdownOpen False)
         ]
-        [ renderNavbar model
+        [ navbar model
         , div [ class "container p-2" ]
             [ if model.showConfig then
-                renderSettings model
+                settingsUI model
 
               else
                 content
@@ -231,8 +231,8 @@ view model =
         ]
 
 
-renderNavbar : Model -> Html.Html Msg
-renderNavbar model =
+navbar : Model -> Html.Html Msg
+navbar model =
     div [ class "navbar container is-flex is-flex-direction-row is-justify-content-space-between p-2" ]
         [ h1 [ class "title is-size-4 mb-0 overflow-ellipsis" ] [ text (I18n.siteTitle model.i18n) ]
         , a
@@ -241,8 +241,8 @@ renderNavbar model =
         ]
 
 
-renderSettings : Model -> Html.Html Msg
-renderSettings model =
+settingsUI : Model -> Html.Html Msg
+settingsUI model =
     let
         langSelector =
             div
