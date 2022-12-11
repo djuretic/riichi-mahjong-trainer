@@ -10,6 +10,7 @@ module Tile exposing
     , greenDragonNumber
     , hasMoreThan4Tiles
     , isRun
+    , isTerminal
     , isTriplet
     , moveWinningTileToEnd
     , partitionBySuit
@@ -53,6 +54,11 @@ type alias Tile =
 
 type alias ComparableTile =
     ( String, TileNumber )
+
+
+isTerminal : Tile -> Bool
+isTerminal tile =
+    tile.suit /= Suit.Honor && (tile.number == 1 || tile.number == 9)
 
 
 redDragonNumber : TileNumber
