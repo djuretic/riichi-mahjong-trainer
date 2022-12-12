@@ -1,12 +1,13 @@
-module Shanten exposing (kokushiShanten)
+module Shanten exposing (shantenChiitoitsu, shantenKokushi)
 
+import Group
 import List.Extra
 import Suit
 import Tile exposing (Tile)
 
 
-kokushiShanten : List Tile -> Int
-kokushiShanten tiles =
+shantenKokushi : List Tile -> Int
+shantenKokushi tiles =
     let
         kokushiTiles =
             List.filter (\t -> t.suit == Suit.Honor || Tile.isTerminal t) Tile.allTiles
@@ -45,3 +46,30 @@ kokushiShanten tiles =
         ( 13, False )
         counter
         |> Tuple.first
+
+
+shantenChiitoitsu : List Tile -> Int
+shantenChiitoitsu tiles =
+    let
+        pairs =
+            findPairs tiles
+                |> Tile.deduplicate
+    in
+    6 - List.length pairs
+
+
+findPairs : List Tile -> List Group.Group
+findPairs tiles =
+    case tiles of
+        [] ->
+            []
+
+        x :: y :: xs ->
+            if x == y then
+                Group.pairOf x :: findPairs xs
+
+            else
+                findPairs (y :: xs)
+
+        _ :: xs ->
+            findPairs xs

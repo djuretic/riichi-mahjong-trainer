@@ -18,6 +18,7 @@ module Group exposing
     , isTripletOf
     , isWinningHand
     , member
+    , pairOf
     , random4SidedWaitTwoSuits10Tiles
     , random4SidedWaitTwoSuits13Tiles
     , random5SidedWait
@@ -66,6 +67,11 @@ type alias GroupsBreakdown =
     { chiitoitsu : List Group
     , perSuit : GroupsPerSuit
     }
+
+
+pairOf : Tile.Tile -> Group
+pairOf tile =
+    { type_ = Pair, tileNumber = tile.number, suit = tile.suit }
 
 
 toWind : Group -> Maybe Tile.Wind
