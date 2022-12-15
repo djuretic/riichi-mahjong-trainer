@@ -186,54 +186,64 @@ findGroupsInSuitHelper suit n shouldFindPair counter =
 
     else
         let
-            foundTriplet =
-                count >= 3
-
             triplet =
-                if foundTriplet then
-                    findGroupsInSuitHelper suit n shouldFindPair (Array.set n (count - 3) counter)
-                        |> addGroupToHead (Group Triplet (n + 1) suit)
-
-                else
-                    Nothing
-
-            foundPair =
-                count >= 2
+                consumeTriplet suit n shouldFindPair counter count
 
             pair =
-                if foundPair && shouldFindPair then
-                    findGroupsInSuitHelper suit n False (Array.set n (count - 2) counter)
-                        |> addGroupToHead (Group Pair (n + 1) suit)
-
-                else
-                    Nothing
-
-            foundRun =
-                suit /= Suit.Honor && n < 7 && count >= 1 && Counter.getCount (n + 1) counter > 0 && Counter.getCount (n + 2) counter > 0
+                consumePair suit n shouldFindPair counter count
 
             run =
-                if foundRun then
-                    let
-                        count2 =
-                            Counter.getCount (n + 1) counter
-
-                        count3 =
-                            Counter.getCount (n + 2) counter
-
-                        updatedCounter =
-                            counter
-                                |> Array.set n (count - 1)
-                                |> Array.set (n + 1) (count2 - 1)
-                                |> Array.set (n + 2) (count3 - 1)
-                    in
-                    findGroupsInSuitHelper suit n shouldFindPair updatedCounter
-                        |> addGroupToHead (Group Run (n + 1) suit)
-
-                else
-                    Nothing
+                consumeRun suit n shouldFindPair counter count
         in
         map2RetainJust List.append triplet run
             |> map2RetainJust List.append pair
+
+
+consumeRun : Suit.Suit -> Int -> Bool -> Counter.Counter -> Int -> Maybe (List (List Group))
+consumeRun suit n shouldFindPair counter count =
+    let
+        foundRun =
+            suit /= Suit.Honor && n < 7 && count >= 1 && Counter.getCount (n + 1) counter > 0 && Counter.getCount (n + 2) counter > 0
+    in
+    if foundRun then
+        let
+            count2 =
+                Counter.getCount (n + 1) counter
+
+            count3 =
+                Counter.getCount (n + 2) counter
+
+            updatedCounter =
+                counter
+                    |> Array.set n (count - 1)
+                    |> Array.set (n + 1) (count2 - 1)
+                    |> Array.set (n + 2) (count3 - 1)
+        in
+        findGroupsInSuitHelper suit n shouldFindPair updatedCounter
+            |> addGroupToHead (Group Run (n + 1) suit)
+
+    else
+        Nothing
+
+
+consumePair : Suit.Suit -> Int -> Bool -> Counter.Counter -> Int -> Maybe (List (List Group))
+consumePair suit n shouldFindPair counter count =
+    if count >= 2 && shouldFindPair then
+        findGroupsInSuitHelper suit n False (Array.set n (count - 2) counter)
+            |> addGroupToHead (Group Pair (n + 1) suit)
+
+    else
+        Nothing
+
+
+consumeTriplet : Suit.Suit -> Int -> Bool -> Counter.Counter -> Int -> Maybe (List (List Group))
+consumeTriplet suit n shouldFindPair counter count =
+    if count >= 3 then
+        findGroupsInSuitHelper suit n shouldFindPair (Array.set n (count - 3) counter)
+            |> addGroupToHead (Group Triplet (n + 1) suit)
+
+    else
+        Nothing
 
 
 
