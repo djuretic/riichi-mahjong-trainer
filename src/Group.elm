@@ -5,6 +5,7 @@ module Group exposing
     , GroupsBreakdown
     , GroupsPerSuit
     , RandomSuitPreference(..)
+    , breakdownConcatMap
     , commonGroups
     , containsTerminal
     , findGroups
@@ -14,6 +15,7 @@ module Group exposing
     , isDragon
     , isHonor
     , isPair
+    , isPartial
     , isRun
     , isTriplet
     , isTripletOf
@@ -442,6 +444,24 @@ isClosed _ =
     True
 
 
+breakdownConcatMap : (List (List Group) -> List Group) -> GroupsBreakdown -> List Group
+breakdownConcatMap groupsSelector groups =
+    let
+        man =
+            groupsSelector groups.perSuit.man
+
+        pin =
+            groupsSelector groups.perSuit.pin
+
+        sou =
+            groupsSelector groups.perSuit.sou
+
+        honor =
+            groupsSelector groups.perSuit.honor
+    in
+    List.concat [ man, pin, sou, honor ]
+
+
 findWinningGroups : GroupsBreakdown -> List Group
 findWinningGroups groups =
     -- TODO consider chiitoitsu and other group configurations in the same hand
@@ -450,20 +470,8 @@ findWinningGroups groups =
             firstItem =
                 \g -> Maybe.withDefault [] (List.head g)
 
-            man =
-                firstItem groups.perSuit.man
-
-            pin =
-                firstItem groups.perSuit.pin
-
-            sou =
-                firstItem groups.perSuit.sou
-
-            honor =
-                firstItem groups.perSuit.honor
-
             possibleGroups =
-                List.concat [ man, pin, sou, honor ]
+                breakdownConcatMap firstItem groups
 
             numberPairs =
                 List.filter (\g -> g.type_ == Pair) possibleGroups |> List.length
@@ -933,3 +941,22 @@ randomSuitsFromPreference wantedSuit =
 
         TwoSuitsTwoFixed s1 s2 ->
             Random.uniform ( s1, s2 ) [ ( s2, s1 ) ]
+
+
+isPartial : Group -> Bool
+isPartial group =
+    case group.type_ of
+        Triplet ->
+            False
+
+        Run ->
+            False
+
+        Pair ->
+            False
+
+        PartialRyanmenPenchan ->
+            True
+
+        PartialKanchan ->
+            True

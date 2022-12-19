@@ -22,6 +22,11 @@ suite =
                 Expect.equalLists
                     [ [ Group PartialRyanmenPenchan 1 Man, Group Triplet 7 Man ] ]
                     (Group.findGroupsInSuit FindPartials Man (Tile.fromString "12777m"))
+        , test "findGroupsInSuits, partial group consecutive tiles 2" <|
+            \_ ->
+                Expect.equalLists
+                    [ [ Group Triplet 1 Man, Group PartialRyanmenPenchan 7 Man ] ]
+                    (Group.findGroupsInSuit FindPartials Man (Tile.fromString "11178m"))
         , test "findGroupsInSuits, partial group kanchan" <|
             \_ ->
                 Expect.equalLists
