@@ -91,7 +91,7 @@ update msg model =
                     Tile.fromString handString
 
                 allGroups =
-                    Group.findGroups tiles
+                    Group.findGroups Group.SkipPartials tiles
 
                 groups =
                     Group.findWinningGroups allGroups
@@ -117,7 +117,7 @@ update msg model =
                     Hand.count hand
 
                 allGroups =
-                    Group.findGroups newHand.tiles
+                    Group.findGroups Group.SkipPartials newHand.tiles
             in
             if Hand.isWinningHand newHand then
                 ( { model | handString = Hand.getHandString newHand, hand = newHand, allGroups = allGroups, guessedValue = guessValueInit }, Cmd.none )
@@ -131,7 +131,7 @@ update msg model =
                     Hand.count hand
 
                 allGroups =
-                    Group.findGroups newHand.tiles
+                    Group.findGroups Group.SkipPartials newHand.tiles
             in
             ( { model | handString = Hand.getHandString newHand, hand = newHand, allGroups = allGroups, guessedValue = guessValueInit }, Cmd.none )
 

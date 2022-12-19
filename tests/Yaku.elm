@@ -29,7 +29,7 @@ testHandYaku hanSourceList handString =
                     Tile.fromString handString
 
                 allGroups =
-                    Group.findGroups tiles
+                    Group.findGroups Group.SkipPartials tiles
 
                 groups =
                     Group.findWinningGroups allGroups

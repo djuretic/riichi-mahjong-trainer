@@ -507,6 +507,12 @@ checkTanyao hand =
 
                     ( Run, _ ) ->
                         True
+
+                    ( PartialRyanmenPenchan, _ ) ->
+                        False
+
+                    ( PartialKanchan, _ ) ->
+                        False
     in
     if List.all isSimple hand.groups then
         Just (HanSource 1 Tanyao)
@@ -954,6 +960,12 @@ waitTypeGroup tile group =
                 else
                     NoWait
 
+            PartialRyanmenPenchan ->
+                NoWait
+
+            PartialKanchan ->
+                NoWait
+
     else
         NoWait
 
@@ -1184,7 +1196,7 @@ winningTiles hand =
     if List.length hand.tiles == 13 then
         let
             generateHand ( tile, tiles ) =
-                ( tile, count { hand | tiles = tiles, groups = Group.findWinningGroups (Group.findGroups tiles), hanCount = 0 } )
+                ( tile, count { hand | tiles = tiles, groups = Group.findWinningGroups (Group.findGroups Group.SkipPartials tiles), hanCount = 0 } )
         in
         List.map (\t -> ( t, Tile.push t hand.tiles )) Tile.allTiles
             |> List.map generateHand

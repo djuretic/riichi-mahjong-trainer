@@ -1,5 +1,6 @@
 module Group exposing
-    ( Group
+    ( FindPartialsOption(..)
+    , Group
     , GroupType(..)
     , GroupsBreakdown
     , GroupsPerSuit
@@ -44,6 +45,8 @@ type GroupType
     = Triplet
     | Run
     | Pair
+    | PartialRyanmenPenchan
+    | PartialKanchan
 
 
 type alias Group =
@@ -67,6 +70,11 @@ type alias GroupsBreakdown =
     { chiitoitsu : List Group
     , perSuit : GroupsPerSuit
     }
+
+
+type FindPartialsOption
+    = FindPartials
+    | SkipPartials
 
 
 pairOf : Tile.Tile -> Group
@@ -108,6 +116,12 @@ toWind group =
         Run ->
             Nothing
 
+        PartialKanchan ->
+            Nothing
+
+        PartialRyanmenPenchan ->
+            Nothing
+
 
 type RandomSuitPreference
     = OneRandomSuit
@@ -117,18 +131,18 @@ type RandomSuitPreference
     | TwoRandomSuits
 
 
-findGroups : List Tile.Tile -> GroupsBreakdown
-findGroups tiles =
+findGroups : FindPartialsOption -> List Tile.Tile -> GroupsBreakdown
+findGroups findPartialGroups tiles =
     let
         part =
             Tile.partitionBySuit tiles
     in
     { chiitoitsu = findChiitoitsu (Tile.sort tiles)
     , perSuit =
-        { sou = findGroupsInSuit Suit.Sou part.sou
-        , man = findGroupsInSuit Suit.Man part.man
-        , pin = findGroupsInSuit Suit.Pin part.pin
-        , honor = findGroupsInSuit Suit.Honor part.honor
+        { sou = findGroupsInSuit findPartialGroups Suit.Sou part.sou
+        , man = findGroupsInSuit findPartialGroups Suit.Man part.man
+        , pin = findGroupsInSuit findPartialGroups Suit.Pin part.pin
+        , honor = findGroupsInSuit findPartialGroups Suit.Honor part.honor
         }
     }
 
@@ -162,17 +176,17 @@ findChiitoitsu tiles =
         []
 
 
-findGroupsInSuit : Suit.Suit -> List Tile.Tile -> List (List Group)
-findGroupsInSuit suit tiles =
+findGroupsInSuit : FindPartialsOption -> Suit.Suit -> List Tile.Tile -> List (List Group)
+findGroupsInSuit findPartialsOption suit tiles =
     List.map .number tiles
         |> List.sort
         |> Counter.fromIntList
-        |> findGroupsInSuitHelper suit 0 True
+        |> findGroupsInSuitHelper findPartialsOption suit 0 True
         |> Maybe.withDefault []
 
 
-findGroupsInSuitHelper : Suit.Suit -> Int -> Bool -> Counter.Counter -> Maybe (List (List Group))
-findGroupsInSuitHelper suit n shouldFindPair counter =
+findGroupsInSuitHelper : FindPartialsOption -> Suit.Suit -> Int -> Bool -> Counter.Counter -> Maybe (List (List Group))
+findGroupsInSuitHelper findPartialsOption suit n shouldFindPair counter =
     let
         count =
             Counter.getCount n counter
@@ -181,25 +195,33 @@ findGroupsInSuitHelper suit n shouldFindPair counter =
         Just [ [] ]
 
     else if count == 0 then
-        findGroupsInSuitHelper suit (n + 1) shouldFindPair counter
+        findGroupsInSuitHelper findPartialsOption suit (n + 1) shouldFindPair counter
 
     else
         let
             triplet =
-                consumeTriplet suit n shouldFindPair counter count
+                consumeTriplet findPartialsOption suit n shouldFindPair counter count
 
             pair =
-                consumePair suit n shouldFindPair counter count
+                consumePair findPartialsOption suit n shouldFindPair counter count
 
             run =
-                consumeRun suit n shouldFindPair counter count
+                consumeRun findPartialsOption suit n shouldFindPair counter count
+
+            partial1 =
+                consumePartialRyanmenPenchan findPartialsOption suit n shouldFindPair counter count
+
+            partial2 =
+                consumePartialKanchan findPartialsOption suit n shouldFindPair counter count
         in
         map2RetainJust List.append triplet run
             |> map2RetainJust List.append pair
+            |> map2RetainJust List.append partial1
+            |> map2RetainJust List.append partial2
 
 
-consumeRun : Suit.Suit -> Int -> Bool -> Counter.Counter -> Int -> Maybe (List (List Group))
-consumeRun suit n shouldFindPair counter count =
+consumeRun : FindPartialsOption -> Suit.Suit -> Int -> Bool -> Counter.Counter -> Int -> Maybe (List (List Group))
+consumeRun findPartialsOption suit n shouldFindPair counter count =
     let
         foundRun =
             suit /= Suit.Honor && n < 7 && count >= 1 && Counter.getCount (n + 1) counter > 0 && Counter.getCount (n + 2) counter > 0
@@ -218,28 +240,68 @@ consumeRun suit n shouldFindPair counter count =
                     |> Array.set (n + 1) (count2 - 1)
                     |> Array.set (n + 2) (count3 - 1)
         in
-        findGroupsInSuitHelper suit n shouldFindPair updatedCounter
+        findGroupsInSuitHelper findPartialsOption suit n shouldFindPair updatedCounter
             |> addGroupToHead (Group Run (n + 1) suit)
 
     else
         Nothing
 
 
-consumePair : Suit.Suit -> Int -> Bool -> Counter.Counter -> Int -> Maybe (List (List Group))
-consumePair suit n shouldFindPair counter count =
+consumePair : FindPartialsOption -> Suit.Suit -> Int -> Bool -> Counter.Counter -> Int -> Maybe (List (List Group))
+consumePair findPartialsOption suit n shouldFindPair counter count =
     if count >= 2 && shouldFindPair then
-        findGroupsInSuitHelper suit n False (Array.set n (count - 2) counter)
+        findGroupsInSuitHelper findPartialsOption suit n False (Array.set n (count - 2) counter)
             |> addGroupToHead (Group Pair (n + 1) suit)
 
     else
         Nothing
 
 
-consumeTriplet : Suit.Suit -> Int -> Bool -> Counter.Counter -> Int -> Maybe (List (List Group))
-consumeTriplet suit n shouldFindPair counter count =
+consumeTriplet : FindPartialsOption -> Suit.Suit -> Int -> Bool -> Counter.Counter -> Int -> Maybe (List (List Group))
+consumeTriplet findPartialsOption suit n shouldFindPair counter count =
     if count >= 3 then
-        findGroupsInSuitHelper suit n shouldFindPair (Array.set n (count - 3) counter)
+        findGroupsInSuitHelper findPartialsOption suit n shouldFindPair (Array.set n (count - 3) counter)
             |> addGroupToHead (Group Triplet (n + 1) suit)
+
+    else
+        Nothing
+
+
+consumePartialRyanmenPenchan : FindPartialsOption -> Suit.Suit -> Int -> Bool -> Counter.Counter -> Int -> Maybe (List (List Group))
+consumePartialRyanmenPenchan findPartialsOption suit n shouldFindPair counter count =
+    let
+        count2 =
+            Counter.getCount (n + 1) counter
+    in
+    if findPartialsOption == FindPartials && suit /= Suit.Honor && count >= 1 && count2 >= 1 then
+        let
+            updatedCounter =
+                counter
+                    |> Array.set n (count - 1)
+                    |> Array.set (n + 1) (count2 - 1)
+        in
+        findGroupsInSuitHelper findPartialsOption suit n shouldFindPair updatedCounter
+            |> addGroupToHead (Group PartialRyanmenPenchan (n + 1) suit)
+
+    else
+        Nothing
+
+
+consumePartialKanchan : FindPartialsOption -> Suit.Suit -> Int -> Bool -> Counter.Counter -> Int -> Maybe (List (List Group))
+consumePartialKanchan findPartialsOption suit n shouldFindPair counter count =
+    let
+        count2 =
+            Counter.getCount (n + 2) counter
+    in
+    if findPartialsOption == FindPartials && suit /= Suit.Honor && count >= 1 && count2 >= 1 then
+        let
+            updatedCounter =
+                counter
+                    |> Array.set n (count - 1)
+                    |> Array.set (n + 2) (count2 - 1)
+        in
+        findGroupsInSuitHelper findPartialsOption suit n shouldFindPair updatedCounter
+            |> addGroupToHead (Group PartialKanchan (n + 1) suit)
 
     else
         Nothing
@@ -283,6 +345,12 @@ toString group =
                 , String.fromInt (group.tileNumber + 2)
                 , Suit.toString group.suit
                 ]
+
+        PartialRyanmenPenchan ->
+            String.concat [ String.fromInt group.tileNumber, String.fromInt (group.tileNumber + 1), Suit.toString group.suit ]
+
+        PartialKanchan ->
+            String.concat [ String.fromInt group.tileNumber, String.fromInt (group.tileNumber + 2), Suit.toString group.suit ]
 
 
 isTriplet : Group -> Bool
@@ -335,6 +403,12 @@ containsTerminal group =
             Run ->
                 group.tileNumber == 1 || group.tileNumber == 7
 
+            PartialRyanmenPenchan ->
+                group.tileNumber == 1 || group.tileNumber == 8
+
+            PartialKanchan ->
+                group.tileNumber == 1 || group.tileNumber == 7
+
 
 toTiles : Group -> List Tile.Tile
 toTiles { type_, tileNumber, suit } =
@@ -348,6 +422,16 @@ toTiles { type_, tileNumber, suit } =
         Run ->
             [ Tile.Tile tileNumber suit
             , Tile.Tile (tileNumber + 1) suit
+            , Tile.Tile (tileNumber + 2) suit
+            ]
+
+        PartialRyanmenPenchan ->
+            [ Tile.Tile tileNumber suit
+            , Tile.Tile (tileNumber + 1) suit
+            ]
+
+        PartialKanchan ->
+            [ Tile.Tile tileNumber suit
             , Tile.Tile (tileNumber + 2) suit
             ]
 
@@ -798,7 +882,7 @@ winningTiles tiles =
         let
             generateHand : ( Tile.Tile, List Tile.Tile ) -> ( Tile.Tile, List Tile.Tile, List Group )
             generateHand ( tile, listTiles ) =
-                ( tile, listTiles, findWinningGroups (findGroups listTiles) )
+                ( tile, listTiles, findWinningGroups (findGroups SkipPartials listTiles) )
         in
         List.map (\t -> ( t, Tile.push t tiles )) Tile.allTiles
             |> List.map generateHand
