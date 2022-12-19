@@ -166,7 +166,7 @@ findGroupsInSuit : Suit.Suit -> List Tile.Tile -> List (List Group)
 findGroupsInSuit suit tiles =
     List.map .number tiles
         |> List.sort
-        |> Tile.toArrayCounter
+        |> Counter.fromIntList
         |> findGroupsInSuitHelper suit 0 True
         |> Maybe.withDefault []
 
@@ -175,8 +175,7 @@ findGroupsInSuitHelper : Suit.Suit -> Int -> Bool -> Counter.Counter -> Maybe (L
 findGroupsInSuitHelper suit n shouldFindPair counter =
     let
         count =
-            Array.get n counter
-                |> Maybe.withDefault 0
+            Counter.getCount n counter
     in
     if n >= Array.length counter then
         Just [ [] ]

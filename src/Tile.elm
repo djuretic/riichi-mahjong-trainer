@@ -20,7 +20,6 @@ module Tile exposing
     , removeTileAtPosFromArray
     , removeTileAtPosFromList
     , sort
-    , toArrayCounter
     , toComparable
     , toString
     , whiteDragonNumber
@@ -183,19 +182,6 @@ windToTileNumber wind =
             4
 
 
-toArrayCounter : List TileNumber -> Counter.Counter
-toArrayCounter tileNumbers =
-    let
-        counter =
-            Array.initialize 9 (always 0)
-
-        accum : TileNumber -> Array.Array Int -> Array.Array Int
-        accum n cnt =
-            Array.set (n - 1) (Maybe.withDefault 0 (Array.get (n - 1) cnt) + 1) cnt
-    in
-    List.foldl accum counter tileNumbers
-
-
 hasMoreThan4Tiles : List Tile -> Bool
 hasMoreThan4Tiles tiles =
     let
@@ -205,7 +191,7 @@ hasMoreThan4Tiles tiles =
         suitHasMoreThan4Tiles : List Tile -> Bool
         suitHasMoreThan4Tiles suitTiles =
             List.map .number suitTiles
-                |> toArrayCounter
+                |> Counter.fromIntList
                 |> Counter.hasCountGreaterThan 4
     in
     suitHasMoreThan4Tiles tilesPerSuit.man
