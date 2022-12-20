@@ -24,6 +24,7 @@ suite =
         , describe "Standard shanten (5 groups + pair)"
             [ testShantenStandard "2-shanten" 2 "46789m55779p457s"
             , testShantenStandard "tenpai" 0 "456m567p12388s77z"
+            , testShantenStandard "chinitsu" -1 "1112245677889p6p"
             ]
         ]
 
