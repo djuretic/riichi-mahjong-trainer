@@ -21,6 +21,8 @@ suite =
             , testShantenChiitoitsu "2 equal pairs" 1 "222288m11p88s223z"
             , testShantenChiitoitsu "14 tiles, 7 pairs" -1 "225588m11p88s2233z"
             ]
+        , describe "Standard shanten (5 groups + pair)"
+            [ testShantenStandard "2-shanten" 2 "46789m55779p457s" ]
         ]
 
 
@@ -34,3 +36,9 @@ testShantenChiitoitsu : String -> Int -> String -> Test
 testShantenChiitoitsu name shanten hand =
     test name <|
         \_ -> Expect.equal shanten (Shanten.shantenChiitoitsu (Tile.fromString hand))
+
+
+testShantenStandard : String -> Int -> String -> Test
+testShantenStandard name shanten hand =
+    test name <|
+        \_ -> Expect.equal shanten (Shanten.shantenStandard (Tile.fromString hand))

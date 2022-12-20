@@ -7,6 +7,7 @@ module Group exposing
     , RandomSuitPreference(..)
     , breakdownConcatMap
     , commonGroups
+    , completionScore
     , containsTerminal
     , findGroups
     , findGroupsInSuit
@@ -185,6 +186,8 @@ findGroupsInSuit findPartialsOption suit tiles =
         |> Counter.fromIntList
         |> findGroupsInSuitHelper findPartialsOption suit 0 True
         |> Maybe.withDefault []
+        |> List.Extra.remove []
+        |> keepHighestScore findPartialsOption
 
 
 findGroupsInSuitHelper : FindPartialsOption -> Suit.Suit -> Int -> Bool -> Counter.Counter -> Maybe (List (List Group))
@@ -215,11 +218,20 @@ findGroupsInSuitHelper findPartialsOption suit n shouldFindPair counter =
 
             partial2 =
                 consumePartialKanchan findPartialsOption suit n shouldFindPair counter count
+
+            -- skip isolated tiles
+            skipTile =
+                if findPartialsOption == FindPartials && count == 1 then
+                    findGroupsInSuitHelper findPartialsOption suit (n + 1) shouldFindPair counter
+
+                else
+                    Nothing
         in
         map2RetainJust List.append triplet run
             |> map2RetainJust List.append pair
             |> map2RetainJust List.append partial1
             |> map2RetainJust List.append partial2
+            |> map2RetainJust List.append skipTile
 
 
 consumeRun : FindPartialsOption -> Suit.Suit -> Int -> Bool -> Counter.Counter -> Int -> Maybe (List (List Group))
@@ -307,6 +319,28 @@ consumePartialKanchan findPartialsOption suit n shouldFindPair counter count =
 
     else
         Nothing
+
+
+keepHighestScore : FindPartialsOption -> List (List Group) -> List (List Group)
+keepHighestScore findPartialsOption groups =
+    if findPartialsOption == FindPartials then
+        let
+            groupsWithScores =
+                List.map (\g -> ( completionScore g, g )) groups
+                    |> List.sortBy Tuple.first
+                    |> List.reverse
+
+            maxScore =
+                List.head groupsWithScores
+                    |> Maybe.withDefault ( ( 0, 0 ), [] )
+                    |> Tuple.first
+        in
+        List.filter (\( score, _ ) -> score == maxScore) groupsWithScores
+            |> List.map Tuple.second
+
+    else
+        -- there are only complete groups and pairs, no need to sort
+        groups
 
 
 
@@ -960,3 +994,13 @@ isPartial group =
 
         PartialKanchan ->
             True
+
+
+completionScore : List Group -> ( Int, Int )
+completionScore groups =
+    let
+        partialOrPairs =
+            List.filter (\g -> isPartial g || isPair g) groups
+                |> List.length
+    in
+    ( List.length groups - partialOrPairs, partialOrPairs )

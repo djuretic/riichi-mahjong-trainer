@@ -1,4 +1,4 @@
-module Shanten exposing (shantenChiitoitsu, shantenKokushi)
+module Shanten exposing (shantenChiitoitsu, shantenKokushi, shantenStandard)
 
 import Group
 import List.Extra
@@ -73,3 +73,22 @@ findPairs tiles =
 
         _ :: xs ->
             findPairs xs
+
+
+shantenStandard : List Tile -> Int
+shantenStandard tiles =
+    let
+        highestShantenScore =
+            \lg ->
+                List.sortBy (\g -> Group.completionScore g) lg
+                    |> List.reverse
+                    |> List.filterMap List.head
+
+        groups =
+            Group.findGroups Group.FindPartials tiles
+                |> Group.breakdownConcatMap highestShantenScore
+
+        ( scoreCompleteGroups, scorePartialGroups ) =
+            Group.completionScore groups
+    in
+    8 - 2 * scoreCompleteGroups - scorePartialGroups
