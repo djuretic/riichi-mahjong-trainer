@@ -22,7 +22,9 @@ suite =
             , testShantenChiitoitsu "14 tiles, 7 pairs" -1 "225588m11p88s2233z"
             ]
         , describe "Standard shanten (5 groups + pair)"
-            [ testShantenStandard "2-shanten" 2 "46789m55779p457s" ]
+            [ testShantenStandard "2-shanten" 2 "46789m55779p457s"
+            , testShantenStandard "tenpai" 0 "456m567p12388s77z"
+            ]
         ]
 
 

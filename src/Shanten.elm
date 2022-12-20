@@ -78,15 +78,9 @@ findPairs tiles =
 shantenStandard : List Tile -> Int
 shantenStandard tiles =
     let
-        highestShantenScore =
-            \lg ->
-                List.sortBy (\g -> Group.completionScore g) lg
-                    |> List.reverse
-                    |> List.filterMap List.head
-
         groups =
             Group.findGroups Group.FindPartials tiles
-                |> Group.breakdownConcatMap highestShantenScore
+                |> Group.breakdownConcatMap (\g -> List.head g |> Maybe.withDefault [])
 
         ( scoreCompleteGroups, scorePartialGroups ) =
             Group.completionScore groups

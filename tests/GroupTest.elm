@@ -29,6 +29,9 @@ suite =
         , testPartialGroups "consecutive tiles or kanchan"
             [ [ Group PartialRyanmenPenchan 4 Man ], [ Group PartialKanchan 5 Man ] ]
             "457m"
+        , testPartialGroups "run and pair"
+            [ [ Group Run 1 Man, Group Pair 8 Man ] ]
+            "12388m"
         ]
 
 
