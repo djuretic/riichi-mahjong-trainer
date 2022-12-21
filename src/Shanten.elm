@@ -1,12 +1,46 @@
 module Shanten exposing (shantenChiitoitsu, shantenKokushi, shantenStandard)
 
-import Group
+import Group exposing (Group)
+import List
 import List.Extra
 import Suit
 import Tile exposing (Tile)
 
 
-shantenKokushi : List Tile -> Int
+type alias ShantenDetail =
+    { kokushi : ShantenCalculation
+    , chiitoitsu : ShantenCalculation
+    , standard : ShantenCalculation
+    , shanten : Int
+    }
+
+
+type alias ShantenCalculation =
+    { shanten : Int
+    , groups : List Group
+    }
+
+
+shanten : List Tile -> ShantenDetail
+shanten tiles =
+    let
+        kokushi =
+            shantenKokushi tiles
+
+        chiitoitsu =
+            shantenChiitoitsu tiles
+
+        standard =
+            shantenStandard tiles
+    in
+    { kokushi = kokushi
+    , chiitoitsu = chiitoitsu
+    , standard = standard
+    , shanten = min kokushi.shanten chiitoitsu.shanten |> min standard.shanten
+    }
+
+
+shantenKokushi : List Tile -> ShantenCalculation
 shantenKokushi tiles =
     let
         kokushiTiles =
@@ -28,34 +62,37 @@ shantenKokushi tiles =
                 )
                 kokushiTiles
     in
-    List.foldl
-        (\( _, count ) ( shanten, foundPair ) ->
-            if count == 1 then
-                ( shanten - 1, foundPair )
+    { shanten =
+        List.foldl
+            (\( _, count ) ( shantenN, foundPair ) ->
+                if count == 1 then
+                    ( shantenN - 1, foundPair )
 
-            else if count == 2 then
-                if foundPair then
-                    ( shanten - 1, True )
+                else if count == 2 then
+                    if foundPair then
+                        ( shantenN - 1, True )
+
+                    else
+                        ( shantenN - 2, True )
 
                 else
-                    ( shanten - 2, True )
+                    ( shantenN, foundPair )
+            )
+            ( 13, False )
+            counter
+            |> Tuple.first
+    , groups = []
+    }
 
-            else
-                ( shanten, foundPair )
-        )
-        ( 13, False )
-        counter
-        |> Tuple.first
 
-
-shantenChiitoitsu : List Tile -> Int
+shantenChiitoitsu : List Tile -> ShantenCalculation
 shantenChiitoitsu tiles =
     let
         pairs =
             findPairs tiles
                 |> Tile.deduplicate
     in
-    6 - List.length pairs
+    { shanten = 6 - List.length pairs, groups = pairs }
 
 
 findPairs : List Tile -> List Group.Group
@@ -75,7 +112,7 @@ findPairs tiles =
             findPairs xs
 
 
-shantenStandard : List Tile -> Int
+shantenStandard : List Tile -> ShantenCalculation
 shantenStandard tiles =
     let
         groups =
@@ -85,4 +122,4 @@ shantenStandard tiles =
         ( scoreCompleteGroups, scorePartialGroups ) =
             Group.completionScore groups
     in
-    8 - 2 * scoreCompleteGroups - scorePartialGroups
+    { shanten = 8 - 2 * scoreCompleteGroups - scorePartialGroups, groups = groups }

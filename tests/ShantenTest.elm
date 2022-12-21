@@ -16,7 +16,7 @@ suite =
             , testShantenKokushi "only one terminal" 12 "1m2223334445556s"
             , testShantenKokushi "14 tiles, yakuman" -1 "19m19p19s12334567z"
             ]
-        , describe "Shanten for Chiitoitshu"
+        , describe "Shanten for Chiitoitsu"
             [ testShantenChiitoitsu "6 pairs" 0 "225588m11p88s223z"
             , testShantenChiitoitsu "2 equal pairs" 1 "222288m11p88s223z"
             , testShantenChiitoitsu "14 tiles, 7 pairs" -1 "225588m11p88s2233z"
@@ -32,16 +32,16 @@ suite =
 testShantenKokushi : String -> Int -> String -> Test
 testShantenKokushi name shanten hand =
     test name <|
-        \_ -> Expect.equal shanten (Shanten.shantenKokushi (Tile.fromString hand))
+        \_ -> Expect.equal shanten (Shanten.shantenKokushi (Tile.fromString hand) |> .shanten)
 
 
 testShantenChiitoitsu : String -> Int -> String -> Test
 testShantenChiitoitsu name shanten hand =
     test name <|
-        \_ -> Expect.equal shanten (Shanten.shantenChiitoitsu (Tile.fromString hand))
+        \_ -> Expect.equal shanten (Shanten.shantenChiitoitsu (Tile.fromString hand) |> .shanten)
 
 
 testShantenStandard : String -> Int -> String -> Test
 testShantenStandard name shanten hand =
     test name <|
-        \_ -> Expect.equal shanten (Shanten.shantenStandard (Tile.fromString hand))
+        \_ -> Expect.equal shanten (Shanten.shantenStandard (Tile.fromString hand) |> .shanten)
