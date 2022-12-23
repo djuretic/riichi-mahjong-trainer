@@ -80,6 +80,13 @@ type FindPartialsOption
     | SkipPartials
 
 
+type alias CompletionScore =
+    { groups : Int
+    , pairs : Int
+    , partials : Int
+    }
+
+
 pairOf : Tile.Tile -> Group
 pairOf tile =
     { type_ = Pair, tileNumber = tile.number, suit = tile.suit }
@@ -263,7 +270,7 @@ consumeRun findPartialsOption suit n shouldFindPair counter count =
 
 consumePair : FindPartialsOption -> Suit.Suit -> Int -> Bool -> Counter.Counter -> Int -> Maybe (List (List Group))
 consumePair findPartialsOption suit n shouldFindPair counter count =
-    if count >= 2 && shouldFindPair then
+    if count >= 2 && (shouldFindPair || findPartialsOption == FindPartials) then
         findGroupsInSuitHelper findPartialsOption suit n False (Array.set n (count - 2) counter)
             |> addGroupToHead (Group Pair (n + 1) suit)
 
@@ -327,12 +334,12 @@ keepHighestScore findPartialsOption groups =
         let
             groupsWithScores =
                 List.map (\g -> ( completionScore g, g )) groups
-                    |> List.sortBy Tuple.first
+                    |> List.sortBy (\( cs, _ ) -> cs.groups)
                     |> List.reverse
 
             maxScore =
                 List.head groupsWithScores
-                    |> Maybe.withDefault ( ( 0, 0 ), [] )
+                    |> Maybe.withDefault ( { groups = 0, pairs = 0, partials = 0 }, [] )
                     |> Tuple.first
         in
         List.filter (\( score, _ ) -> score == maxScore) groupsWithScores
@@ -996,11 +1003,17 @@ isPartial group =
             True
 
 
-completionScore : List Group -> ( Int, Int )
+completionScore : List Group -> CompletionScore
 completionScore groups =
     let
-        partialOrPairs =
-            List.filter (\g -> isPartial g || isPair g) groups
-                |> List.length
+        calc group acc =
+            if isPartial group then
+                { acc | partials = acc.partials + 1 }
+
+            else if isPair group then
+                { acc | pairs = acc.pairs + 1 }
+
+            else
+                { acc | groups = acc.groups + 1 }
     in
-    ( List.length groups - partialOrPairs, partialOrPairs )
+    List.foldl calc (CompletionScore 0 0 0) groups

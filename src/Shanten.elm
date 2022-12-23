@@ -134,7 +134,7 @@ shantenStandard tiles =
             Group.findGroups Group.FindPartials tiles
                 |> Group.breakdownConcatMap (\g -> List.head g |> Maybe.withDefault [])
 
-        ( scoreCompleteGroups, scorePartialGroups ) =
+        completionScore =
             Group.completionScore groups
 
         baselineScore =
@@ -160,7 +160,7 @@ shantenStandard tiles =
                 _ ->
                     8
     in
-    { shanten = baselineScore - 2 * scoreCompleteGroups - scorePartialGroups, groups = groups }
+    { shanten = baselineScore - 2 * completionScore.groups - completionScore.pairs - completionScore.partials, groups = groups }
 
 
 tileAcceptance : List Tile -> TileAcceptance
