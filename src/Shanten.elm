@@ -1,4 +1,4 @@
-module Shanten exposing (shantenChiitoitsu, shantenKokushi, shantenStandard)
+module Shanten exposing (TileAcceptance(..), shantenChiitoitsu, shantenKokushi, shantenStandard, tileAcceptance)
 
 import Group exposing (Group)
 import List
@@ -11,7 +11,7 @@ type alias ShantenDetail =
     { kokushi : ShantenCalculation
     , chiitoitsu : ShantenCalculation
     , standard : ShantenCalculation
-    , shanten : Int
+    , final : ShantenCalculation
     }
 
 
@@ -19,6 +19,11 @@ type alias ShantenCalculation =
     { shanten : Int
     , groups : List Group
     }
+
+
+type TileAcceptance
+    = DiscardAndDraw Tile (List Tile)
+    | Draw (List Tile)
 
 
 shanten : List Tile -> ShantenDetail
@@ -36,7 +41,9 @@ shanten tiles =
     { kokushi = kokushi
     , chiitoitsu = chiitoitsu
     , standard = standard
-    , shanten = min kokushi.shanten chiitoitsu.shanten |> min standard.shanten
+    , final =
+        List.Extra.minimumBy .shanten [ kokushi, chiitoitsu, standard ]
+            |> Maybe.withDefault { shanten = 8, groups = [] }
     }
 
 
@@ -121,5 +128,66 @@ shantenStandard tiles =
 
         ( scoreCompleteGroups, scorePartialGroups ) =
             Group.completionScore groups
+
+        baselineScore =
+            case List.length tiles of
+                4 ->
+                    2
+
+                5 ->
+                    2
+
+                7 ->
+                    4
+
+                8 ->
+                    4
+
+                10 ->
+                    6
+
+                11 ->
+                    6
+
+                _ ->
+                    8
     in
-    { shanten = 8 - 2 * scoreCompleteGroups - scorePartialGroups, groups = groups }
+    { shanten = baselineScore - 2 * scoreCompleteGroups - scorePartialGroups, groups = groups }
+
+
+tileAcceptance : List Tile -> TileAcceptance
+tileAcceptance tiles =
+    let
+        currentShanten =
+            shanten tiles
+
+        numTiles =
+            List.length tiles
+    in
+    if currentShanten.final.shanten >= 0 then
+        if List.member numTiles [ 4, 7, 10, 13 ] then
+            drawnTileAcceptance currentShanten.final.shanten tiles
+
+        else if List.member numTiles [ 5, 8, 11, 14 ] then
+            Draw []
+            -- DiscardAndDraw
+
+        else
+            Draw []
+
+    else
+        Draw []
+
+
+drawnTileAcceptance : Int -> List Tile -> TileAcceptance
+drawnTileAcceptance baseShanten tiles =
+    let
+        -- TODO filter tiles already in hand
+        tilesToDraw =
+            Tile.allTiles
+
+        shantenByTile =
+            List.map (\t -> ( t, shanten (t :: tiles) )) tilesToDraw
+                |> List.filter (\( _, sd ) -> sd.final.shanten < baseShanten)
+    in
+    Draw (List.map Tuple.first shantenByTile)

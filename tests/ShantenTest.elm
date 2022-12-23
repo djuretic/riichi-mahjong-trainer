@@ -1,6 +1,7 @@
 module ShantenTest exposing (..)
 
 import Expect
+import Hand exposing (FuDescription(..))
 import Shanten
 import Test exposing (..)
 import Tile
@@ -26,6 +27,17 @@ suite =
             , testShantenStandard "tenpai" 0 "456m567p12388s77z"
             , testShantenStandard "chinitsu" -1 "1112245677889p6p"
             ]
+        , describe "Standard shanten (less tiles)"
+            [ testShantenStandard "4-tiles tenpai" 0 "1234m"
+            , testShantenStandard "4-tiles 1-shanten" 1 "12m3p5s"
+            , testShantenStandard "4-tiles 2-shanten" 2 "1m3p5s3z"
+            , testShantenStandard "5-tiles tenpai" 0 "7799m1z"
+            , testShantenStandard "5-tiles complete" -1 "77799m"
+            , testShantenStandard "5-tiles no pair" 0 "12345m"
+            , testShantenStandard "7-tiles tenpai" 0 "7788999m"
+            ]
+        , describe "Tile acceptance"
+            [ testTileAcceptance "2-sided wait 4 tiles" "14m" "1234m" ]
         ]
 
 
@@ -45,3 +57,9 @@ testShantenStandard : String -> Int -> String -> Test
 testShantenStandard name shanten hand =
     test name <|
         \_ -> Expect.equal shanten (Shanten.shantenStandard (Tile.fromString hand) |> .shanten)
+
+
+testTileAcceptance : String -> String -> String -> Test
+testTileAcceptance name acceptedTiles hand =
+    test name <|
+        \_ -> Expect.equal (Shanten.Draw (Tile.fromString acceptedTiles)) (Shanten.tileAcceptance (Tile.fromString hand))
