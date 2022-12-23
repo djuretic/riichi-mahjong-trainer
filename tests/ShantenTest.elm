@@ -1,7 +1,6 @@
 module ShantenTest exposing (..)
 
 import Expect
-import Hand exposing (FuDescription(..))
 import Shanten
 import Test exposing (..)
 import Tile

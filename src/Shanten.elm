@@ -137,6 +137,13 @@ shantenStandard tiles =
         completionScore =
             Group.completionScore groups
 
+        noPairPenalty =
+            if completionScore.pairs == 0 && List.member (List.length tiles) [ 5, 8, 11, 14 ] then
+                1
+
+            else
+                0
+
         baselineScore =
             case List.length tiles of
                 4 ->
@@ -160,7 +167,7 @@ shantenStandard tiles =
                 _ ->
                     8
     in
-    { shanten = baselineScore - 2 * completionScore.groups - completionScore.pairs - completionScore.partials, groups = groups }
+    { shanten = baselineScore - 2 * completionScore.groups - completionScore.pairs - completionScore.partials + noPairPenalty, groups = groups }
 
 
 tileAcceptance : List Tile -> TileAcceptance

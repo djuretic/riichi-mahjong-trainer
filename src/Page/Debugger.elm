@@ -1,4 +1,4 @@
-module Page.Debugger exposing (..)
+module Page.Debugger exposing (main)
 
 import Browser
 import Group exposing (Group)
