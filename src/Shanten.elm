@@ -1,4 +1,12 @@
-module Shanten exposing (TileAcceptance(..), shantenChiitoitsu, shantenKokushi, shantenStandard, tileAcceptance)
+module Shanten exposing
+    ( ShantenDetail
+    , TileAcceptance(..)
+    , shanten
+    , shantenChiitoitsu
+    , shantenKokushi
+    , shantenStandard
+    , tileAcceptance
+    )
 
 import Group exposing (Group)
 import List
