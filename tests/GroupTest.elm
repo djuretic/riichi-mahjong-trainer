@@ -32,6 +32,12 @@ suite =
         , testPartialGroups "run and pair"
             [ [ Group Run 1 Man, Group Pair 8 Man ] ]
             "12388m"
+        , testPartialGroups "2-sided wait 4 tiles"
+            [ [ Group Run 1 Man ], [ Group Run 2 Man ] ]
+            "1234m"
+        , testPartialGroups "pair and run"
+            [ [ Group Pair 1 Man, Group Run 2 Man ] ]
+            "11234m"
         ]
 
 

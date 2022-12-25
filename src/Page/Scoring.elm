@@ -1,12 +1,13 @@
 module Page.Scoring exposing (Model, Msg, init, update, view)
 
 import Browser
-import Group exposing (Group)
+import Group
 import Hand exposing (Hand)
 import Html exposing (Html, a, button, div, input, li, p, table, tbody, td, text, tfoot, th, thead, tr, ul)
 import Html.Attributes exposing (class, colspan, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import I18n
+import Page.Debugger
 import Random
 import Tile
 import UI
@@ -267,47 +268,12 @@ renderTabContent model =
 
             else
                 div []
-                    [ debugGroups model.allGroups
+                    [ Page.Debugger.debugGroups model.allGroups
                     , UI.groupsSimple model.i18n True model.hand.groups
                     , renderHanDetails model.hand
                     , renderFuDetails model.i18n model.hand
                     , renderScore model.hand
                     ]
-
-
-debugGroup : List Group -> Html Msg
-debugGroup listGroup =
-    if List.isEmpty listGroup then
-        text "-"
-
-    else
-        ul [] (List.map (\g -> li [] [ text (Group.toString g) ]) listGroup)
-
-
-debugGroups : Group.GroupsBreakdown -> Html Msg
-debugGroups groups =
-    let
-        generateTd l =
-            List.map (\g -> td [] [ debugGroup g ]) l
-
-        sevenPairsTxt =
-            if List.isEmpty groups.chiitoitsu then
-                "no"
-
-            else
-                "yes"
-    in
-    table [ class "table is-striped" ]
-        [ thead []
-            [ tr [] [ th [] [ text "groupsPerSuit" ] ] ]
-        , tbody []
-            [ tr [] (generateTd groups.perSuit.man)
-            , tr [] (generateTd groups.perSuit.pin)
-            , tr [] (generateTd groups.perSuit.sou)
-            , tr [] (generateTd groups.perSuit.honor)
-            , tr [] [ text ("Chiitoisu: " ++ sevenPairsTxt) ]
-            ]
-        ]
 
 
 renderHanDetails : Hand -> Html Msg

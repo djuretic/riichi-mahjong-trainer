@@ -25,7 +25,7 @@ type alias ShantenDetail =
 
 type alias ShantenCalculation =
     { shanten : Int
-    , groups : List Group
+    , groups : List (List Group)
     }
 
 
@@ -107,7 +107,7 @@ shantenChiitoitsu tiles =
             findPairs tiles
                 |> Tile.deduplicate
     in
-    { shanten = 6 - List.length pairs, groups = pairs }
+    { shanten = 6 - List.length pairs, groups = [ pairs ] }
 
 
 findPairs : List Tile -> List Group.Group
@@ -130,12 +130,13 @@ findPairs tiles =
 shantenStandard : List Tile -> ShantenCalculation
 shantenStandard tiles =
     let
-        groups =
+        groupConfigurations =
             Group.findGroups Group.FindPartials tiles
-                |> Group.breakdownConcatMap (\g -> List.head g |> Maybe.withDefault [])
+                |> Group.breakdownCartesianProduct
 
+        -- TODO are the scores different in some configurations?
         completionScore =
-            Group.completionScore groups
+            Group.completionScore (List.head groupConfigurations |> Maybe.withDefault [])
 
         noPairPenalty =
             if completionScore.pairs == 0 && List.member (List.length tiles) [ 5, 8, 11, 14 ] then
@@ -167,7 +168,9 @@ shantenStandard tiles =
                 _ ->
                     8
     in
-    { shanten = baselineScore - 2 * completionScore.groups - completionScore.pairs - completionScore.partials + noPairPenalty, groups = groups }
+    { shanten = baselineScore - 2 * completionScore.groups - completionScore.pairs - completionScore.partials + noPairPenalty
+    , groups = groupConfigurations
+    }
 
 
 tileAcceptance : List Tile -> TileAcceptance

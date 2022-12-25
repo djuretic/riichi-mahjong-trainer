@@ -5,7 +5,9 @@ module Group exposing
     , GroupsBreakdown
     , GroupsPerSuit
     , RandomSuitPreference(..)
+    , breakdownCartesianProduct
     , breakdownConcatMap
+    , breakdownInit
     , commonGroups
     , completionScore
     , containsTerminal
@@ -501,6 +503,26 @@ breakdownConcatMap groupsSelector groups =
             groupsSelector groups.perSuit.honor
     in
     List.concat [ man, pin, sou, honor ]
+
+
+breakdownInit : GroupsBreakdown
+breakdownInit =
+    { chiitoitsu = []
+    , perSuit =
+        { man = []
+        , pin = []
+        , sou = []
+        , honor = []
+        }
+    }
+
+
+breakdownCartesianProduct : GroupsBreakdown -> List (List Group)
+breakdownCartesianProduct groups =
+    [ groups.perSuit.man, groups.perSuit.pin, groups.perSuit.sou, groups.perSuit.honor ]
+        |> List.filter (\lg -> not (List.isEmpty lg))
+        |> List.Extra.cartesianProduct
+        |> List.map List.concat
 
 
 findWinningGroups : GroupsBreakdown -> List Group
