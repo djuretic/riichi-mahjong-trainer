@@ -6,6 +6,7 @@ import Html exposing (Html, div, input, li, p, table, tbody, td, text, th, thead
 import Html.Attributes exposing (class, placeholder, type_, value)
 import Html.Events exposing (onInput)
 import I18n
+import List.Extra
 import Shanten
 import Suit
 import Tile exposing (Tile)
@@ -24,6 +25,7 @@ type alias Model =
 
 type Msg
     = HandStr String
+    | Discard Tile
 
 
 main : Program () Model Msg
@@ -73,12 +75,32 @@ update msg model =
             , Cmd.none
             )
 
+        Discard tile ->
+            let
+                tiles =
+                    List.Extra.remove tile model.tiles
+
+                groupsBreakdown =
+                    Group.findGroups Group.FindPartials tiles
+
+                groups =
+                    Group.breakdownCartesianProduct groupsBreakdown
+            in
+            ( { model | tiles = tiles, shanten = Shanten.shanten tiles, groups = groups, breakdown = groupsBreakdown }, Cmd.none )
+
 
 view : Model -> Html Msg
 view model =
+    let
+        uiMap : UI.UIMsg -> Msg
+        uiMap uiMsg =
+            case uiMsg of
+                UI.TileOnClick tile ->
+                    Discard tile
+    in
     div []
         [ input [ class "input", type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
-        , p [] [ UI.tiles model.i18n True model.tiles ]
+        , p [] [ UI.tilesWithOnClick model.i18n True model.tiles |> Html.map uiMap ]
         , div [ class "block" ]
             [ p [] [ text ("Shanten: " ++ String.fromInt model.shanten.final.shanten) ]
             , p [] [ text ("Kokushi " ++ String.fromInt model.shanten.kokushi.shanten) ]

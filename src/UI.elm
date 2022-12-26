@@ -1,5 +1,6 @@
 module UI exposing
-    ( backTile
+    ( UIMsg(..)
+    , backTile
     , breakpoints
     , groups
     , groupsSimple
@@ -17,12 +18,14 @@ module UI exposing
     , tileTitle
     , tileWidth
     , tiles
+    , tilesWithOnClick
     )
 
 import FontAwesome
 import Group
 import Html
 import Html.Attributes exposing (class, src, style, title)
+import Html.Events exposing (onClick)
 import I18n exposing (I18n)
 import List.Extra
 import Suit
@@ -34,6 +37,10 @@ type alias GroupData =
     { group : Group.Group
     , winningTile : Maybe Tile.Tile
     }
+
+
+type UIMsg
+    = TileOnClick Tile.Tile
 
 
 breakpoints : Html.Html msg
@@ -60,6 +67,15 @@ tiles i18n addNumbers baseTiles =
     Html.div [ class "tiles is-flex is-flex-direction-row", tileGapAttr ] allTiles
 
 
+tilesWithOnClick : I18n -> Bool -> List Tile.Tile -> Html.Html UIMsg
+tilesWithOnClick i18n addNumbers baseTiles =
+    let
+        allTiles =
+            List.map (tileWithOnClick i18n addNumbers []) baseTiles
+    in
+    Html.div [ class "tiles is-flex is-flex-direction-row", tileGapAttr ] allTiles
+
+
 tile : I18n -> Bool -> List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg
 tile i18n addNumbers attrs baseTile =
     let
@@ -71,6 +87,19 @@ tile i18n addNumbers attrs baseTile =
 
     else
         Html.img (tileAttrs i18n path (Just baseTile) |> List.append attrs) []
+
+
+tileWithOnClick : I18n -> Bool -> List (Html.Attribute UIMsg) -> Tile.Tile -> Html.Html UIMsg
+tileWithOnClick i18n addNumbers attrs baseTile =
+    let
+        path =
+            tilePath addNumbers baseTile
+    in
+    if String.isEmpty path then
+        Html.text ""
+
+    else
+        Html.img (tileAttrs i18n path (Just baseTile) ++ attrs ++ [ onClick (TileOnClick baseTile) ]) []
 
 
 tileSimple : I18n -> Bool -> Tile.Tile -> Html.Html msg
