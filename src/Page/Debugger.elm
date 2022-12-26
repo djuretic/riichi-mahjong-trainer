@@ -2,11 +2,12 @@ module Page.Debugger exposing (debugGroup, debugGroups, main)
 
 import Browser
 import Group exposing (Group)
-import Html exposing (Html, div, input, li, p, table, tbody, td, text, th, thead, tr, ul)
+import Html exposing (Html, button, div, input, li, p, table, tbody, td, text, th, thead, tr, ul)
 import Html.Attributes exposing (class, placeholder, type_, value)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onClick, onInput)
 import I18n
 import List.Extra
+import Random
 import Shanten
 import Suit
 import Tile exposing (Tile)
@@ -26,6 +27,8 @@ type alias Model =
 type Msg
     = HandStr String
     | Discard Tile
+    | GenerateRandomTiles Int
+    | TilesGenerated ( List Tile, List Tile )
 
 
 main : Program () Model Msg
@@ -55,38 +58,29 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         HandStr handString ->
-            let
-                tiles =
-                    Tile.fromString handString
+            ( model
+                |> setTiles (Tile.fromString handString)
+                |> setHandString handString
+                |> calculateGroupsAndShantenFromTiles
+            , Cmd.none
+            )
 
-                groupsBreakdown =
-                    Group.findGroups Group.FindPartials tiles
-
-                groups =
-                    Group.breakdownCartesianProduct groupsBreakdown
-            in
-            ( { model
-                | handString = handString
-                , tiles = tiles
-                , shanten = Shanten.shanten tiles
-                , groups = groups
-                , breakdown = groupsBreakdown
-              }
+        TilesGenerated ( tiles, _ ) ->
+            ( model
+                |> setTiles (tiles |> Tile.sort)
+                |> calculateGroupsAndShantenFromTiles
             , Cmd.none
             )
 
         Discard tile ->
-            let
-                tiles =
-                    List.Extra.remove tile model.tiles
+            ( model
+                |> setTiles (List.Extra.remove tile model.tiles)
+                |> calculateGroupsAndShantenFromTiles
+            , Cmd.none
+            )
 
-                groupsBreakdown =
-                    Group.findGroups Group.FindPartials tiles
-
-                groups =
-                    Group.breakdownCartesianProduct groupsBreakdown
-            in
-            ( { model | tiles = tiles, shanten = Shanten.shanten tiles, groups = groups, breakdown = groupsBreakdown }, Cmd.none )
+        GenerateRandomTiles numTiles ->
+            ( model, Random.generate TilesGenerated (Tile.randomList numTiles) )
 
 
 view : Model -> Html Msg
@@ -100,6 +94,7 @@ view model =
     in
     div []
         [ input [ class "input", type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
+        , button [ class "button is-primary", onClick (GenerateRandomTiles 7) ] [ text "Random hand" ]
         , p [] [ UI.tilesWithOnClick model.i18n True model.tiles |> Html.map uiMap ]
         , div [ class "block" ]
             [ p [] [ text ("Shanten: " ++ String.fromInt model.shanten.final.shanten) ]
@@ -146,3 +141,25 @@ debugGroups groups =
             , tr [] [ text ("Chiitoisu: " ++ sevenPairsTxt) ]
             ]
         ]
+
+
+setTiles : List Tile -> Model -> Model
+setTiles tiles model =
+    { model | tiles = tiles }
+
+
+setHandString : String -> Model -> Model
+setHandString handStr model =
+    { model | handString = handStr }
+
+
+calculateGroupsAndShantenFromTiles : Model -> Model
+calculateGroupsAndShantenFromTiles model =
+    let
+        groupsBreakdown =
+            Group.findGroups Group.FindPartials model.tiles
+
+        groups =
+            Group.breakdownCartesianProduct groupsBreakdown
+    in
+    { model | groups = groups, breakdown = groupsBreakdown, shanten = Shanten.shanten model.tiles }

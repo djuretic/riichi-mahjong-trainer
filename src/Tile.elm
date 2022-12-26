@@ -15,6 +15,7 @@ module Tile exposing
     , moveWinningTileToEnd
     , partitionBySuit
     , push
+    , randomList
     , randomWind
     , redDragonNumber
     , removeTileAtPosFromArray
@@ -31,6 +32,7 @@ import Array
 import Counter
 import Parser exposing ((|.), (|=))
 import Random
+import Random.List
 import Suit exposing (Suit(..))
 
 
@@ -333,3 +335,12 @@ tilesFromSuitString parsedSuit =
 
         Nothing ->
             []
+
+
+randomList : Int -> Random.Generator ( List Tile, List Tile )
+randomList n =
+    let
+        allPossibleTiles =
+            List.concatMap (List.repeat 4) allTiles
+    in
+    Random.List.choices n allPossibleTiles
