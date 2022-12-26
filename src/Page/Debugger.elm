@@ -8,6 +8,7 @@ import Html.Events exposing (onClick, onInput)
 import I18n
 import List.Extra
 import Random
+import Random.List
 import Shanten
 import Suit
 import Tile exposing (Tile)
@@ -18,6 +19,7 @@ type alias Model =
     { i18n : I18n.I18n
     , handString : String
     , tiles : List Tile
+    , remainingTiles : List Tile
     , breakdown : Group.GroupsBreakdown
     , groups : List (List Group)
     , shanten : Shanten.ShantenDetail
@@ -29,6 +31,7 @@ type Msg
     | Discard Tile
     | GenerateRandomTiles Int
     | TilesGenerated ( List Tile, List Tile )
+    | TileDrawn ( Maybe Tile, List Tile )
 
 
 main : Program () Model Msg
@@ -46,6 +49,7 @@ init =
     ( { i18n = I18n.init I18n.En
       , handString = ""
       , tiles = []
+      , remainingTiles = []
       , shanten = Shanten.shanten []
       , groups = []
       , breakdown = Group.breakdownInit
@@ -65,9 +69,10 @@ update msg model =
             , Cmd.none
             )
 
-        TilesGenerated ( tiles, _ ) ->
+        TilesGenerated ( tiles, remaining ) ->
             ( model
                 |> setTiles (tiles |> Tile.sort)
+                |> setRemainingTiles remaining
                 |> calculateGroupsAndShantenFromTiles
             , Cmd.none
             )
@@ -75,9 +80,21 @@ update msg model =
         Discard tile ->
             ( model
                 |> setTiles (List.Extra.remove tile model.tiles)
-                |> calculateGroupsAndShantenFromTiles
-            , Cmd.none
+            , Random.generate TileDrawn (Random.List.choose model.remainingTiles)
             )
+
+        TileDrawn ( tile, remaining ) ->
+            case tile of
+                Just t ->
+                    ( model
+                        |> setTiles (Tile.sort model.tiles ++ [ t ])
+                        |> setRemainingTiles remaining
+                        |> calculateGroupsAndShantenFromTiles
+                    , Cmd.none
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
 
         GenerateRandomTiles numTiles ->
             ( model, Random.generate TilesGenerated (Tile.randomList numTiles) )
@@ -94,8 +111,8 @@ view model =
     in
     div []
         [ input [ class "input", type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
-        , button [ class "button is-primary", onClick (GenerateRandomTiles 7) ] [ text "Random hand" ]
-        , p [] [ UI.tilesWithOnClick model.i18n True model.tiles |> Html.map uiMap ]
+        , button [ class "button is-primary", onClick (GenerateRandomTiles 8) ] [ text "Random hand" ]
+        , p [] [ UI.tilesWithOnClick model.i18n False model.tiles |> Html.map uiMap ]
         , div [ class "block" ]
             [ p [] [ text ("Shanten: " ++ String.fromInt model.shanten.final.shanten) ]
             , p [] [ text ("Kokushi " ++ String.fromInt model.shanten.kokushi.shanten) ]
@@ -146,6 +163,11 @@ debugGroups groups =
 setTiles : List Tile -> Model -> Model
 setTiles tiles model =
     { model | tiles = tiles }
+
+
+setRemainingTiles : List Tile -> Model -> Model
+setRemainingTiles remainingTiles model =
+    { model | remainingTiles = remainingTiles }
 
 
 setHandString : String -> Model -> Model
