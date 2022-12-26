@@ -11,7 +11,7 @@
     "build:prod": "./optimize.sh src/Main.elm",
     "translations": "travelm-agency --elm_path=src/I18n.elm --inline translations",
     "debug": "elm-live src/Main.elm --open -- --output app.js --debug",
-    "debugger": "elm-live src/Page/Debugger.elm --open -s debugger.html -- --output debugger.html",
+    "debugger": "elm-live src/Page/Debugger.elm --open -s debugger.html -- --output debugger.js",
     "live": "elm-live src/Main.elm --open --host 0.0.0.0 -- --output app.js",
     "review": "elm-review",
     "test": "elm-test"
