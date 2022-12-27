@@ -3,7 +3,7 @@ module Page.Debugger exposing (debugGroup, debugGroups, main)
 import Browser
 import Group exposing (Group)
 import Html exposing (Html, a, button, div, input, li, p, table, tbody, td, text, th, thead, tr, ul)
-import Html.Attributes exposing (class, href, placeholder, target, type_, value)
+import Html.Attributes exposing (class, disabled, href, placeholder, target, type_, value)
 import Html.Events exposing (onClick, onInput)
 import I18n
 import List.Extra
@@ -22,7 +22,14 @@ type alias Model =
     , breakdown : Group.GroupsBreakdown
     , groups : List (List Group)
     , shanten : Shanten.ShantenDetail
+
+    -- last turn is first item
+    , previousTurns : List Turn
     }
+
+
+type alias Turn =
+    { tiles : List Tile }
 
 
 type Msg
@@ -30,6 +37,7 @@ type Msg
     | Discard Tile
     | GenerateRandomTiles Int
     | TilesGenerated ( List Tile, List Tile )
+    | UndoTurn
 
 
 main : Program () Model Msg
@@ -51,6 +59,7 @@ init =
       , shanten = Shanten.shanten []
       , groups = []
       , breakdown = Group.breakdownInit
+      , previousTurns = []
       }
     , Cmd.none
     )
@@ -62,6 +71,7 @@ update msg model =
         HandStr handString ->
             ( model
                 |> setTiles (Tile.fromString handString)
+                |> resetTurns
                 |> setHandString handString
                 |> calculateGroupsAndShantenFromTiles
             , Cmd.none
@@ -70,6 +80,7 @@ update msg model =
         TilesGenerated ( tiles, remaining ) ->
             ( model
                 |> setTiles (tiles |> Tile.sort)
+                |> resetTurns
                 |> setRemainingTiles remaining
                 |> calculateGroupsAndShantenFromTiles
             , Cmd.none
@@ -83,6 +94,7 @@ update msg model =
             case drawnTile of
                 Just ( drawtile, remaining ) ->
                     ( model
+                        |> newTurnFromTiles
                         |> setTiles (Tile.sort (List.Extra.remove tile model.tiles) ++ [ drawtile ])
                         |> setRemainingTiles remaining
                         |> calculateGroupsAndShantenFromTiles
@@ -94,6 +106,20 @@ update msg model =
 
         GenerateRandomTiles numTiles ->
             ( model, Random.generate TilesGenerated (Tile.randomList numTiles) )
+
+        UndoTurn ->
+            case model.previousTurns of
+                turn :: _ ->
+                    ( model
+                        |> setTiles turn.tiles
+                        |> removeTurn
+                        -- |> setRemainingTiles remaining
+                        |> calculateGroupsAndShantenFromTiles
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -107,9 +133,9 @@ view model =
     in
     div []
         [ input [ class "input", type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
-        , button [ class "button is-primary", onClick (GenerateRandomTiles 8) ] [ text "Random hand 8" ]
         , button [ class "button is-primary", onClick (GenerateRandomTiles 11) ] [ text "Random hand 11" ]
         , button [ class "button is-primary", onClick (GenerateRandomTiles 14) ] [ text "Random hand 14" ]
+        , button [ class "button is-secondary", onClick UndoTurn, disabled (List.isEmpty model.previousTurns) ] [ text "Undo turn" ]
         , div [ class "block" ]
             [ UI.tilesWithOnClick model.i18n False model.tiles |> Html.map uiMap
             , a
@@ -168,6 +194,21 @@ debugGroups groups =
 setTiles : List Tile -> Model -> Model
 setTiles tiles model =
     { model | tiles = tiles }
+
+
+resetTurns : Model -> Model
+resetTurns model =
+    { model | previousTurns = [] }
+
+
+newTurnFromTiles : Model -> Model
+newTurnFromTiles model =
+    { model | previousTurns = { tiles = model.tiles } :: model.previousTurns }
+
+
+removeTurn : Model -> Model
+removeTurn model =
+    { model | previousTurns = List.tail model.previousTurns |> Maybe.withDefault [] }
 
 
 setRemainingTiles : List Tile -> Model -> Model
