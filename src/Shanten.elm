@@ -145,6 +145,13 @@ shantenStandard tiles =
             else
                 0
 
+        tooManyGroupsPenalty =
+            let
+                scoreSum =
+                    completionScore.groups + completionScore.pairs + completionScore.partials
+            in
+            max 0 (scoreSum - 5)
+
         baselineScore =
             case List.length tiles of
                 4 ->
@@ -168,7 +175,7 @@ shantenStandard tiles =
                 _ ->
                     8
     in
-    { shanten = baselineScore - 2 * completionScore.groups - completionScore.pairs - completionScore.partials + noPairPenalty
+    { shanten = baselineScore - 2 * completionScore.groups - completionScore.pairs - completionScore.partials + noPairPenalty + tooManyGroupsPenalty
     , groups = groupConfigurations
     }
 
