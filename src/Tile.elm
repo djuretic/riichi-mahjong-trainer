@@ -344,3 +344,7 @@ randomList n =
             List.concatMap (List.repeat 4) allTiles
     in
     Random.List.choices n allPossibleTiles
+        |> Random.andThen
+            (\( tiles, remaining ) ->
+                Random.pair (Random.constant tiles) (Random.List.shuffle remaining)
+            )
