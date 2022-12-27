@@ -20,6 +20,7 @@ suite =
             [ testShantenChiitoitsu "6 pairs" 0 "225588m11p88s223z"
             , testShantenChiitoitsu "2 equal pairs" 1 "222288m11p88s223z"
             , testShantenChiitoitsu "14 tiles, 7 pairs" -1 "225588m11p88s2233z"
+            , testShantenChiitoitsu "14 tiles, unsorted last tile" 0 "2268m22334p55s11z4p"
             ]
         , describe "Standard shanten (5 groups + pair)"
             [ testShantenStandard "2-shanten" 2 "46789m55779p457s"

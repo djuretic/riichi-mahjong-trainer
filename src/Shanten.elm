@@ -104,7 +104,8 @@ shantenChiitoitsu : List Tile -> ShantenCalculation
 shantenChiitoitsu tiles =
     let
         pairs =
-            findPairs tiles
+            Tile.sort tiles
+                |> findPairs
                 |> Tile.deduplicate
     in
     { shanten = 6 - List.length pairs, groups = [ pairs ] }

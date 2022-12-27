@@ -19,6 +19,7 @@ type alias Model =
     , handString : String
     , tiles : List Tile
     , remainingTiles : List Tile
+    , tileToDrawPosition : Int
     , breakdown : Group.GroupsBreakdown
     , groups : List (List Group)
     , shanten : Shanten.ShantenDetail
@@ -29,7 +30,9 @@ type alias Model =
 
 
 type alias Turn =
-    { tiles : List Tile }
+    { tiles : List Tile
+    , tileToDrawPosition : Int
+    }
 
 
 type Msg
@@ -56,6 +59,7 @@ init =
       , handString = ""
       , tiles = []
       , remainingTiles = []
+      , tileToDrawPosition = 0
       , shanten = Shanten.shanten []
       , groups = []
       , breakdown = Group.breakdownInit
@@ -72,6 +76,7 @@ update msg model =
             ( model
                 |> setTiles (Tile.fromString handString)
                 |> resetTurns
+                |> setTileToDrawPosition 0
                 |> setHandString handString
                 |> calculateGroupsAndShantenFromTiles
             , Cmd.none
@@ -81,6 +86,7 @@ update msg model =
             ( model
                 |> setTiles (tiles |> Tile.sort)
                 |> resetTurns
+                |> setTileToDrawPosition 0
                 |> setRemainingTiles remaining
                 |> calculateGroupsAndShantenFromTiles
             , Cmd.none
@@ -89,14 +95,14 @@ update msg model =
         Discard tile ->
             let
                 drawnTile =
-                    List.Extra.uncons model.remainingTiles
+                    List.Extra.getAt model.tileToDrawPosition model.remainingTiles
             in
             case drawnTile of
-                Just ( drawtile, remaining ) ->
+                Just drawtile ->
                     ( model
                         |> newTurnFromTiles
+                        |> setTileToDrawPosition (model.tileToDrawPosition + 1)
                         |> setTiles (Tile.sort (List.Extra.remove tile model.tiles) ++ [ drawtile ])
-                        |> setRemainingTiles remaining
                         |> calculateGroupsAndShantenFromTiles
                     , Cmd.none
                     )
@@ -112,8 +118,8 @@ update msg model =
                 turn :: _ ->
                     ( model
                         |> setTiles turn.tiles
+                        |> setTileToDrawPosition turn.tileToDrawPosition
                         |> removeTurn
-                        -- |> setRemainingTiles remaining
                         |> calculateGroupsAndShantenFromTiles
                     , Cmd.none
                     )
@@ -203,12 +209,19 @@ resetTurns model =
 
 newTurnFromTiles : Model -> Model
 newTurnFromTiles model =
-    { model | previousTurns = { tiles = model.tiles } :: model.previousTurns }
+    { model
+        | previousTurns = { tiles = model.tiles, tileToDrawPosition = model.tileToDrawPosition } :: model.previousTurns
+    }
 
 
 removeTurn : Model -> Model
 removeTurn model =
     { model | previousTurns = List.tail model.previousTurns |> Maybe.withDefault [] }
+
+
+setTileToDrawPosition : Int -> Model -> Model
+setTileToDrawPosition pos model =
+    { model | tileToDrawPosition = pos }
 
 
 setRemainingTiles : List Tile -> Model -> Model
