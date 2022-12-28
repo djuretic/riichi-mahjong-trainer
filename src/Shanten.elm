@@ -140,7 +140,15 @@ shantenStandard tiles =
             Group.completionScore (List.head groupConfigurations |> Maybe.withDefault [])
 
         noPairPenalty =
-            if completionScore.pairs == 0 && List.member (List.length tiles) [ 5, 8, 11, 14 ] then
+            let
+                usedTiles =
+                    3 * completionScore.groups + 2 * (completionScore.pairs + completionScore.partials)
+
+                -- if unusedTiles == 2, any of those tiles is candidate for a pair, after discarding the other one
+                unusedTiles =
+                    List.length tiles - usedTiles
+            in
+            if completionScore.pairs == 0 && List.member (List.length tiles) [ 5, 8, 11, 14 ] && unusedTiles /= 2 then
                 1
 
             else

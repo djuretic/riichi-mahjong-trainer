@@ -36,6 +36,7 @@ suite =
             , testShantenStandard "4-tiles 2-shanten" 2 "1m3p5s3z"
             , testShantenStandard "5-tiles tenpai" 0 "6699m1z"
             , testShantenStandard "5-tiles tenpai no pair" 0 "12345m"
+            , testShantenStandard "5-tiles tenpai no pair 2" 0 "12369m"
             , testShantenStandard "5-tiles complete" -1 "77799m"
             , testShantenStandard "7-tiles tenpai" 0 "7788999m"
             ]
