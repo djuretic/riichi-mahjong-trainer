@@ -35,6 +35,7 @@ type alias Turn =
     { tiles : List Tile
     , tileToDrawPosition : Int
     , discards : List Tile
+    , shanten : Int
     }
 
 
@@ -153,7 +154,8 @@ view model =
         analysisSection =
             if model.showAnalysis then
                 div [ class "block" ]
-                    [ p [] [ text ("Shanten: " ++ String.fromInt model.shanten.final.shanten) ]
+                    [ turnsIndicator model
+                    , p [] [ text ("Shanten: " ++ String.fromInt model.shanten.final.shanten) ]
                     , p [] [ text ("Kokushi " ++ String.fromInt model.shanten.kokushi.shanten) ]
                     , p [] [ text ("Chiitoitsu " ++ String.fromInt model.shanten.chiitoitsu.shanten) ]
                     , debugGroups model.breakdown
@@ -185,6 +187,17 @@ view model =
             ]
         , analysisSection
         ]
+
+
+turnsIndicator : Model -> Html Msg
+turnsIndicator model =
+    div []
+        (text "Turns"
+            :: (List.reverse model.previousTurns
+                    |> List.map (\t -> text (String.fromInt t.shanten))
+                    |> List.intersperse (text "->")
+               )
+        )
 
 
 debugGroup : List Group -> Html msg
@@ -264,6 +277,7 @@ newTurnFromTilesAndDiscards model =
             { tiles = model.tiles
             , tileToDrawPosition = model.tileToDrawPosition
             , discards = model.discards
+            , shanten = model.shanten.final.shanten
             }
                 :: model.previousTurns
     }
