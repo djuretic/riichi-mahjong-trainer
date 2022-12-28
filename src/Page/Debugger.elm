@@ -3,7 +3,7 @@ module Page.Debugger exposing (debugGroup, debugGroups, main)
 import Browser
 import Group exposing (Group)
 import Html exposing (Html, a, button, div, input, li, p, table, tbody, td, text, th, thead, tr, ul)
-import Html.Attributes exposing (class, disabled, href, placeholder, target, type_, value)
+import Html.Attributes exposing (class, classList, disabled, href, placeholder, target, type_, value)
 import Html.Events exposing (onClick, onInput)
 import I18n
 import List.Extra
@@ -18,6 +18,7 @@ type alias Model =
     { i18n : I18n.I18n
     , handString : String
     , tiles : List Tile
+    , discards : List Tile
     , remainingTiles : List Tile
     , tileToDrawPosition : Int
     , breakdown : Group.GroupsBreakdown
@@ -26,12 +27,14 @@ type alias Model =
 
     -- last turn is first item
     , previousTurns : List Turn
+    , showAnalysis : Bool
     }
 
 
 type alias Turn =
     { tiles : List Tile
     , tileToDrawPosition : Int
+    , discards : List Tile
     }
 
 
@@ -41,6 +44,7 @@ type Msg
     | GenerateRandomTiles Int
     | TilesGenerated ( List Tile, List Tile )
     | UndoTurn
+    | SetShowAnalysis Bool
 
 
 main : Program () Model Msg
@@ -59,11 +63,13 @@ init =
       , handString = ""
       , tiles = []
       , remainingTiles = []
+      , discards = []
       , tileToDrawPosition = 0
       , shanten = Shanten.shanten []
       , groups = []
       , breakdown = Group.breakdownInit
       , previousTurns = []
+      , showAnalysis = False
       }
     , Cmd.none
     )
@@ -76,6 +82,7 @@ update msg model =
             ( model
                 |> setTiles (Tile.fromString handString)
                 |> resetTurns
+                |> setDiscards []
                 |> setTileToDrawPosition 0
                 |> setHandString handString
                 |> calculateGroupsAndShantenFromTiles
@@ -86,6 +93,7 @@ update msg model =
             ( model
                 |> setTiles (tiles |> Tile.sort)
                 |> resetTurns
+                |> setDiscards []
                 |> setTileToDrawPosition 0
                 |> setRemainingTiles remaining
                 |> calculateGroupsAndShantenFromTiles
@@ -100,8 +108,9 @@ update msg model =
             case drawnTile of
                 Just drawtile ->
                     ( model
-                        |> newTurnFromTiles
+                        |> newTurnFromTilesAndDiscards
                         |> setTileToDrawPosition (model.tileToDrawPosition + 1)
+                        |> setDiscards (model.discards ++ [ tile ])
                         |> setTiles (Tile.sort (List.Extra.remove tile model.tiles) ++ [ drawtile ])
                         |> calculateGroupsAndShantenFromTiles
                     , Cmd.none
@@ -119,6 +128,7 @@ update msg model =
                     ( model
                         |> setTiles turn.tiles
                         |> setTileToDrawPosition turn.tileToDrawPosition
+                        |> setDiscards turn.discards
                         |> removeTurn
                         |> calculateGroupsAndShantenFromTiles
                     , Cmd.none
@@ -126,6 +136,9 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        SetShowAnalysis showAnalysis ->
+            ( setShowAnalysis showAnalysis model, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -136,29 +149,41 @@ view model =
             case uiMsg of
                 UI.TileOnClick tile ->
                     Discard tile
+
+        analysisSection =
+            if model.showAnalysis then
+                div [ class "block" ]
+                    [ p [] [ text ("Shanten: " ++ String.fromInt model.shanten.final.shanten) ]
+                    , p [] [ text ("Kokushi " ++ String.fromInt model.shanten.kokushi.shanten) ]
+                    , p [] [ text ("Chiitoitsu " ++ String.fromInt model.shanten.chiitoitsu.shanten) ]
+                    , debugGroups model.breakdown
+                    , p [] (List.map (UI.groups model.i18n False (Tile 1 Suit.Man)) model.shanten.final.groups)
+                    , p [] [ text "--" ]
+                    , p [] (List.map (UI.groups model.i18n False (Tile 1 Suit.Man)) model.groups)
+                    , a
+                        [ href ("https://tenhou.net/2/?q=" ++ (List.map Tile.toString model.tiles |> String.join ""))
+                        , target "_blank"
+                        ]
+                        [ text "Tenhou" ]
+                    ]
+
+            else
+                div [] []
     in
     div []
         [ input [ class "input", type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
         , button [ class "button is-primary", onClick (GenerateRandomTiles 11) ] [ text "Random hand 11" ]
         , button [ class "button is-primary", onClick (GenerateRandomTiles 14) ] [ text "Random hand 14" ]
         , button [ class "button is-secondary", onClick UndoTurn, disabled (List.isEmpty model.previousTurns) ] [ text "Undo turn" ]
+        , showAnalysisSelector model
         , div [ class "block" ]
             [ UI.tilesWithOnClick model.i18n False model.tiles |> Html.map uiMap
-            , a
-                [ href ("https://tenhou.net/2/?q=" ++ (List.map Tile.toString model.tiles |> String.join ""))
-                , target "_blank"
-                ]
-                [ text "Tenhou" ]
+            , text "Discards:"
+            , UI.tiles model.i18n False (List.take 6 model.discards)
+            , UI.tiles model.i18n False (List.take 6 (List.drop 6 model.discards))
+            , UI.tiles model.i18n False (List.drop 12 model.discards)
             ]
-        , div [ class "block" ]
-            [ p [] [ text ("Shanten: " ++ String.fromInt model.shanten.final.shanten) ]
-            , p [] [ text ("Kokushi " ++ String.fromInt model.shanten.kokushi.shanten) ]
-            , p [] [ text ("Chiitoitsu " ++ String.fromInt model.shanten.chiitoitsu.shanten) ]
-            , debugGroups model.breakdown
-            , p [] (List.map (UI.groups model.i18n False (Tile 1 Suit.Man)) model.shanten.final.groups)
-            , p [] [ text "--" ]
-            , p [] (List.map (UI.groups model.i18n False (Tile 1 Suit.Man)) model.groups)
-            ]
+        , analysisSection
         ]
 
 
@@ -197,9 +222,34 @@ debugGroups groups =
         ]
 
 
+showAnalysisSelector : Model -> Html Msg
+showAnalysisSelector model =
+    let
+        buttonUI txt showAnalysis =
+            button
+                [ classList
+                    [ ( "button", True )
+                    , ( "is-primary", model.showAnalysis == showAnalysis )
+                    , ( "is-selected", model.showAnalysis == showAnalysis )
+                    ]
+                , onClick (SetShowAnalysis showAnalysis)
+                ]
+                [ text txt ]
+    in
+    div [ class "buttons has-addons" ]
+        [ buttonUI (I18n.numberedTilesSelectorYes model.i18n) True
+        , buttonUI (I18n.numberedTilesSelectorNo model.i18n) False
+        ]
+
+
 setTiles : List Tile -> Model -> Model
 setTiles tiles model =
     { model | tiles = tiles }
+
+
+setDiscards : List Tile -> Model -> Model
+setDiscards discards model =
+    { model | discards = discards }
 
 
 resetTurns : Model -> Model
@@ -207,10 +257,15 @@ resetTurns model =
     { model | previousTurns = [] }
 
 
-newTurnFromTiles : Model -> Model
-newTurnFromTiles model =
+newTurnFromTilesAndDiscards : Model -> Model
+newTurnFromTilesAndDiscards model =
     { model
-        | previousTurns = { tiles = model.tiles, tileToDrawPosition = model.tileToDrawPosition } :: model.previousTurns
+        | previousTurns =
+            { tiles = model.tiles
+            , tileToDrawPosition = model.tileToDrawPosition
+            , discards = model.discards
+            }
+                :: model.previousTurns
     }
 
 
@@ -232,6 +287,11 @@ setRemainingTiles remainingTiles model =
 setHandString : String -> Model -> Model
 setHandString handStr model =
     { model | handString = handStr }
+
+
+setShowAnalysis : Bool -> Model -> Model
+setShowAnalysis showAnalysis model =
+    { model | showAnalysis = showAnalysis }
 
 
 calculateGroupsAndShantenFromTiles : Model -> Model
