@@ -158,6 +158,10 @@ view model =
                     , p [] [ text ("Shanten: " ++ String.fromInt model.shanten.final.shanten) ]
                     , p [] [ text ("Kokushi " ++ String.fromInt model.shanten.kokushi.shanten) ]
                     , p [] [ text ("Chiitoitsu " ++ String.fromInt model.shanten.chiitoitsu.shanten) ]
+                    , div [ class "block" ]
+                        [ text "Tile acceptance:"
+                        , tileAcceptanceSection (Shanten.tileAcceptance model.tiles) model
+                        ]
                     , debugGroups model.breakdown
                     , p [] (List.map (UI.groups model.i18n False (Tile 1 Suit.Man)) model.shanten.final.groups)
                     , p [] [ text "--" ]
@@ -198,6 +202,26 @@ turnsIndicator model =
                     |> List.intersperse (text "->")
                )
         )
+
+
+tileAcceptanceSection : Shanten.TileAcceptance -> Model -> Html Msg
+tileAcceptanceSection tileAcceptance model =
+    case tileAcceptance of
+        Shanten.Draw tiles ->
+            UI.tiles model.i18n False tiles
+
+        Shanten.DiscardAndDraw discardAndTiles ->
+            div []
+                (List.map
+                    (\( discardTile, tiles ) ->
+                        div []
+                            [ UI.tileSimple model.i18n False discardTile
+                            , text "->"
+                            , UI.tiles model.i18n False tiles
+                            ]
+                    )
+                    discardAndTiles
+                )
 
 
 debugGroup : List Group -> Html msg

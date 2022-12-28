@@ -2,8 +2,9 @@ module ShantenTest exposing (..)
 
 import Expect
 import Shanten
+import Suit
 import Test exposing (..)
-import Tile
+import Tile exposing (Tile)
 
 
 suite : Test
@@ -39,7 +40,9 @@ suite =
             , testShantenStandard "7-tiles tenpai" 0 "7788999m"
             ]
         , describe "Tile acceptance"
-            [ testTileAcceptance "2-sided wait 4 tiles" "14m" "1234m" ]
+            [ testTileAcceptanceDraw "2-sided wait 4 tiles" "14m" "1234m"
+            , testTileAcceptanceDiscardDraw "5 tiles" [ ( "1s", "48s" ) ] "14488s"
+            ]
         ]
 
 
@@ -61,7 +64,17 @@ testShantenStandard name shanten hand =
         \_ -> Expect.equal shanten (Shanten.shantenStandard (Tile.fromString hand) |> .shanten)
 
 
-testTileAcceptance : String -> String -> String -> Test
-testTileAcceptance name acceptedTiles hand =
+testTileAcceptanceDraw : String -> String -> String -> Test
+testTileAcceptanceDraw name acceptedTiles hand =
     test name <|
         \_ -> Expect.equal (Shanten.Draw (Tile.fromString acceptedTiles)) (Shanten.tileAcceptance (Tile.fromString hand))
+
+
+testTileAcceptanceDiscardDraw : String -> List ( String, String ) -> String -> Test
+testTileAcceptanceDiscardDraw name acceptedTiles hand =
+    let
+        tiles =
+            List.map (\( t, tt ) -> ( Tile.fromString t |> List.head |> Maybe.withDefault (Tile 99 Suit.Man), Tile.fromString tt )) acceptedTiles
+    in
+    test name <|
+        \_ -> Expect.equal (Shanten.DiscardAndDraw tiles) (Shanten.tileAcceptance (Tile.fromString hand))

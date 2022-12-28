@@ -30,7 +30,7 @@ type alias ShantenCalculation =
 
 
 type TileAcceptance
-    = DiscardAndDraw Tile (List Tile)
+    = DiscardAndDraw (List ( Tile, List Tile ))
     | Draw (List Tile)
 
 
@@ -192,11 +192,18 @@ tileAcceptance tiles =
     in
     if currentShanten.final.shanten >= 0 then
         if List.member numTiles [ 4, 7, 10, 13 ] then
-            drawnTileAcceptance currentShanten.final.shanten tiles
+            Draw (drawnTileAcceptance currentShanten.final.shanten tiles)
 
         else if List.member numTiles [ 5, 8, 11, 14 ] then
-            Draw []
-            -- DiscardAndDraw
+            let
+                uniqueTiles =
+                    List.Extra.unique tiles
+
+                discardsAndAcceptance =
+                    List.map (\t -> ( t, drawnTileAcceptance currentShanten.final.shanten (List.Extra.remove t tiles) )) uniqueTiles
+                        |> List.filter (\( _, acceptance ) -> not (List.isEmpty acceptance))
+            in
+            DiscardAndDraw discardsAndAcceptance
 
         else
             Draw []
@@ -205,7 +212,7 @@ tileAcceptance tiles =
         Draw []
 
 
-drawnTileAcceptance : Int -> List Tile -> TileAcceptance
+drawnTileAcceptance : Int -> List Tile -> List Tile
 drawnTileAcceptance baseShanten tiles =
     let
         -- TODO filter tiles already in hand
@@ -216,4 +223,4 @@ drawnTileAcceptance baseShanten tiles =
             List.map (\t -> ( t, shanten (t :: tiles) )) tilesToDraw
                 |> List.filter (\( _, sd ) -> sd.final.shanten < baseShanten)
     in
-    Draw (List.map Tuple.first shantenByTile)
+    List.map Tuple.first shantenByTile
