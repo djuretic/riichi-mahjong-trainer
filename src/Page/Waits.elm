@@ -614,7 +614,7 @@ winningTilesSection model =
                 [ div [ class "content" ]
                     [ ul []
                         [ li []
-                            [ text "Common Waits Patterns (English) - "
+                            [ text "Common Wait Patterns (English) - "
                             , a [ href "https://drive.google.com/file/d/1K4NuE2UZgeqhSR-WsYWyQlRiEERh5VQo/view?usp=share_link", target "_blank" ] [ text "PNG" ]
                             , text " | "
                             , a [ href "https://drive.google.com/file/d/1MXvEAwT31RnTJzCqYTpfaL7bd7cmONjT/view?usp=share_link", target "_blank" ] [ text "PDF" ]
