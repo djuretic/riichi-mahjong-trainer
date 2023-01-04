@@ -621,9 +621,9 @@ winningTilesSection model =
                             ]
                         , li []
                             [ text "Esperas Comunes de Mahjong (Español) - "
-                            , a [ href "img/Esperas_Comunes_Mahjong.png", target "_blank" ] [ text "PNG" ]
+                            , a [ href "/img/Esperas_Comunes_Mahjong.png", target "_blank" ] [ text "PNG" ]
                             , text " | "
-                            , a [ href "pdf/Esperas_Comunes_Mahjong.pdf", target "_blank" ] [ text "PDF" ]
+                            , a [ href "/pdf/Esperas_Comunes_Mahjong.pdf", target "_blank" ] [ text "PDF" ]
                             ]
                         ]
                     ]
