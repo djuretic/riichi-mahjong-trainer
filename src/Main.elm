@@ -218,12 +218,12 @@ view model =
                 content
             ]
         , footer [ class "footer pb-6" ]
-            [ div [ class "has-text-centered" ]
+            [ div [ class "has-text-centered content" ]
                 [ Html.map never <|
-                    p [ class "content" ]
+                    div []
                         (I18n.mahjongImageCredits { author = "Martin Persson", href = "https://www.martinpersson.org/" } [] model.i18n)
                 , Html.map never <|
-                    p [ class "content" ]
+                    div []
                         (I18n.faviconCredits { author = "Freepik - Flaticon", href = "https://www.flaticon.com/free-icons/mahjong" } [] model.i18n)
                 , p [ class "mt-2" ] [ a [ class "icon-link", href "https://github.com/djuretic/riichi-mahjong-trainer", target "_blank" ] [ UI.icon "icon" Brands.github ] ]
                 ]
