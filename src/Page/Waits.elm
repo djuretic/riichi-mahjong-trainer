@@ -5,7 +5,7 @@ import FontAwesome.Regular as IconR
 import FontAwesome.Solid as IconS
 import Group exposing (Group)
 import Html exposing (Html, a, button, div, li, span, text, ul)
-import Html.Attributes exposing (class, classList, disabled, style)
+import Html.Attributes exposing (class, classList, disabled, href, style, target)
 import Html.Events exposing (onClick)
 import Html.Keyed
 import I18n
@@ -48,6 +48,7 @@ type alias Model =
 type GroupsView
     = GroupAnimation
     | GroupTable
+    | ExternalLinks
 
 
 type alias PreferencesModel =
@@ -561,7 +562,7 @@ winningTilesSection model =
             classList [ ( "is-active", model.groupsView == expected ) ]
 
         noContentDiv =
-            if model.confirmedSelected then
+            if model.confirmedSelected || model.groupsView == ExternalLinks then
                 []
 
             else
@@ -607,6 +608,29 @@ winningTilesSection model =
 
             else
                 []
+
+        externalLinks =
+            if model.groupsView == ExternalLinks then
+                [ div [ class "content" ]
+                    [ ul []
+                        [ li []
+                            [ text "Common Waits Patterns (English) - "
+                            , a [ href "https://drive.google.com/file/d/1K4NuE2UZgeqhSR-WsYWyQlRiEERh5VQo/view?usp=share_link", target "_blank" ] [ text "PNG" ]
+                            , text " | "
+                            , a [ href "https://drive.google.com/file/d/1MXvEAwT31RnTJzCqYTpfaL7bd7cmONjT/view?usp=share_link", target "_blank" ] [ text "PDF" ]
+                            ]
+                        , li []
+                            [ text "Esperas Comunes de Mahjong (Español) - "
+                            , a [ href "img/Esperas_Comunes_Mahjong.png", target "_blank" ] [ text "PNG" ]
+                            , text " | "
+                            , a [ href "pdf/Esperas_Comunes_Mahjong.pdf", target "_blank" ] [ text "PDF" ]
+                            ]
+                        ]
+                    ]
+                ]
+
+            else
+                []
     in
     div [ class "tabs is-boxed" ]
         [ ul []
@@ -616,10 +640,14 @@ winningTilesSection model =
             , li
                 [ isActiveTabCss GroupTable, onClick (SetGroupsView GroupTable) ]
                 [ a [] [ UI.icon "icon is-small" IconS.table, span [] [ text (I18n.tableTab model.i18n) ] ] ]
+            , li
+                [ isActiveTabCss ExternalLinks, onClick (SetGroupsView ExternalLinks) ]
+                [ a [] [ UI.icon "icon is-small" IconS.link, span [] [ text (I18n.linksTab model.i18n) ] ] ]
             ]
         ]
         :: (groupsTable
                 ++ groupsSvgAnimation
+                ++ externalLinks
                 ++ noContentDiv
            )
 
@@ -951,6 +979,9 @@ encode model =
 
                 GroupTable ->
                     "t"
+
+                ExternalLinks ->
+                    "l"
     in
     E.object
         [ ( "mode", E.string (trainModeToString model.trainMode) )

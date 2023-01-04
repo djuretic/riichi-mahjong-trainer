@@ -35,6 +35,7 @@ newHandButton = Nueva mano
 
 animationTab = Animación
 tableTab = Tabla
+linksTab = Enlaces
 
 groupsContentPlaceholder = Seleciona las esperas para ver los grupos posibles
 

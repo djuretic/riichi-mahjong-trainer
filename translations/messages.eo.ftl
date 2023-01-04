@@ -35,6 +35,7 @@ newHandButton = Nova mano
 
 animationTab = Movbildo
 tableTab = Tabelo
+linksTab = Ligiloj
 
 groupsContentPlaceholder = Elektu la atendojn por vidi la eblajn grupojn
 

@@ -34,6 +34,7 @@ newHandButton = New hand
 
 animationTab = Animation
 tableTab = Table
+linksTab = Links
 
 groupsContentPlaceholder = Select waits to view possible groups
 
