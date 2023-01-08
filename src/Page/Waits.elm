@@ -625,6 +625,12 @@ winningTilesSection model =
                             , text " | "
                             , a [ href "/pdf/Esperas_Comunes_Mahjong.pdf", target "_blank" ] [ text "PDF" ]
                             ]
+                        , li []
+                            [ text "Kutimaj Atendoj de Maĝango (Esperanto) - "
+                            , a [ href "/img/Kutimaj_Atendoj_de_Maĝango.png", target "_blank" ] [ text "PNG" ]
+                            , text " | "
+                            , a [ href "/pdf/Kutimaj_Atendoj_de_Maĝango.pdf", target "_blank" ] [ text "PDF" ]
+                            ]
                         ]
                     ]
                 ]
