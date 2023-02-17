@@ -78,6 +78,7 @@ type Msg
     | ResetWaitsAnimation
     | Tick Time.Posix
     | UpdateI18n I18n.I18n
+    | KeyPressed String
 
 
 type TrainMode
@@ -172,11 +173,16 @@ cmdGenerateRandomTiles numTries model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
+    let
+        keyEvent =
+            Browser.Events.onKeyUp (D.map KeyPressed (D.field "key" D.string))
+    in
     if model.confirmedSelected then
-        Browser.Events.onAnimationFrame Tick
+        Sub.batch
+            [ Browser.Events.onAnimationFrame Tick, keyEvent ]
 
     else
-        Sub.none
+        keyEvent
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -244,7 +250,7 @@ update msg model =
                 ( initAnimatedTiles { model | tiles = tiles, waits = waits, selectedWaits = Set.empty, confirmedSelected = False, currentAnimatedTile = Nothing }, Cmd.none )
 
         ToggleWaitTile tile ->
-            if model.confirmedSelected then
+            if model.confirmedSelected || not (Tile.isValid tile) then
                 ( model, Cmd.none )
 
             else
@@ -305,6 +311,25 @@ update msg model =
 
         UpdateI18n i18n ->
             ( { model | i18n = i18n }, Cmd.none )
+
+        KeyPressed value ->
+            let
+                numValue =
+                    String.toInt value
+
+                tileSuits =
+                    waitTileSuits model
+            in
+            case ( numValue, tileSuits ) of
+                ( Just val, [ suit ] ) ->
+                    if List.length tileSuits == 1 then
+                        update (ToggleWaitTile (Tile val suit)) model
+
+                    else
+                        ( model, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -506,14 +531,16 @@ numberedTilesSelector model =
         ]
 
 
+waitTileSuits : Model -> List Suit.Suit
+waitTileSuits model =
+    List.map .suit model.tiles
+        |> List.Extra.unique
+        |> List.sortBy Suit.toString
+
+
 waitButtons : Model -> Html Msg
 waitButtons model =
     let
-        tileSuits =
-            List.map .suit model.tiles
-                |> List.Extra.unique
-                |> List.sortBy Suit.toString
-
         selectedCss tile =
             if Set.member (Tile.toComparable tile) model.selectedWaits then
                 class ""
@@ -549,7 +576,7 @@ waitButtons model =
                 )
     in
     div []
-        (List.map (\t -> renderRow (Tile.allSuitTiles t)) tileSuits)
+        (List.map (\t -> renderRow (Tile.allSuitTiles t)) (waitTileSuits model))
 
 
 winningTilesSection : Model -> List (Html Msg)

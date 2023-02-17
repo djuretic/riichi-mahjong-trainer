@@ -12,6 +12,7 @@ module Tile exposing
     , isRun
     , isTerminal
     , isTriplet
+    , isValid
     , moveWinningTileToEnd
     , partitionBySuit
     , push
@@ -55,6 +56,15 @@ type alias Tile =
 
 type alias ComparableTile =
     ( String, TileNumber )
+
+
+isValid : Tile -> Bool
+isValid tile =
+    if tile.suit == Honor then
+        1 <= tile.number && tile.number <= 7
+
+    else
+        1 <= tile.number && tile.number <= 9
 
 
 isTerminal : Tile -> Bool
