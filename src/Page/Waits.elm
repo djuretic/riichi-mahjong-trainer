@@ -42,6 +42,7 @@ type alias Model =
     , animatedTiles : List AnimatedTile
     , currentAnimatedTile : Maybe Tile
     , groupsView : GroupsView
+    , keyboardInput : Set Int
     }
 
 
@@ -148,6 +149,7 @@ init i18n flags =
                 , animatedTiles = []
                 , currentAnimatedTile = Nothing
                 , groupsView = prefs.groupsView
+                , keyboardInput = Set.empty
                 }
                 |> avoidTwoEqualSuits True RandomSuit
     in
@@ -247,10 +249,20 @@ update msg model =
                 --     _ =
                 --         Debug.log "numTries" numTries
                 -- in
-                ( initAnimatedTiles { model | tiles = tiles, waits = waits, selectedWaits = Set.empty, confirmedSelected = False, currentAnimatedTile = Nothing }, Cmd.none )
+                ( initAnimatedTiles
+                    { model
+                        | tiles = tiles
+                        , waits = waits
+                        , selectedWaits = Set.empty
+                        , confirmedSelected = False
+                        , currentAnimatedTile = Nothing
+                        , keyboardInput = Set.empty
+                    }
+                , Cmd.none
+                )
 
         ToggleWaitTile tile ->
-            if model.confirmedSelected || not (Tile.isValid tile) then
+            if model.confirmedSelected || not (Tile.isValid tile) || not (List.member tile.suit (waitTileSuits model)) then
                 ( model, Cmd.none )
 
             else
@@ -317,19 +329,40 @@ update msg model =
                 numValue =
                     String.toInt value
 
+                suitValue =
+                    Suit.fromString value
+
                 tileSuits =
                     waitTileSuits model
             in
-            case ( numValue, tileSuits ) of
-                ( Just val, [ suit ] ) ->
-                    if List.length tileSuits == 1 then
-                        update (ToggleWaitTile (Tile val suit)) model
+            case numValue of
+                Just val ->
+                    case tileSuits of
+                        [] ->
+                            ( model, Cmd.none )
 
-                    else
-                        ( model, Cmd.none )
+                        [ suit ] ->
+                            update (ToggleWaitTile (Tile val suit)) model
 
-                _ ->
-                    ( model, Cmd.none )
+                        _ ->
+                            if Set.member val model.keyboardInput then
+                                ( { model | keyboardInput = Set.remove val model.keyboardInput }, Cmd.none )
+
+                            else
+                                ( { model | keyboardInput = Set.insert val model.keyboardInput }, Cmd.none )
+
+                Nothing ->
+                    case suitValue of
+                        Just suit ->
+                            if not (Set.isEmpty model.keyboardInput) && List.length tileSuits > 1 then
+                                -- toogle multiple tiles at once (eg: 112s)
+                                Set.foldl (\n ( modl, _ ) -> update (ToggleWaitTile (Tile n suit)) modl) ( { model | keyboardInput = Set.empty }, Cmd.none ) model.keyboardInput
+
+                            else
+                                ( model, Cmd.none )
+
+                        Nothing ->
+                            ( model, Cmd.none )
 
 
 view : Model -> Html Msg
