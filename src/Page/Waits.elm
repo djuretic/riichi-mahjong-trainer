@@ -330,7 +330,8 @@ update msg model =
                     String.toInt value
 
                 suitValue =
-                    Suit.fromString value
+                    String.toLower value
+                        |> Suit.fromString
 
                 tileSuits =
                     waitTileSuits model
