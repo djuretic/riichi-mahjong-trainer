@@ -329,9 +329,11 @@ update msg model =
                 numValue =
                     String.toInt value
 
-                suitValue =
+                stringValue =
                     String.toLower value
-                        |> Suit.fromString
+
+                suitValue =
+                    Suit.fromString stringValue
 
                 tileSuits =
                     waitTileSuits model
@@ -363,7 +365,15 @@ update msg model =
                                 ( model, Cmd.none )
 
                         Nothing ->
-                            ( model, Cmd.none )
+                            case stringValue of
+                                "c" ->
+                                    update ConfirmSelected model
+
+                                "n" ->
+                                    update (GenerateTiles 0) model
+
+                                _ ->
+                                    ( model, Cmd.none )
 
 
 view : Model -> Html Msg
