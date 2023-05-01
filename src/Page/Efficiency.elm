@@ -1,7 +1,7 @@
 module Page.Efficiency exposing (Model, Msg, init, update, view)
 
 import Html exposing (Html, a, button, div, text)
-import Html.Attributes exposing (class, href, target)
+import Html.Attributes exposing (class, classList, href, target)
 import Html.Events exposing (onClick)
 import I18n
 import List.Extra
@@ -18,6 +18,7 @@ type alias Model =
     , availableTiles : List Tile
     , discardedTiles : List Tile
     , shanten : Shanten.ShantenDetail
+    , showShanten : Bool
     }
 
 
@@ -26,6 +27,7 @@ type Msg
     | TilesGenerated ( List Tile, List Tile )
     | DiscardTile Tile
     | DrawTile ( Maybe Tile, List Tile )
+    | ToggleShowShanten
 
 
 init : I18n.I18n -> ( Model, Cmd Msg )
@@ -35,6 +37,7 @@ init i18n =
       , availableTiles = []
       , discardedTiles = []
       , shanten = Shanten.init
+      , showShanten = False
       }
     , cmdGenerateTiles
     )
@@ -61,7 +64,13 @@ update msg model =
 
         DiscardTile tile ->
             if List.member tile model.tiles then
-                ( { model | tiles = List.Extra.remove tile model.tiles, discardedTiles = model.discardedTiles ++ [ tile ] }, Random.generate DrawTile (Random.List.choose model.availableTiles) )
+                ( { model
+                    | tiles = List.Extra.remove tile model.tiles |> Tile.sort
+                    , discardedTiles = model.discardedTiles ++ [ tile ]
+                    , showShanten = False
+                  }
+                , Random.generate DrawTile (Random.List.choose model.availableTiles)
+                )
 
             else
                 ( model, Cmd.none )
@@ -73,6 +82,9 @@ update msg model =
 
                 Nothing ->
                     ( model, Cmd.none )
+
+        ToggleShowShanten ->
+            ( { model | showShanten = not model.showShanten }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -92,7 +104,8 @@ view model =
     div []
         [ div [ class "block" ] [ UI.tilesWithOnClick model.i18n numberedTiles model.tiles |> Html.map uiMap ]
         , button [ class "button", onClick GenerateTiles ] [ text (I18n.newHandButton model.i18n) ]
-        , div []
+        , button [ class "button", onClick ToggleShowShanten ] [ text "Shanten" ]
+        , div [ classList [ ( "is-invisible", not model.showShanten ) ] ]
             [ text (String.fromInt model.shanten.final.shanten)
             , text "-shanten -> "
             , a [ href ("https://tenhou.net/2/?q=" ++ tilesString), target "_blank" ] [ text "Tenhou" ]
