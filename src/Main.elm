@@ -9,6 +9,7 @@ import Html.Events exposing (onClick, stopPropagationOn)
 import I18n
 import Json.Decode as D
 import Json.Encode as E
+import Page.Efficiency
 import Page.Waits
 import UI
 
@@ -37,6 +38,7 @@ type alias Model =
 
     -- , scoring : Page.Scoring.Model
     , waits : Page.Waits.Model
+    , efficiency : Page.Efficiency.Model
     , languageDropdownOpen : Bool
     , showConfig : Bool
     }
@@ -64,6 +66,7 @@ type Theme
 type Page
     = ScoringPage
     | WaitsPage
+    | EfficiencyPage
 
 
 type Msg
@@ -71,8 +74,10 @@ type Msg
     | SetTheme Theme
     | SetLanguage I18n.Language
     | WaitsMsg Page.Waits.Msg
+    | EfficiencyMsg Page.Efficiency.Msg
     | SetLanguageDropdownOpen Bool
     | ToggleShowConfig
+    | TogglePage
 
 
 defaultConfig : ConfigModel
@@ -126,6 +131,9 @@ init flags =
         ( waits, waitsCmd ) =
             Page.Waits.init i18n flagsModel.waits
 
+        ( efficiency, efficiencyCmd ) =
+            Page.Efficiency.init i18n
+
         theme =
             if configModel.darkTheme then
                 DarkMode
@@ -139,12 +147,18 @@ init flags =
             , page = WaitsPage
             , theme = theme
             , waits = waits
+            , efficiency = efficiency
             , languageDropdownOpen = False
             , showConfig = False
             }
     in
     ( model
-    , Cmd.batch [ Cmd.map WaitsMsg waitsCmd, setHtmlClass (themeClassName theme), setStorageConfig (encode model) ]
+    , Cmd.batch
+        [ Cmd.map WaitsMsg waitsCmd
+        , setHtmlClass (themeClassName theme)
+        , setStorageConfig (encode model)
+        , Cmd.map EfficiencyMsg efficiencyCmd
+        ]
     )
 
 
@@ -178,11 +192,33 @@ update msg model =
             in
             ( { model | waits = waits }, Cmd.map WaitsMsg waitsCmd )
 
+        EfficiencyMsg emsg ->
+            let
+                ( efficiency, efficiencyCmd ) =
+                    Page.Efficiency.update emsg model.efficiency
+            in
+            ( { model | efficiency = efficiency }, Cmd.map EfficiencyMsg efficiencyCmd )
+
         SetLanguageDropdownOpen value ->
             ( { model | languageDropdownOpen = value }, Cmd.none )
 
         ToggleShowConfig ->
             ( { model | showConfig = not model.showConfig }, Cmd.none )
+
+        TogglePage ->
+            let
+                newPage =
+                    case model.page of
+                        WaitsPage ->
+                            EfficiencyPage
+
+                        EfficiencyPage ->
+                            WaitsPage
+
+                        ScoringPage ->
+                            EfficiencyPage
+            in
+            ( { model | page = newPage }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -204,6 +240,9 @@ view model =
 
                 WaitsPage ->
                     Html.map WaitsMsg (Page.Waits.view model.waits)
+
+                EfficiencyPage ->
+                    Html.map EfficiencyMsg (Page.Efficiency.view model.efficiency)
     in
     div
         [ class "base-container"
@@ -235,6 +274,7 @@ navbar : Model -> Html.Html Msg
 navbar model =
     div [ class "navbar container is-flex is-flex-direction-row is-justify-content-space-between p-2" ]
         [ h1 [ class "title is-size-4 mb-0 overflow-ellipsis" ] [ text (I18n.siteTitle model.i18n) ]
+        , a [ onClick TogglePage ] [ text "*" ]
         , a
             [ class "icon-link is-clickable p-1 rounded", classList [ ( "has-background-primary", model.showConfig ) ], title (I18n.settingsTitle model.i18n), onClick ToggleShowConfig ]
             [ UI.icon "icon" Solid.gear ]
