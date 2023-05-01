@@ -46,13 +46,21 @@ shanten tiles =
 
         standard =
             shantenStandard tiles
+
+        minShanten =
+            List.map .shanten [ kokushi, chiitoitsu, standard ]
+                |> List.minimum
+                |> Maybe.withDefault 8
+
+        groups =
+            List.filter (\sh -> sh.shanten == minShanten) [ kokushi, chiitoitsu, standard ]
+                |> List.map .groups
+                |> List.concat
     in
     { kokushi = kokushi
     , chiitoitsu = chiitoitsu
     , standard = standard
-    , final =
-        List.Extra.minimumBy .shanten [ kokushi, chiitoitsu, standard ]
-            |> Maybe.withDefault { shanten = 8, groups = [] }
+    , final = { shanten = minShanten, groups = groups }
     }
 
 

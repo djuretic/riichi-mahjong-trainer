@@ -91,11 +91,11 @@ view model =
     in
     div []
         [ div [ class "block" ] [ UI.tilesWithOnClick model.i18n numberedTiles model.tiles |> Html.map uiMap ]
+        , button [ class "button", onClick GenerateTiles ] [ text (I18n.newHandButton model.i18n) ]
         , div []
             [ text (String.fromInt model.shanten.final.shanten)
             , text "-shanten -> "
             , a [ href ("https://tenhou.net/2/?q=" ++ tilesString), target "_blank" ] [ text "Tenhou" ]
             , div [] (List.map (\lg -> UI.groupsSimple model.i18n numberedTiles lg) model.shanten.final.groups)
             ]
-        , button [ class "button", onClick GenerateTiles ] [ text (I18n.newHandButton model.i18n) ]
         ]
