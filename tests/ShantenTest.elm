@@ -27,6 +27,7 @@ suite =
             [ testShantenStandard "2-shanten" 2 "46789m55779p457s"
             , testShantenStandard "tenpai" 0 "456m567p12388s77z"
             , testShantenStandard "chinitsu" -1 "1112245677889p6p"
+            , testShantenStandard "group with 2 partials (pin)" 3 "149m2334568p335s"
             , testShantenStandard "6 groups" 1 "3367m11123p1267s3m"
             ]
         , describe "Standard shanten (less tiles)"

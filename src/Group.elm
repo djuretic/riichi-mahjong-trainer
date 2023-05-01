@@ -336,7 +336,7 @@ keepHighestScore findPartialsOption groups =
         let
             groupsWithScores =
                 List.map (\g -> ( completionScore g, g )) groups
-                    |> List.sortBy (\( cs, _ ) -> ( cs.groups, cs.pairs, cs.partials ))
+                    |> List.sortBy (\( cs, _ ) -> ( cs.groups, cs.pairs + cs.partials ))
                     |> List.reverse
 
             maxScore =
