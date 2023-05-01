@@ -62,7 +62,7 @@ view model =
             False
 
         tilesString =
-            List.map Tile.toString model.tiles |> String.join ""
+            Tile.listToString model.tiles
     in
     div []
         [ div [ class "block" ] [ UI.tiles model.i18n numberedTiles model.tiles ]

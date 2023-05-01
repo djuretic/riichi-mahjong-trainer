@@ -13,6 +13,7 @@ module Tile exposing
     , isTerminal
     , isTriplet
     , isValid
+    , listToString
     , moveWinningTileToEnd
     , partitionBySuit
     , push
@@ -31,6 +32,7 @@ module Tile exposing
 
 import Array
 import Counter
+import List.Extra
 import Parser exposing ((|.), (|=))
 import Random
 import Random.List
@@ -286,6 +288,28 @@ push tile tiles =
 toString : Tile -> String
 toString tile =
     String.fromInt tile.number ++ Suit.toString tile.suit
+
+
+listToString : List Tile -> String
+listToString tiles =
+    case tiles of
+        [] ->
+            ""
+
+        x :: _ ->
+            let
+                suit =
+                    x.suit
+
+                sameSuitTiles =
+                    List.Extra.takeWhile (\t -> t.suit == suit) tiles
+                        |> List.map (\t -> String.fromInt t.number)
+                        |> String.join ""
+
+                remaining =
+                    List.Extra.dropWhile (\t -> t.suit == suit) tiles
+            in
+            sameSuitTiles ++ Suit.toString suit ++ listToString remaining
 
 
 randomWind : Random.Generator Wind
