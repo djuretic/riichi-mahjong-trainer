@@ -142,6 +142,31 @@ findPairs tiles =
             findPairs xs
 
 
+expectedGroups : Int -> Int
+expectedGroups numTiles =
+    case numTiles of
+        4 ->
+            2
+
+        5 ->
+            2
+
+        7 ->
+            3
+
+        8 ->
+            3
+
+        10 ->
+            4
+
+        11 ->
+            4
+
+        _ ->
+            5
+
+
 shantenStandard : List Tile -> ShantenCalculation
 shantenStandard tiles =
     let
@@ -153,26 +178,17 @@ shantenStandard tiles =
         completionScore =
             Group.completionScore (List.head groupConfigurations |> Maybe.withDefault [])
 
-        noPairPenalty =
-            let
-                usedTiles =
-                    3 * completionScore.groups + 2 * (completionScore.pairs + completionScore.partials)
+        scoreSum =
+            completionScore.groups + completionScore.pairs + completionScore.partials
 
-                -- if unusedTiles == 2, any of those tiles is candidate for a pair, after discarding the other one
-                unusedTiles =
-                    List.length tiles - usedTiles
-            in
-            if completionScore.pairs == 0 && List.member (List.length tiles) [ 5, 8, 11, 14 ] && unusedTiles /= 2 then
+        noPairPenalty =
+            if scoreSum == expectedGroups (List.length tiles) && completionScore.pairs == 0 then
                 1
 
             else
                 0
 
         tooManyGroupsPenalty =
-            let
-                scoreSum =
-                    completionScore.groups + completionScore.pairs + completionScore.partials
-            in
             max 0 (scoreSum - 5)
 
         baselineScore =
@@ -197,6 +213,8 @@ shantenStandard tiles =
 
                 _ ->
                     8
+
+        -- _ = Debug.log "aaa" { baseLineScore = baselineScore, completionScore = completionScore, noPairPenalty = noPairPenalty, tooManyGroupsPenalty = tooManyGroupsPenalty  }
     in
     { shanten = baselineScore - 2 * completionScore.groups - completionScore.pairs - completionScore.partials + noPairPenalty + tooManyGroupsPenalty
     , groups = groupConfigurations
