@@ -1,6 +1,7 @@
 module Shanten exposing
     ( ShantenDetail
     , TileAcceptance(..)
+    , init
     , shanten
     , shantenChiitoitsu
     , shantenKokushi
@@ -52,6 +53,19 @@ shanten tiles =
     , final =
         List.Extra.minimumBy .shanten [ kokushi, chiitoitsu, standard ]
             |> Maybe.withDefault { shanten = 8, groups = [] }
+    }
+
+
+init : ShantenDetail
+init =
+    let
+        base =
+            { shanten = 8, groups = [] }
+    in
+    { kokushi = base
+    , chiitoitsu = base
+    , standard = base
+    , final = base
     }
 
 

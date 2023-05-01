@@ -1,10 +1,11 @@
 module Page.Efficiency exposing (Model, Msg, init, update, view)
 
 import Html exposing (Html, a, button, div, input, li, p, table, tbody, td, text, tfoot, th, thead, tr, ul)
-import Html.Attributes exposing (class, colspan, placeholder, type_, value)
-import Html.Events exposing (onClick, onInput)
+import Html.Attributes exposing (class, colspan, href, placeholder, target, type_, value)
+import Html.Events exposing (onClick)
 import I18n
 import Random
+import Shanten
 import Tile exposing (Tile)
 import UI
 
@@ -14,6 +15,7 @@ type alias Model =
     , tiles : List Tile
     , availableTiles : List Tile
     , discardedTiles : List Tile
+    , shanten : Shanten.ShantenDetail
     }
 
 
@@ -28,6 +30,7 @@ init i18n =
       , tiles = []
       , availableTiles = []
       , discardedTiles = []
+      , shanten = Shanten.init
       }
     , cmdGenerateTiles
     )
@@ -45,7 +48,11 @@ update msg model =
             ( model, cmdGenerateTiles )
 
         TilesGenerated ( tiles, remainingTiles ) ->
-            ( { model | tiles = Tile.sort tiles, availableTiles = remainingTiles, discardedTiles = [] }, Cmd.none )
+            let
+                shanten =
+                    Shanten.shanten tiles
+            in
+            ( { model | tiles = Tile.sort tiles, availableTiles = remainingTiles, discardedTiles = [], shanten = shanten }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -53,8 +60,16 @@ view model =
     let
         numberedTiles =
             False
+
+        tilesString =
+            List.map Tile.toString model.tiles |> String.join ""
     in
     div []
         [ div [ class "block" ] [ UI.tiles model.i18n numberedTiles model.tiles ]
+        , div []
+            [ text (String.fromInt model.shanten.final.shanten)
+            , text "-shanten -> "
+            , a [ href ("https://tenhou.net/2/?q=" ++ tilesString), target "_blank" ] [ text "Tenhou" ]
+            ]
         , button [ class "button", onClick GenerateTiles ] [ text (I18n.newHandButton model.i18n) ]
         ]
