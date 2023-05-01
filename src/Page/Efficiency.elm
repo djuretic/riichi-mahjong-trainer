@@ -1,10 +1,12 @@
 module Page.Efficiency exposing (Model, Msg, init, update, view)
 
-import Html exposing (Html, a, button, div, input, li, p, table, tbody, td, text, tfoot, th, thead, tr, ul)
-import Html.Attributes exposing (class, colspan, href, placeholder, target, type_, value)
+import Html exposing (Html, a, button, div, text)
+import Html.Attributes exposing (class, href, target)
 import Html.Events exposing (onClick)
 import I18n
+import List.Extra
 import Random
+import Random.List
 import Shanten
 import Tile exposing (Tile)
 import UI
@@ -20,8 +22,10 @@ type alias Model =
 
 
 type Msg
-    = TilesGenerated ( List Tile, List Tile )
-    | GenerateTiles
+    = GenerateTiles
+    | TilesGenerated ( List Tile, List Tile )
+    | DiscardTile Tile
+    | DrawTile ( Maybe Tile, List Tile )
 
 
 init : I18n.I18n -> ( Model, Cmd Msg )
@@ -41,6 +45,11 @@ cmdGenerateTiles =
     Random.generate TilesGenerated (Tile.randomList 14)
 
 
+recalculateShanten : Model -> Model
+recalculateShanten model =
+    { model | shanten = Shanten.shanten model.tiles }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -48,11 +57,22 @@ update msg model =
             ( model, cmdGenerateTiles )
 
         TilesGenerated ( tiles, remainingTiles ) ->
-            let
-                shanten =
-                    Shanten.shanten tiles
-            in
-            ( { model | tiles = Tile.sort tiles, availableTiles = remainingTiles, discardedTiles = [], shanten = shanten }, Cmd.none )
+            ( recalculateShanten { model | tiles = Tile.sort tiles, availableTiles = remainingTiles, discardedTiles = [] }, Cmd.none )
+
+        DiscardTile tile ->
+            if List.member tile model.tiles then
+                ( { model | tiles = List.Extra.remove tile model.tiles, discardedTiles = model.discardedTiles ++ [ tile ] }, Random.generate DrawTile (Random.List.choose model.availableTiles) )
+
+            else
+                ( model, Cmd.none )
+
+        DrawTile ( possibleTile, availableTiles ) ->
+            case possibleTile of
+                Just tile ->
+                    ( recalculateShanten { model | tiles = model.tiles ++ [ tile ], availableTiles = availableTiles }, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -63,9 +83,14 @@ view model =
 
         tilesString =
             Tile.listToString model.tiles
+
+        uiMap uiMsg =
+            case uiMsg of
+                UI.TileOnClick tile ->
+                    DiscardTile tile
     in
     div []
-        [ div [ class "block" ] [ UI.tiles model.i18n numberedTiles model.tiles ]
+        [ div [ class "block" ] [ UI.tilesWithOnClick model.i18n numberedTiles model.tiles |> Html.map uiMap ]
         , div []
             [ text (String.fromInt model.shanten.final.shanten)
             , text "-shanten -> "
