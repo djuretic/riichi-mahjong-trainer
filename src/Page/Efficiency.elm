@@ -19,6 +19,7 @@ type alias Model =
     , discardedTiles : List Tile
     , shanten : Shanten.ShantenDetail
     , showShanten : Bool
+    , tileAcceptance : Shanten.TileAcceptance
     }
 
 
@@ -38,6 +39,7 @@ init i18n =
       , discardedTiles = []
       , shanten = Shanten.init
       , showShanten = False
+      , tileAcceptance = Shanten.Draw Shanten.emptyTileAcceptanceDetail
       }
     , cmdGenerateTiles
     )
@@ -50,7 +52,7 @@ cmdGenerateTiles =
 
 recalculateShanten : Model -> Model
 recalculateShanten model =
-    { model | shanten = Shanten.shanten model.tiles }
+    { model | shanten = Shanten.shanten model.tiles, tileAcceptance = Shanten.tileAcceptance model.tiles }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -110,5 +112,32 @@ view model =
             , text "-shanten -> "
             , a [ href ("https://tenhou.net/2/?q=" ++ tilesString), target "_blank" ] [ text "Tenhou" ]
             , div [] (List.map (\lg -> UI.groupsSimple model.i18n numberedTiles lg) model.shanten.final.groups)
+            , text "Tile acceptance"
+            , tileAcceptance model
             ]
         ]
+
+
+tileAcceptance : Model -> Html Msg
+tileAcceptance model =
+    let
+        addNumbers =
+            False
+    in
+    case model.tileAcceptance of
+        Shanten.Draw _ ->
+            div [] []
+
+        Shanten.DiscardAndDraw listAcceptance ->
+            div []
+                (List.map
+                    (\( t, detail ) ->
+                        div []
+                            [ UI.tileSimple model.i18n addNumbers t
+                            , text "->"
+                            , UI.tiles model.i18n addNumbers detail.tiles
+                            , text (String.fromInt detail.numTiles)
+                            ]
+                    )
+                    listAcceptance
+                )

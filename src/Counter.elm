@@ -20,6 +20,8 @@ fromIntList intList =
     List.foldl accum counter intList
 
 
+{-| n is zero-based!
+-}
 getCount : Int -> Counter -> Int
 getCount n counter =
     Array.get n counter

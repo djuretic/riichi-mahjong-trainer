@@ -1,6 +1,7 @@
 module Shanten exposing
     ( ShantenDetail
     , TileAcceptance(..)
+    , emptyTileAcceptanceDetail
     , init
     , shanten
     , shantenChiitoitsu
@@ -9,6 +10,7 @@ module Shanten exposing
     , tileAcceptance
     )
 
+import Counter exposing (Counter)
 import Group exposing (Group)
 import List
 import List.Extra
@@ -30,9 +32,28 @@ type alias ShantenCalculation =
     }
 
 
+type alias TileAcceptanceDetail =
+    { numTiles : Int
+    , tiles : List Tile
+    }
+
+
 type TileAcceptance
-    = DiscardAndDraw (List ( Tile, List Tile ))
-    | Draw (List Tile)
+    = DiscardAndDraw (List ( Tile, TileAcceptanceDetail ))
+    | Draw TileAcceptanceDetail
+
+
+type alias CounterPerSuit =
+    { sou : Counter
+    , man : Counter
+    , pin : Counter
+    , honor : Counter
+    }
+
+
+emptyTileAcceptanceDetail : TileAcceptanceDetail
+emptyTileAcceptanceDetail =
+    { numTiles = 0, tiles = [] }
 
 
 shanten : List Tile -> ShantenDetail
@@ -240,7 +261,7 @@ tileAcceptance tiles =
     in
     if currentShanten.final.shanten >= 0 then
         if List.member numTiles [ 4, 7, 10, 13 ] then
-            Draw (drawnTileAcceptance currentShanten.final.shanten tiles)
+            Draw (drawnTileAcceptance currentShanten.final.shanten tiles |> addNumTilesToTileAcceptance tiles)
 
         else if List.member numTiles [ 5, 8, 11, 14 ] then
             let
@@ -248,16 +269,17 @@ tileAcceptance tiles =
                     List.Extra.unique tiles
 
                 discardsAndAcceptance =
-                    List.map (\t -> ( t, drawnTileAcceptance currentShanten.final.shanten (List.Extra.remove t tiles) )) uniqueTiles
-                        |> List.filter (\( _, acceptance ) -> not (List.isEmpty acceptance))
+                    List.map (\t -> ( t, drawnTileAcceptance currentShanten.final.shanten (List.Extra.remove t tiles) |> addNumTilesToTileAcceptance tiles )) uniqueTiles
+                        |> List.filter (\( _, acceptance ) -> not (List.isEmpty acceptance.tiles))
+                        |> List.sortBy (\( _, acceptance ) -> negate acceptance.numTiles)
             in
             DiscardAndDraw discardsAndAcceptance
 
         else
-            Draw []
+            Draw emptyTileAcceptanceDetail
 
     else
-        Draw []
+        Draw emptyTileAcceptanceDetail
 
 
 drawnTileAcceptance : Int -> List Tile -> List Tile
@@ -272,3 +294,44 @@ drawnTileAcceptance baseShanten tiles =
                 |> List.filter (\( _, sd ) -> sd.final.shanten < baseShanten)
     in
     List.map Tuple.first shantenByTile
+
+
+addNumTilesToTileAcceptance : List Tile -> List Tile -> TileAcceptanceDetail
+addNumTilesToTileAcceptance usedTiles tiles =
+    let
+        partition =
+            Tile.partitionBySuit usedTiles
+
+        counterPerSuit =
+            { pin = List.map .number partition.pin |> Counter.fromIntList
+            , man = List.map .number partition.man |> Counter.fromIntList
+            , sou = List.map .number partition.sou |> Counter.fromIntList
+            , honor = List.map .number partition.honor |> Counter.fromIntList
+            }
+
+        resultTiles =
+            List.map (\t -> ( t, numRemainingTilesOf counterPerSuit t )) tiles
+    in
+    { numTiles = List.map Tuple.second resultTiles |> List.sum
+    , tiles = List.map Tuple.first resultTiles
+    }
+
+
+numRemainingTilesOf : CounterPerSuit -> Tile -> Int
+numRemainingTilesOf counterPerSuit tile =
+    let
+        used =
+            case tile.suit of
+                Suit.Pin ->
+                    Counter.getCount (tile.number - 1) counterPerSuit.pin
+
+                Suit.Man ->
+                    Counter.getCount (tile.number - 1) counterPerSuit.man
+
+                Suit.Sou ->
+                    Counter.getCount (tile.number - 1) counterPerSuit.sou
+
+                Suit.Honor ->
+                    Counter.getCount (tile.number - 1) counterPerSuit.honor
+    in
+    4 - used
