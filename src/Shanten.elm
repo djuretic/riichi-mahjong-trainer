@@ -250,8 +250,8 @@ shantenStandard tiles =
     }
 
 
-tileAcceptance : List Tile -> TileAcceptance
-tileAcceptance tiles =
+tileAcceptance : List Tile -> List Tile -> TileAcceptance
+tileAcceptance usedTiles tiles =
     let
         currentShanten =
             shanten tiles
@@ -261,7 +261,7 @@ tileAcceptance tiles =
     in
     if currentShanten.final.shanten >= 0 then
         if List.member numTiles [ 4, 7, 10, 13 ] then
-            Draw (drawnTileAcceptance currentShanten.final.shanten tiles |> addNumTilesToTileAcceptance tiles)
+            Draw (drawnTileAcceptance currentShanten.final.shanten tiles |> addNumTilesToTileAcceptance (tiles ++ usedTiles))
 
         else if List.member numTiles [ 5, 8, 11, 14 ] then
             let
@@ -269,7 +269,7 @@ tileAcceptance tiles =
                     List.Extra.unique tiles
 
                 discardsAndAcceptance =
-                    List.map (\t -> ( t, drawnTileAcceptance currentShanten.final.shanten (List.Extra.remove t tiles) |> addNumTilesToTileAcceptance tiles )) uniqueTiles
+                    List.map (\t -> ( t, drawnTileAcceptance currentShanten.final.shanten (List.Extra.remove t tiles) |> addNumTilesToTileAcceptance (t :: tiles ++ usedTiles) )) uniqueTiles
                         |> List.filter (\( _, acceptance ) -> not (List.isEmpty acceptance.tiles))
                         |> List.sortBy (\( _, acceptance ) -> negate acceptance.numTiles)
             in

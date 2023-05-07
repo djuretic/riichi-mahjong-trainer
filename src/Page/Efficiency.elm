@@ -52,7 +52,7 @@ cmdGenerateTiles =
 
 recalculateShanten : Model -> Model
 recalculateShanten model =
-    { model | shanten = Shanten.shanten model.tiles, tileAcceptance = Shanten.tileAcceptance model.tiles }
+    { model | shanten = Shanten.shanten model.tiles, tileAcceptance = Shanten.tileAcceptance model.discardedTiles model.tiles }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

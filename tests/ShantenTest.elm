@@ -72,7 +72,7 @@ testShantenStandard name shanten hand =
 testTileAcceptanceDraw : String -> String -> Int -> String -> Test
 testTileAcceptanceDraw name acceptedTiles numTiles hand =
     test name <|
-        \_ -> Expect.equal (Shanten.Draw { numTiles = numTiles, tiles = Tile.fromString acceptedTiles }) (Shanten.tileAcceptance (Tile.fromString hand))
+        \_ -> Expect.equal (Shanten.Draw { numTiles = numTiles, tiles = Tile.fromString acceptedTiles }) (Shanten.tileAcceptance [] (Tile.fromString hand))
 
 
 testTileAcceptanceDiscardDraw : String -> List ( String, ( String, Int ) ) -> String -> Test
@@ -82,4 +82,4 @@ testTileAcceptanceDiscardDraw name acceptedTiles hand =
             List.map (\( t, ( tt, num ) ) -> ( Tile.fromString t |> List.head |> Maybe.withDefault (Tile 99 Suit.Man), { numTiles = num, tiles = Tile.fromString tt } )) acceptedTiles
     in
     test name <|
-        \_ -> Expect.equal (Shanten.DiscardAndDraw tiles) (Shanten.tileAcceptance (Tile.fromString hand))
+        \_ -> Expect.equal (Shanten.DiscardAndDraw tiles) (Shanten.tileAcceptance [] (Tile.fromString hand))
