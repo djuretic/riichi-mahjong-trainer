@@ -1,6 +1,7 @@
 module Shanten exposing
     ( ShantenDetail
     , TileAcceptance(..)
+    , TileAcceptanceDetail
     , emptyTileAcceptanceDetail
     , init
     , shanten

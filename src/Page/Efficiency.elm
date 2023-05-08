@@ -1,6 +1,6 @@
 module Page.Efficiency exposing (Model, Msg, init, update, view)
 
-import Html exposing (Html, a, button, div, text)
+import Html exposing (Html, a, button, div, span, text)
 import Html.Attributes exposing (class, classList, href, target)
 import Html.Events exposing (onClick)
 import I18n
@@ -20,6 +20,8 @@ type alias Model =
     , shanten : Shanten.ShantenDetail
     , showShanten : Bool
     , tileAcceptance : Shanten.TileAcceptance
+    , lastDiscardAcceptanceDetail : Maybe ( Tile, Shanten.TileAcceptanceDetail )
+    , lastDiscardBestAcceptanceDetail : Maybe ( Tile, Shanten.TileAcceptanceDetail )
     }
 
 
@@ -40,6 +42,8 @@ init i18n =
       , shanten = Shanten.init
       , showShanten = False
       , tileAcceptance = Shanten.Draw Shanten.emptyTileAcceptanceDetail
+      , lastDiscardAcceptanceDetail = Nothing
+      , lastDiscardBestAcceptanceDetail = Nothing
       }
     , cmdGenerateTiles
     )
@@ -62,14 +66,43 @@ update msg model =
             ( model, cmdGenerateTiles )
 
         TilesGenerated ( tiles, remainingTiles ) ->
-            ( recalculateShanten { model | tiles = Tile.sort tiles, availableTiles = remainingTiles, discardedTiles = [] }, Cmd.none )
+            ( recalculateShanten
+                { model
+                    | tiles = Tile.sort tiles
+                    , availableTiles = remainingTiles
+                    , discardedTiles = []
+                    , lastDiscardAcceptanceDetail = Nothing
+                    , lastDiscardBestAcceptanceDetail = Nothing
+                }
+            , Cmd.none
+            )
 
         DiscardTile tile ->
             if List.member tile model.tiles then
+                let
+                    filterTileAcceptance : Tile -> Shanten.TileAcceptance -> Maybe ( Tile, Shanten.TileAcceptanceDetail )
+                    filterTileAcceptance tileToFind tileAccept =
+                        case tileAccept of
+                            Shanten.DiscardAndDraw tileAcceptanceList ->
+                                List.Extra.find (\( t, _ ) -> t == tileToFind) tileAcceptanceList
+
+                            _ ->
+                                Nothing
+
+                    bestTileAcceptance =
+                        case model.tileAcceptance of
+                            Shanten.DiscardAndDraw tileAcceptanceList ->
+                                List.head tileAcceptanceList
+
+                            _ ->
+                                Nothing
+                in
                 ( { model
                     | tiles = List.Extra.remove tile model.tiles |> Tile.sort
                     , discardedTiles = model.discardedTiles ++ [ tile ]
                     , showShanten = False
+                    , lastDiscardAcceptanceDetail = filterTileAcceptance tile model.tileAcceptance
+                    , lastDiscardBestAcceptanceDetail = bestTileAcceptance
                   }
                 , Random.generate DrawTile (Random.List.choose model.availableTiles)
                 )
@@ -107,6 +140,12 @@ view model =
         [ div [ class "block" ] [ UI.tilesWithOnClick model.i18n numberedTiles model.tiles |> Html.map uiMap ]
         , button [ class "button", onClick GenerateTiles ] [ text (I18n.newHandButton model.i18n) ]
         , button [ class "button", onClick ToggleShowShanten ] [ text "Shanten" ]
+        , div []
+            [ text "Discard with widest tile acceptance"
+            , Maybe.map (tileAcceptanceDiscardTile model numberedTiles) model.lastDiscardBestAcceptanceDetail |> Maybe.withDefault (span [] [])
+            , text "Your discard"
+            , Maybe.map (tileAcceptanceDiscardTile model numberedTiles) model.lastDiscardAcceptanceDetail |> Maybe.withDefault (span [] [])
+            ]
         , div [ classList [ ( "is-invisible", not model.showShanten ) ] ]
             [ text (String.fromInt model.shanten.final.shanten)
             , text "-shanten -> "
@@ -131,13 +170,16 @@ tileAcceptance model =
         Shanten.DiscardAndDraw listAcceptance ->
             div []
                 (List.map
-                    (\( t, detail ) ->
-                        div []
-                            [ UI.tileSimple model.i18n addNumbers t
-                            , text "->"
-                            , UI.tiles model.i18n addNumbers detail.tiles
-                            , text (String.fromInt detail.numTiles)
-                            ]
-                    )
+                    (tileAcceptanceDiscardTile model addNumbers)
                     listAcceptance
                 )
+
+
+tileAcceptanceDiscardTile : Model -> Bool -> ( Tile, Shanten.TileAcceptanceDetail ) -> Html Msg
+tileAcceptanceDiscardTile model addNumbers ( tile, detail ) =
+    div []
+        [ UI.tileSimple model.i18n addNumbers tile
+        , text "->"
+        , UI.tiles model.i18n addNumbers detail.tiles
+        , text (String.fromInt detail.numTiles)
+        ]
