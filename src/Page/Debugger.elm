@@ -183,11 +183,11 @@ view model =
         , button [ class "button is-secondary", onClick UndoTurn, disabled (List.isEmpty model.previousTurns) ] [ text "Undo turn" ]
         , showAnalysisSelector model
         , div [ class "block" ]
-            [ UI.tilesWithOnClick model.i18n False model.tiles |> Html.map uiMap
+            [ UI.tilesDivWithOnClick model.i18n False model.tiles |> Html.map uiMap
             , text "Discards:"
-            , UI.tiles model.i18n False (List.take 6 model.discards)
-            , UI.tiles model.i18n False (List.take 6 (List.drop 6 model.discards))
-            , UI.tiles model.i18n False (List.drop 12 model.discards)
+            , UI.tilesDiv model.i18n False (List.take 6 model.discards)
+            , UI.tilesDiv model.i18n False (List.take 6 (List.drop 6 model.discards))
+            , UI.tilesDiv model.i18n False (List.drop 12 model.discards)
             ]
         , analysisSection
         ]
@@ -208,7 +208,7 @@ tileAcceptanceSection : Shanten.TileAcceptance -> Model -> Html Msg
 tileAcceptanceSection tileAcceptance model =
     case tileAcceptance of
         Shanten.Draw tiles ->
-            UI.tiles model.i18n False tiles
+            UI.tilesDiv model.i18n False tiles
 
         Shanten.DiscardAndDraw discardAndTiles ->
             div []
@@ -217,7 +217,7 @@ tileAcceptanceSection tileAcceptance model =
                         div []
                             [ UI.tileSimple model.i18n False discardTile
                             , text "->"
-                            , UI.tiles model.i18n False tiles
+                            , UI.tilesDiv model.i18n False tiles
                             ]
                     )
                     discardAndTiles

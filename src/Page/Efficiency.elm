@@ -14,6 +14,7 @@ import UI
 
 type alias Model =
     { i18n : I18n.I18n
+    , numberOfTiles : Int
     , tiles : List Tile
     , availableTiles : List Tile
     , discardedTiles : List Tile
@@ -28,6 +29,7 @@ type alias Model =
 type Msg
     = GenerateTiles
     | TilesGenerated ( List Tile, List Tile )
+    | SetNumberOfTiles Int
     | DiscardTile Tile
     | DrawTile ( Maybe Tile, List Tile )
     | ToggleShowShanten
@@ -36,6 +38,7 @@ type Msg
 init : I18n.I18n -> ( Model, Cmd Msg )
 init i18n =
     ( { i18n = i18n
+      , numberOfTiles = 14
       , tiles = []
       , availableTiles = []
       , discardedTiles = []
@@ -45,13 +48,13 @@ init i18n =
       , lastDiscardAcceptanceDetail = Nothing
       , lastDiscardBestAcceptanceDetail = Nothing
       }
-    , cmdGenerateTiles
+    , cmdGenerateTiles 14
     )
 
 
-cmdGenerateTiles : Cmd Msg
-cmdGenerateTiles =
-    Random.generate TilesGenerated (Tile.randomList 14)
+cmdGenerateTiles : Int -> Cmd Msg
+cmdGenerateTiles numTiles =
+    Random.generate TilesGenerated (Tile.randomList numTiles)
 
 
 recalculateShanten : Model -> Model
@@ -63,7 +66,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GenerateTiles ->
-            ( model, cmdGenerateTiles )
+            ( model, cmdGenerateTiles model.numberOfTiles )
 
         TilesGenerated ( tiles, remainingTiles ) ->
             ( recalculateShanten
@@ -76,6 +79,9 @@ update msg model =
                 }
             , Cmd.none
             )
+
+        SetNumberOfTiles numTiles ->
+            update GenerateTiles { model | numberOfTiles = numTiles }
 
         DiscardTile tile ->
             if List.member tile model.tiles then
@@ -137,15 +143,12 @@ view model =
                     DiscardTile tile
     in
     div []
-        [ div [ class "block" ] [ UI.tilesDivWithOnClick model.i18n numberedTiles model.tiles |> Html.map uiMap ]
+        [ div [ class "block" ]
+            [ UI.label (I18n.numTilesSelectorTitle model.i18n) (numberTilesSelector model)
+            ]
+        , div [ class "block" ] [ UI.tilesDivWithOnClick model.i18n numberedTiles model.tiles |> Html.map uiMap ]
         , button [ class "button", onClick GenerateTiles ] [ text (I18n.newHandButton model.i18n) ]
         , button [ class "button", onClick ToggleShowShanten ] [ text "Shanten" ]
-        , div []
-            [ text "Discard with widest tile acceptance"
-            , Maybe.map (tileAcceptanceDiscardTile model numberedTiles) model.lastDiscardBestAcceptanceDetail |> Maybe.withDefault (span [] [])
-            , text "Your discard"
-            , Maybe.map (tileAcceptanceDiscardTile model numberedTiles) model.lastDiscardAcceptanceDetail |> Maybe.withDefault (span [] [])
-            ]
         , div [ classList [ ( "is-invisible", not model.showShanten ) ] ]
             [ text (String.fromInt model.shanten.final.shanten)
             , text "-shanten -> "
@@ -154,6 +157,34 @@ view model =
             , text "Tile acceptance"
             , tileAcceptance model
             ]
+        , div [ classList [ ( "is-invisible", not model.showShanten ) ] ]
+            [ text "Discard with widest tile acceptance"
+            , Maybe.map (tileAcceptanceDiscardTile model numberedTiles) model.lastDiscardBestAcceptanceDetail |> Maybe.withDefault (span [] [])
+            , text "Your discard"
+            , Maybe.map (tileAcceptanceDiscardTile model numberedTiles) model.lastDiscardAcceptanceDetail |> Maybe.withDefault (span [] [])
+            ]
+        ]
+
+
+numberTilesSelector : Model -> Html Msg
+numberTilesSelector model =
+    let
+        buttonUI txt numberOfTiles =
+            button
+                [ classList
+                    [ ( "button", True )
+                    , ( "is-primary", model.numberOfTiles == numberOfTiles )
+                    , ( "is-selected", model.numberOfTiles == numberOfTiles )
+                    ]
+                , onClick (SetNumberOfTiles numberOfTiles)
+                ]
+                [ text txt ]
+    in
+    div [ class "buttons has-addons" ]
+        [ buttonUI "5" 5
+        , buttonUI "8" 8
+        , buttonUI "11" 11
+        , buttonUI "14" 14
         ]
 
 
@@ -178,8 +209,10 @@ tileAcceptance model =
 tileAcceptanceDiscardTile : Model -> Bool -> ( Tile, Shanten.TileAcceptanceDetail ) -> Html Msg
 tileAcceptanceDiscardTile model addNumbers ( tile, detail ) =
     div UI.tilesDivAttrs
-        [ UI.tileSimple model.i18n addNumbers tile
-        , text "->"
-        , UI.tilesDiv model.i18n addNumbers detail.tiles
-        , text (String.fromInt detail.numTiles)
-        ]
+        ([ UI.tileSimple model.i18n addNumbers tile
+         , text "->"
+         ]
+            ++ UI.tilesList model.i18n addNumbers detail.tiles
+            ++ [ text (String.fromInt detail.numTiles)
+               ]
+        )
