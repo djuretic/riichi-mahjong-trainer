@@ -228,7 +228,7 @@ view model =
     div []
         [ input [ class "input", type_ "text", placeholder "Hand", value model.handString, onInput HandStr ] []
         , button [ class "button is-primary", onClick GenerateRandomWinningHand ] [ text "Random winning hand" ]
-        , p [] [ UI.tiles model.i18n True model.hand.tiles ]
+        , p [] [ UI.tilesDiv model.i18n True model.hand.tiles ]
         , renderWinBy model.hand
         , renderWinds model.hand
         , div [ class "tabs" ]
@@ -258,7 +258,7 @@ renderTabContent model =
                         (List.map
                             (\( t, g ) ->
                                 tr []
-                                    [ td [] [ UI.tiles model.i18n False [ t ] ]
+                                    [ td [] [ UI.tilesDiv model.i18n False [ t ] ]
                                     , td [] [ UI.groups model.i18n True t g ]
                                     ]
                             )

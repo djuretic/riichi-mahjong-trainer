@@ -137,7 +137,7 @@ view model =
                     DiscardTile tile
     in
     div []
-        [ div [ class "block" ] [ UI.tilesWithOnClick model.i18n numberedTiles model.tiles |> Html.map uiMap ]
+        [ div [ class "block" ] [ UI.tilesDivWithOnClick model.i18n numberedTiles model.tiles |> Html.map uiMap ]
         , button [ class "button", onClick GenerateTiles ] [ text (I18n.newHandButton model.i18n) ]
         , button [ class "button", onClick ToggleShowShanten ] [ text "Shanten" ]
         , div []
@@ -177,9 +177,9 @@ tileAcceptance model =
 
 tileAcceptanceDiscardTile : Model -> Bool -> ( Tile, Shanten.TileAcceptanceDetail ) -> Html Msg
 tileAcceptanceDiscardTile model addNumbers ( tile, detail ) =
-    div []
+    div UI.tilesDivAttrs
         [ UI.tileSimple model.i18n addNumbers tile
         , text "->"
-        , UI.tiles model.i18n addNumbers detail.tiles
+        , UI.tilesDiv model.i18n addNumbers detail.tiles
         , text (String.fromInt detail.numTiles)
         ]

@@ -415,7 +415,7 @@ view model =
             , UI.label (I18n.minWaitsSelectorTitle model.i18n) (minWaitsSelector model)
             , UI.label (I18n.numberedTilesSelector model.i18n) (numberedTilesSelector model)
             ]
-        , div [ class "block" ] [ UI.tiles model.i18n model.numberedTiles model.tiles ]
+        , div [ class "block" ] [ UI.tilesDiv model.i18n model.numberedTiles model.tiles ]
         , div [ class "block" ]
             [ text (I18n.selectWaitTilesText model.i18n)
             , waitButtons model
@@ -732,7 +732,7 @@ winningTilesSection model =
 winningTiles : Model -> List (Html Msg)
 winningTiles model =
     [ text (I18n.showWaitTilesText model.i18n)
-    , UI.tiles model.i18n model.numberedTiles (List.map Tuple.first model.waits)
+    , UI.tilesDiv model.i18n model.numberedTiles (List.map Tuple.first model.waits)
     ]
 
 

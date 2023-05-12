@@ -17,8 +17,10 @@ module UI exposing
     , tileSimple
     , tileTitle
     , tileWidth
-    , tiles
-    , tilesWithOnClick
+    , tilesDiv
+    , tilesDivAttrs
+    , tilesDivWithOnClick
+    , tilesList
     )
 
 import FontAwesome
@@ -58,22 +60,32 @@ breakpoints =
         ]
 
 
-tiles : I18n -> Bool -> List Tile.Tile -> Html.Html msg
-tiles i18n addNumbers baseTiles =
+tilesDiv : I18n -> Bool -> List Tile.Tile -> Html.Html msg
+tilesDiv i18n addNumbers baseTiles =
     let
         allTiles =
-            List.map (tileSimple i18n addNumbers) baseTiles
+            tilesList i18n addNumbers baseTiles
     in
-    Html.div [ class "tiles is-flex is-flex-direction-row", tileGapAttr ] allTiles
+    Html.div tilesDivAttrs allTiles
 
 
-tilesWithOnClick : I18n -> Bool -> List Tile.Tile -> Html.Html UIMsg
-tilesWithOnClick i18n addNumbers baseTiles =
+tilesDivAttrs : List (Html.Attribute msg)
+tilesDivAttrs =
+    [ class "tiles is-flex is-flex-direction-row", tileGapAttr ]
+
+
+tilesList : I18n -> Bool -> List Tile.Tile -> List (Html.Html msg)
+tilesList i18n addNumbers baseTiles =
+    List.map (tileSimple i18n addNumbers) baseTiles
+
+
+tilesDivWithOnClick : I18n -> Bool -> List Tile.Tile -> Html.Html UIMsg
+tilesDivWithOnClick i18n addNumbers baseTiles =
     let
         allTiles =
             List.map (tileWithOnClick i18n addNumbers []) baseTiles
     in
-    Html.div [ class "tiles is-flex is-flex-direction-row", tileGapAttr ] allTiles
+    Html.div tilesDivAttrs allTiles
 
 
 tile : I18n -> Bool -> List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg
