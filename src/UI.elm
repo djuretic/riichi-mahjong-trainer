@@ -111,7 +111,7 @@ tileWithOnClick i18n addNumbers attrs baseTile =
         Html.text ""
 
     else
-        Html.img (tileAttrs i18n path (Just baseTile) ++ attrs ++ [ onClick (TileOnClick baseTile) ]) []
+        Html.img (tileAttrs i18n path (Just baseTile) ++ attrs ++ [class "is-clickable", onClick (TileOnClick baseTile) ]) []
 
 
 tileSimple : I18n -> Bool -> Tile.Tile -> Html.Html msg
