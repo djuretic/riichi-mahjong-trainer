@@ -43,6 +43,7 @@ suite =
             ]
         , describe "Tile acceptance"
             [ testTileAcceptanceDraw "2-sided wait 4 tiles" "14m" 6 "1234m"
+            , testTileAcceptanceDraw "shanpon 7 tiles" "8p2s6z" 8 "79p229s66z"
             , testTileAcceptanceDraw "10 tiles 3 groups no pair" "47m5p159s2z" 24 "5689m5p1469s2z"
             , testTileAcceptanceDraw "13 tiles 4 groups no pair" "47m58p159s2z" 27 "5689m5678p1469s2z"
             , testTileAcceptanceDraw "13 tiles 2-shanten 7 pairs and standard" "2345m34567p123s" 38 "334m3356999p112s"

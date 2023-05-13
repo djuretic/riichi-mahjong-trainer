@@ -219,7 +219,7 @@ shantenStandard tiles =
                 0
 
         tooManyGroupsPenalty =
-            max 0 (scoreSum - 5)
+            max 0 (scoreSum - expectedGroups (List.length tiles))
 
         baselineScore =
             case List.length tiles of
@@ -244,7 +244,7 @@ shantenStandard tiles =
                 _ ->
                     8
 
-        -- _ = Debug.log "aaa" { baseLineScore = baselineScore, completionScore = completionScore, noPairPenalty = noPairPenalty, tooManyGroupsPenalty = tooManyGroupsPenalty  }
+        -- _ = Debug.log "aaa" { groups = List.map (\lg -> List.map Group.toString lg) groupConfigurations,  baseLineScore = baselineScore, completionScore = completionScore, noPairPenalty = noPairPenalty, tooManyGroupsPenalty = tooManyGroupsPenalty }
     in
     { shanten = baselineScore - 2 * completionScore.groups - completionScore.pairs - completionScore.partials + noPairPenalty + tooManyGroupsPenalty
     , groups = groupConfigurations
