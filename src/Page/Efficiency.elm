@@ -1,6 +1,6 @@
 module Page.Efficiency exposing (Model, Msg, init, update, view)
 
-import Html exposing (Html, a, button, div, span, text)
+import Html exposing (Html, a, button, div, li, span, text, ul)
 import Html.Attributes exposing (class, classList, href, target)
 import Html.Events exposing (onClick)
 import I18n
@@ -19,11 +19,16 @@ type alias Model =
     , availableTiles : List Tile
     , discardedTiles : List Tile
     , shanten : Shanten.ShantenDetail
-    , showShanten : Bool
     , tileAcceptance : Shanten.TileAcceptance
     , lastDiscardAcceptanceDetail : Maybe ( Tile, Shanten.TileAcceptanceDetail )
     , lastDiscardBestAcceptanceDetail : Maybe ( Tile, Shanten.TileAcceptanceDetail )
+    , currentTab : Tab
     }
+
+
+type Tab
+    = CurrentHandAnalysisTab
+    | LastMoveAnalysisTab
 
 
 type Msg
@@ -32,7 +37,8 @@ type Msg
     | SetNumberOfTiles Int
     | DiscardTile Tile
     | DrawTile ( Maybe Tile, List Tile )
-    | ToggleShowShanten
+    | SetTab Tab
+    | ShowHand ( Tile, List Tile )
 
 
 init : I18n.I18n -> ( Model, Cmd Msg )
@@ -43,10 +49,10 @@ init i18n =
       , availableTiles = []
       , discardedTiles = []
       , shanten = Shanten.init
-      , showShanten = False
       , tileAcceptance = Shanten.Draw Shanten.emptyTileAcceptanceDetail
       , lastDiscardAcceptanceDetail = Nothing
       , lastDiscardBestAcceptanceDetail = Nothing
+      , currentTab = CurrentHandAnalysisTab
       }
     , cmdGenerateTiles 14
     )
@@ -106,7 +112,6 @@ update msg model =
                 ( { model
                     | tiles = List.Extra.remove tile model.tiles |> Tile.sort
                     , discardedTiles = model.discardedTiles ++ [ tile ]
-                    , showShanten = False
                     , lastDiscardAcceptanceDetail = filterTileAcceptance tile model.tileAcceptance
                     , lastDiscardBestAcceptanceDetail = bestTileAcceptance
                   }
@@ -124,8 +129,12 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
-        ToggleShowShanten ->
-            ( { model | showShanten = not model.showShanten }, Cmd.none )
+        SetTab tab ->
+            ( { model | currentTab = tab }, Cmd.none )
+
+        ShowHand ( tiles, drawnTile ) ->
+            -- TODO complete
+            ( model, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -141,6 +150,18 @@ view model =
             case uiMsg of
                 UI.TileOnClick tile ->
                     DiscardTile tile
+
+        tabs =
+            div [ class "tabs is-boxed" ]
+                [ ul []
+                    [ li
+                        [ classList [ ( "is-active", model.currentTab == CurrentHandAnalysisTab ) ], onClick (SetTab CurrentHandAnalysisTab) ]
+                        [ a [] [ text "Hand" ] ]
+                    , li
+                        [ classList [ ( "is-active", model.currentTab == LastMoveAnalysisTab ) ], onClick (SetTab LastMoveAnalysisTab) ]
+                        [ a [] [ text "Last move" ] ]
+                    ]
+                ]
     in
     div []
         [ div [ class "block" ]
@@ -148,8 +169,8 @@ view model =
             ]
         , div [ class "block" ] [ UI.tilesDivWithOnClick model.i18n numberedTiles model.tiles |> Html.map uiMap ]
         , button [ class "button", onClick GenerateTiles ] [ text (I18n.newHandButton model.i18n) ]
-        , button [ class "button", onClick ToggleShowShanten ] [ text "Shanten" ]
-        , div [ classList [ ( "is-invisible", not model.showShanten ) ] ]
+        , tabs
+        , div [ classList [ ( "is-hidden", model.currentTab /= CurrentHandAnalysisTab ) ] ]
             [ text (String.fromInt model.shanten.final.shanten)
             , text "-shanten -> "
             , a [ href ("https://tenhou.net/2/?q=" ++ tilesString), target "_blank" ] [ text "Tenhou" ]
@@ -157,7 +178,7 @@ view model =
             , text "Tile acceptance"
             , tileAcceptance model
             ]
-        , div [ classList [ ( "is-invisible", not model.showShanten ) ] ]
+        , div [ classList [ ( "is-hidden", model.currentTab /= LastMoveAnalysisTab ) ] ]
             [ text "Discard with widest tile acceptance"
             , Maybe.map (tileAcceptanceDiscardTile model numberedTiles) model.lastDiscardBestAcceptanceDetail |> Maybe.withDefault (span [] [])
             , text "Your discard"
@@ -208,11 +229,19 @@ tileAcceptance model =
 
 tileAcceptanceDiscardTile : Model -> Bool -> ( Tile, Shanten.TileAcceptanceDetail ) -> Html Msg
 tileAcceptanceDiscardTile model addNumbers ( tile, detail ) =
+    let
+        uiMap : UI.UIMsg -> Msg
+        uiMap uiMsg =
+            case uiMsg of
+                UI.TileOnClick clickedTile ->
+                    -- TODO prev turn tiles
+                    ShowHand ( clickedTile, model.tiles )
+    in
     div UI.tilesDivAttrs
         ([ UI.tileSimple model.i18n addNumbers tile
          , text "->"
          ]
-            ++ UI.tilesList model.i18n addNumbers detail.tiles
+            ++ (UI.tilesListWithOnClick model.i18n addNumbers detail.tiles |> List.map (Html.map uiMap))
             ++ [ text (String.fromInt detail.numTiles)
                ]
         )

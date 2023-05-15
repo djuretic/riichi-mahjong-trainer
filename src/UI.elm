@@ -21,6 +21,7 @@ module UI exposing
     , tilesDivAttrs
     , tilesDivWithOnClick
     , tilesList
+    , tilesListWithOnClick
     )
 
 import FontAwesome
@@ -83,9 +84,14 @@ tilesDivWithOnClick : I18n -> Bool -> List Tile.Tile -> Html.Html UIMsg
 tilesDivWithOnClick i18n addNumbers baseTiles =
     let
         allTiles =
-            List.map (tileWithOnClick i18n addNumbers []) baseTiles
+            tilesListWithOnClick i18n addNumbers baseTiles
     in
     Html.div tilesDivAttrs allTiles
+
+
+tilesListWithOnClick : I18n -> Bool -> List Tile.Tile -> List (Html.Html UIMsg)
+tilesListWithOnClick i18n addNumbers baseTiles =
+    List.map (tileWithOnClick i18n addNumbers []) baseTiles
 
 
 tile : I18n -> Bool -> List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg
@@ -111,7 +117,7 @@ tileWithOnClick i18n addNumbers attrs baseTile =
         Html.text ""
 
     else
-        Html.img (tileAttrs i18n path (Just baseTile) ++ attrs ++ [class "is-clickable", onClick (TileOnClick baseTile) ]) []
+        Html.img (tileAttrs i18n path (Just baseTile) ++ attrs ++ [ class "is-clickable", onClick (TileOnClick baseTile) ]) []
 
 
 tileSimple : I18n -> Bool -> Tile.Tile -> Html.Html msg
