@@ -1,14 +1,20 @@
-module Page.Efficiency exposing (Model, Msg, init, update, view)
+module Page.Efficiency exposing (Model, Msg, init, subscriptions, update, view)
 
+import Anim
+import Browser.Events
 import Html exposing (Html, a, button, div, li, text, ul)
-import Html.Attributes exposing (class, classList, href, target)
+import Html.Attributes exposing (class, classList, href, style, target)
 import Html.Events exposing (onClick)
 import I18n
 import List.Extra
+import Point
 import Random
 import Random.List
 import Shanten
+import Svg exposing (image, svg)
+import Svg.Attributes as SvgA
 import Tile exposing (Tile)
+import Time
 import UI
 
 
@@ -23,6 +29,8 @@ type alias Model =
     , tileAcceptance : Shanten.TileAcceptance
     , lastDiscardTileAcceptance : List ( Tile, Shanten.TileAcceptanceDetail )
     , currentTab : Tab
+    , animatedTiles : List AnimatedTile
+    , lastTick : Int
     }
 
 
@@ -39,6 +47,21 @@ type Msg
     | DrawTile ( Maybe Tile, List Tile )
     | SetTab Tab
     | ShowHand ( Tile, List Tile )
+    | Tick Time.Posix
+
+
+type alias AnimatedTile =
+    { tile : Tile
+    , state : AnimState
+    , pos : Point.Point
+    , next : List Point.Point
+    }
+
+
+type AnimState
+    = TileInHand
+    | WinningTileEnter
+    | WinningTileExit
 
 
 init : I18n.I18n -> ( Model, Cmd Msg )
@@ -53,6 +76,8 @@ init i18n =
       , tileAcceptance = Shanten.Draw Shanten.emptyTileAcceptanceDetail
       , lastDiscardTileAcceptance = []
       , currentTab = CurrentHandAnalysisTab
+      , animatedTiles = []
+      , lastTick = 0
       }
     , cmdGenerateTiles 14
     )
@@ -68,6 +93,11 @@ recalculateShanten model =
     { model | shanten = Shanten.shanten model.tiles, tileAcceptance = Shanten.tileAcceptance model.discardedTiles model.tiles }
 
 
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Browser.Events.onAnimationFrame Tick
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -81,6 +111,7 @@ update msg model =
                     , availableTiles = remainingTiles
                     , discardedTiles = []
                     , lastDiscardTileAcceptance = []
+                    , animatedTiles = []
                 }
             , Cmd.none
             )
@@ -99,11 +130,12 @@ update msg model =
                             _ ->
                                 []
                 in
-                ( { model
-                    | tiles = List.Extra.remove tile model.tiles |> Tile.sort
-                    , discardedTiles = model.discardedTiles ++ [ tile ]
-                    , lastDiscardTileAcceptance = lastDiscardAcceptance
-                  }
+                ( initAnimatedTiles
+                    { model
+                        | tiles = List.Extra.remove tile model.tiles |> Tile.sort
+                        , discardedTiles = model.discardedTiles ++ [ tile ]
+                        , lastDiscardTileAcceptance = lastDiscardAcceptance
+                    }
                 , Random.generate DrawTile (Random.List.choose model.availableTiles)
                 )
 
@@ -125,10 +157,16 @@ update msg model =
             -- TODO complete
             ( model, Cmd.none )
 
+        Tick tickTime ->
+            ( Anim.tick tickTime doAnimation model, Cmd.none )
+
 
 view : Model -> Html Msg
 view model =
     let
+        groupGapSvg =
+            15
+
         tilesString =
             Tile.listToString model.tiles
 
@@ -164,6 +202,7 @@ view model =
             ]
         , div [ classList [ ( "is-hidden", model.currentTab /= LastMoveAnalysisTab ) ] ]
             [ tenhouLink model tilesString
+            , animationSvg groupGapSvg 1 "is-hidden-mobile" model
             , text "Discard"
             , div []
                 (List.map
@@ -171,6 +210,73 @@ view model =
                     model.lastDiscardTileAcceptance
                 )
             ]
+        ]
+
+
+initAnimatedTiles : Model -> Model
+initAnimatedTiles ({ lastDiscardTileAcceptance } as model) =
+    let
+        baseTiles =
+            List.indexedMap
+                (\n ( t, _ ) ->
+                    { tile = t
+                    , pos = ( 0, n * (UI.tileHeight + UI.tileGap) )
+                    , next = []
+                    , state = TileInHand
+                    }
+                )
+                lastDiscardTileAcceptance
+    in
+    { model | animatedTiles = baseTiles }
+
+
+setupAnimation : Model -> List AnimatedTile
+setupAnimation model =
+    -- TODO
+    []
+
+
+doAnimation : List AnimatedTile -> List AnimatedTile
+doAnimation tiles =
+    let
+        process t =
+            case t.next of
+                [] ->
+                    t
+
+                pos :: xs ->
+                    { t | pos = pos, next = xs }
+    in
+    List.map process tiles
+
+
+animationSvg : Int -> Float -> String -> Model -> Html Msg
+animationSvg groupGapSvg zoom cssClass model =
+    let
+        totalHeightStr =
+            String.fromInt (10 * UI.tileHeight)
+
+        widthPx =
+            (model.numberOfTiles + 2) * (UI.tileWidth + UI.tileGap) + (groupGapSvg * 4) + 5
+
+        svgWidth =
+            toFloat widthPx * zoom |> round
+    in
+    div [ class ("tiles block is-flex is-flex-direction-row " ++ cssClass), style "min-width" "20px" ]
+        [ svg [ SvgA.width (String.fromInt svgWidth), SvgA.viewBox ("0 0 " ++ String.fromInt widthPx ++ " " ++ totalHeightStr) ]
+            (List.indexedMap
+                (\n ( tile, _ ) ->
+                    image
+                        [ SvgA.x "0"
+                        , SvgA.y (String.fromInt (n * (UI.tileHeight + UI.tileGap)))
+                        , SvgA.width (String.fromInt UI.tileWidth)
+                        , SvgA.height (String.fromInt UI.tileHeight)
+                        , SvgA.xlinkHref (UI.tilePath model.numberedTiles tile)
+                        ]
+                        [ Svg.title [] [ Svg.text (UI.tileTitle model.i18n tile) ] ]
+                )
+                model.lastDiscardTileAcceptance
+            )
         ]
 
 

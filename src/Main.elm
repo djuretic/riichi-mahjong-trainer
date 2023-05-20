@@ -226,6 +226,9 @@ subscriptions model =
     if model.page == WaitsPage then
         Sub.map WaitsMsg (Page.Waits.subscriptions model.waits)
 
+    else if model.page == EfficiencyPage then
+        Sub.map EfficiencyMsg (Page.Efficiency.subscriptions model.efficiency)
+
     else
         Sub.none
 

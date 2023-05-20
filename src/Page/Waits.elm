@@ -1,5 +1,6 @@
 port module Page.Waits exposing (Model, Msg(..), init, subscriptions, update, view)
 
+import Anim
 import Browser.Events
 import FontAwesome.Regular as IconR
 import FontAwesome.Solid as IconS
@@ -299,27 +300,7 @@ update msg model =
             ( { model | animatedTiles = setupAnimation model model.tiles, currentAnimatedTile = Nothing }, Cmd.none )
 
         Tick tickTime ->
-            let
-                fps =
-                    30
-
-                fpsInterval =
-                    1000 / fps
-
-                now =
-                    Time.posixToMillis tickTime
-
-                elapsed =
-                    now - model.lastTick
-            in
-            if model.lastTick == 0 then
-                ( { model | lastTick = now }, Cmd.none )
-
-            else if toFloat elapsed > fpsInterval then
-                ( { model | lastTick = now - remainderBy (round fpsInterval) elapsed, animatedTiles = doAnimation model.animatedTiles }, Cmd.none )
-
-            else
-                ( model, Cmd.none )
+            ( Anim.tick tickTime doAnimation model, Cmd.none )
 
         UpdateI18n i18n ->
             ( { model | i18n = i18n }, Cmd.none )
