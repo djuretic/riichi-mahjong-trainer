@@ -315,7 +315,10 @@ setupAnimationEnter toDiscardTiles tilesToEnter animatedTiles =
     animatedTiles ++ enterTiles
 
 
+
 -- TODO remove tiles that are not visible and exiting
+
+
 doAnimation : List AnimatedTile -> List AnimatedTile
 doAnimation tiles =
     let

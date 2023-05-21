@@ -38,6 +38,11 @@ suite =
         , testPartialGroups "pair and run"
             [ [ Group Pair 1 Man, Group Run 2 Man ] ]
             "11234m"
+        , testPartialGroups "partial kanchan or pair"
+            [ [ Group PartialKanchan 1 Man, Group PartialKanchan 6 Man ]
+            , [ Group Pair 3 Man, Group PartialKanchan 6 Man ]
+            ]
+            "13368m"
         ]
 
 
