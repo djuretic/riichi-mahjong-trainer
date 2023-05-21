@@ -196,7 +196,7 @@ view model =
         , tabs
         , div [ classList [ ( "is-hidden", model.currentTab /= CurrentHandAnalysisTab ) ] ]
             [ tenhouLink model tilesString
-            , div [] (List.map (\lg -> UI.groupsSimple model.i18n model.numberedTiles lg) model.shanten.final.groups)
+            , div [] (List.map (\lg -> UI.groupsSimple model.i18n model.numberedTiles lg) (model.shanten.final.groupConfigurations |> List.map .groups))
             , text "Tile acceptance"
             , tileAcceptance model
             ]

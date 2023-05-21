@@ -27,9 +27,15 @@ type alias ShantenDetail =
     }
 
 
+type alias GroupConfiguration =
+    { groups : List Group
+    , shanten : Int
+    }
+
+
 type alias ShantenCalculation =
     { shanten : Int
-    , groups : List (List Group)
+    , groupConfigurations : List GroupConfiguration
     }
 
 
@@ -76,13 +82,13 @@ shanten tiles =
 
         groups =
             List.filter (\sh -> sh.shanten == minShanten) [ kokushi, chiitoitsu, standard ]
-                |> List.map .groups
+                |> List.map .groupConfigurations
                 |> List.concat
     in
     { kokushi = kokushi
     , chiitoitsu = chiitoitsu
     , standard = standard
-    , final = { shanten = minShanten, groups = groups }
+    , final = { shanten = minShanten, groupConfigurations = groups }
     }
 
 
@@ -90,7 +96,7 @@ init : ShantenDetail
 init =
     let
         base =
-            { shanten = 8, groups = [] }
+            { shanten = 8, groupConfigurations = [] }
     in
     { kokushi = base
     , chiitoitsu = base
@@ -140,7 +146,7 @@ shantenKokushi tiles =
             ( 13, False )
             counter
             |> Tuple.first
-    , groups = []
+    , groupConfigurations = []
     }
 
 
@@ -151,8 +157,11 @@ shantenChiitoitsu tiles =
             Tile.sort tiles
                 |> findPairs
                 |> Tile.deduplicate
+
+        shantenNum =
+            6 - List.length pairs
     in
-    { shanten = 6 - List.length pairs, groups = [ pairs ] }
+    { shanten = shantenNum, groupConfigurations = [ { groups = pairs, shanten = List.length pairs } ] }
 
 
 findPairs : List Tile -> List Group.Group
@@ -203,26 +212,32 @@ shantenStandard tiles =
         groupConfigurations =
             Group.findGroups Group.FindPartials tiles
                 |> Group.breakdownCartesianProduct
+                |> List.map (\lg -> { groups = lg, shanten = shantenNumberFromGroups (List.length tiles) lg })
+    in
+    { shanten = List.map .shanten groupConfigurations |> List.minimum |> Maybe.withDefault 99, groupConfigurations = groupConfigurations }
 
-        -- TODO are the scores different in some configurations?
+
+shantenNumberFromGroups : Int -> List Group -> Int
+shantenNumberFromGroups tilesInHand groups =
+    let
         completionScore =
-            Group.completionScore (List.head groupConfigurations |> Maybe.withDefault [])
+            Group.completionScore groups
 
         scoreSum =
             completionScore.groups + completionScore.pairs + completionScore.partials
 
         noPairPenalty =
-            if scoreSum == expectedGroups (List.length tiles) && completionScore.pairs == 0 then
+            if scoreSum == expectedGroups tilesInHand && completionScore.pairs == 0 then
                 1
 
             else
                 0
 
         tooManyGroupsPenalty =
-            max 0 (scoreSum - expectedGroups (List.length tiles))
+            max 0 (scoreSum - expectedGroups tilesInHand)
 
         baselineScore =
-            case List.length tiles of
+            case tilesInHand of
                 4 ->
                     2
 
@@ -244,11 +259,9 @@ shantenStandard tiles =
                 _ ->
                     8
 
-        -- _ = Debug.log "aaa" { groups = List.map (\lg -> List.map Group.toString lg) groupConfigurations,  baseLineScore = baselineScore, completionScore = completionScore, noPairPenalty = noPairPenalty, tooManyGroupsPenalty = tooManyGroupsPenalty }
+        -- _ = Debug.log "debug" { groups = List.map Group.toString groups,  baseLineScore = baselineScore, completionScore = completionScore, noPairPenalty = noPairPenalty, tooManyGroupsPenalty = tooManyGroupsPenalty }
     in
-    { shanten = baselineScore - 2 * completionScore.groups - completionScore.pairs - completionScore.partials + noPairPenalty + tooManyGroupsPenalty
-    , groups = groupConfigurations
-    }
+    baselineScore - 2 * completionScore.groups - completionScore.pairs - completionScore.partials + noPairPenalty + tooManyGroupsPenalty
 
 
 tileAcceptance : List Tile -> List Tile -> TileAcceptance
