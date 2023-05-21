@@ -59,9 +59,9 @@ type alias AnimatedTile =
 
 
 type AnimState
-    = TileInHand
-    | WinningTileEnter
-    | WinningTileExit
+    = TileRemains
+    | TileEnter
+    | TileExit
 
 
 init : I18n.I18n -> ( Model, Cmd Msg )
@@ -214,31 +214,112 @@ view model =
 
 
 initAnimatedTiles : Model -> Model
-initAnimatedTiles ({ lastDiscardTileAcceptance } as model) =
+initAnimatedTiles ({ lastDiscardTileAcceptance, discardedTiles } as model) =
+    if List.length discardedTiles == 1 then
+        let
+            baseTiles =
+                List.indexedMap
+                    (\n ( t, _ ) ->
+                        { tile = t
+                        , pos = ( 0, n * (UI.tileHeight + UI.tileGap) )
+                        , next = []
+                        , state = TileRemains
+                        }
+                    )
+                    lastDiscardTileAcceptance
+        in
+        { model | animatedTiles = baseTiles }
+
+    else
+        -- setup animation
+        let
+            toDiscardTiles =
+                List.map Tuple.first lastDiscardTileAcceptance
+
+            prevDiscardTiles =
+                List.map .tile model.animatedTiles
+
+            differenceBetweenLists : List Tile -> List Tile -> ( List Tile, List Tile, List Tile )
+            differenceBetweenLists list1 list2 =
+                let
+                    ( l1, l2 ) =
+                        List.partition (\t -> List.member t list2) list1
+
+                    ( _, l4 ) =
+                        List.partition (\t -> List.member t list1) list2
+                in
+                ( l2, l1, l4 )
+
+            ( tilesToExit, tilesToRemain, tilesToEnter ) =
+                differenceBetweenLists prevDiscardTiles toDiscardTiles
+        in
+        { model
+            | animatedTiles =
+                setupAnimationRemain toDiscardTiles tilesToRemain model.animatedTiles
+                    |> setupAnimationExit tilesToExit
+                    |> setupAnimationEnter toDiscardTiles tilesToEnter
+        }
+
+
+setupAnimationRemain : List Tile -> List Tile -> List AnimatedTile -> List AnimatedTile
+setupAnimationRemain toDiscardTiles tilesToRemain animatedTiles =
+    List.map
+        (\at ->
+            if List.member at.tile tilesToRemain then
+                let
+                    index =
+                        List.Extra.elemIndex at.tile toDiscardTiles |> Maybe.withDefault -1
+                in
+                { at | state = TileRemains, next = Point.easing at.pos ( 0, index * (UI.tileHeight + UI.tileGap) ) }
+
+            else
+                at
+        )
+        animatedTiles
+
+
+setupAnimationExit : List Tile -> List AnimatedTile -> List AnimatedTile
+setupAnimationExit tilesToExit animatedTiles =
+    List.map
+        (\at ->
+            if List.member at.tile tilesToExit then
+                { at | state = TileExit, next = Point.easing at.pos ( -100, Tuple.second at.pos ) }
+
+            else
+                at
+        )
+        animatedTiles
+
+
+setupAnimationEnter : List Tile -> List Tile -> List AnimatedTile -> List AnimatedTile
+setupAnimationEnter toDiscardTiles tilesToEnter animatedTiles =
     let
-        baseTiles =
-            List.indexedMap
-                (\n ( t, _ ) ->
+        enterTiles =
+            List.map
+                (\t ->
+                    let
+                        index =
+                            List.Extra.elemIndex t toDiscardTiles |> Maybe.withDefault -1
+
+                        pos =
+                            ( -100, index * (UI.tileHeight + UI.tileGap) )
+                    in
                     { tile = t
-                    , pos = ( 0, n * (UI.tileHeight + UI.tileGap) )
-                    , next = []
-                    , state = TileInHand
+                    , pos = pos
+                    , next = Point.easing pos ( 0, Tuple.second pos )
+                    , state = TileEnter
                     }
                 )
-                lastDiscardTileAcceptance
+                tilesToEnter
     in
-    { model | animatedTiles = baseTiles }
+    animatedTiles ++ enterTiles
 
 
-setupAnimation : Model -> List AnimatedTile
-setupAnimation model =
-    -- TODO
-    []
-
-
+-- TODO remove tiles that are not visible and exiting
 doAnimation : List AnimatedTile -> List AnimatedTile
 doAnimation tiles =
     let
+        process : AnimatedTile -> AnimatedTile
         process t =
             case t.next of
                 [] ->
@@ -265,17 +346,21 @@ animationSvg groupGapSvg zoom cssClass model =
     div [ class ("tiles block is-flex is-flex-direction-row " ++ cssClass), style "min-width" "20px" ]
         [ svg [ SvgA.width (String.fromInt svgWidth), SvgA.viewBox ("0 0 " ++ String.fromInt widthPx ++ " " ++ totalHeightStr) ]
             (List.indexedMap
-                (\n ( tile, _ ) ->
+                (\n animTile ->
+                    let
+                        ( posX, posY ) =
+                            animTile.pos
+                    in
                     image
-                        [ SvgA.x "0"
-                        , SvgA.y (String.fromInt (n * (UI.tileHeight + UI.tileGap)))
+                        [ SvgA.x (String.fromInt posX)
+                        , SvgA.y (String.fromInt posY)
                         , SvgA.width (String.fromInt UI.tileWidth)
                         , SvgA.height (String.fromInt UI.tileHeight)
-                        , SvgA.xlinkHref (UI.tilePath model.numberedTiles tile)
+                        , SvgA.xlinkHref (UI.tilePath model.numberedTiles animTile.tile)
                         ]
-                        [ Svg.title [] [ Svg.text (UI.tileTitle model.i18n tile) ] ]
+                        [ Svg.title [] [ Svg.text (UI.tileTitle model.i18n animTile.tile) ] ]
                 )
-                model.lastDiscardTileAcceptance
+                model.animatedTiles
             )
         ]
 
