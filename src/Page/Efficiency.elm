@@ -11,6 +11,7 @@ import Point
 import Random
 import Random.List
 import Shanten
+import Suit exposing (Suit)
 import Svg exposing (image, svg)
 import Svg.Attributes as SvgA
 import Tile exposing (Tile)
@@ -22,6 +23,7 @@ type alias Model =
     { i18n : I18n.I18n
     , numberedTiles : Bool
     , numberOfTiles : Int
+    , suits : List Suit
     , tiles : List Tile
     , availableTiles : List Tile
     , discardedTiles : List Tile
@@ -43,6 +45,7 @@ type Msg
     = GenerateTiles
     | TilesGenerated ( List Tile, List Tile )
     | SetNumberOfTiles Int
+    | ToggleSuit Suit
     | DiscardTile Tile
     | DrawTile ( Maybe Tile, List Tile )
     | SetTab Tab
@@ -66,26 +69,31 @@ type AnimState
 
 init : I18n.I18n -> ( Model, Cmd Msg )
 init i18n =
+    let
+        defaultSuits =
+            [ Suit.Man, Suit.Pin, Suit.Sou ]
+    in
     ( { i18n = i18n
       , numberedTiles = False
       , numberOfTiles = 14
+      , suits = defaultSuits
       , tiles = []
       , availableTiles = []
       , discardedTiles = []
       , shanten = Shanten.init
       , tileAcceptance = Shanten.Draw Shanten.emptyTileAcceptanceDetail
       , lastDiscardTileAcceptance = []
-      , currentTab = CurrentHandAnalysisTab
+      , currentTab = LastMoveAnalysisTab
       , animatedTiles = []
       , lastTick = 0
       }
-    , cmdGenerateTiles 14
+    , cmdGenerateTiles 14 defaultSuits
     )
 
 
-cmdGenerateTiles : Int -> Cmd Msg
-cmdGenerateTiles numTiles =
-    Random.generate TilesGenerated (Tile.randomList numTiles)
+cmdGenerateTiles : Int -> List Suit -> Cmd Msg
+cmdGenerateTiles numTiles suits =
+    Random.generate TilesGenerated (Tile.randomListOfSuits numTiles suits)
 
 
 recalculateShanten : Model -> Model
@@ -102,7 +110,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GenerateTiles ->
-            ( model, cmdGenerateTiles model.numberOfTiles )
+            ( model, cmdGenerateTiles model.numberOfTiles model.suits )
 
         TilesGenerated ( tiles, remainingTiles ) ->
             ( recalculateShanten
@@ -118,6 +126,21 @@ update msg model =
 
         SetNumberOfTiles numTiles ->
             update GenerateTiles { model | numberOfTiles = numTiles }
+
+        ToggleSuit suit ->
+            let
+                suits =
+                    if List.member suit model.suits then
+                        List.Extra.remove suit model.suits
+
+                    else
+                        suit :: model.suits
+            in
+            if List.isEmpty suits then
+                ( model, Cmd.none )
+
+            else
+                update GenerateTiles { model | suits = suits }
 
         DiscardTile tile ->
             if List.member tile model.tiles then
@@ -179,17 +202,18 @@ view model =
             div [ class "tabs is-boxed" ]
                 [ ul []
                     [ li
-                        [ classList [ ( "is-active", model.currentTab == CurrentHandAnalysisTab ) ], onClick (SetTab CurrentHandAnalysisTab) ]
-                        [ a [] [ text "Hand" ] ]
-                    , li
                         [ classList [ ( "is-active", model.currentTab == LastMoveAnalysisTab ) ], onClick (SetTab LastMoveAnalysisTab) ]
                         [ a [] [ text "Last move" ] ]
+                    , li
+                        [ classList [ ( "is-active", model.currentTab == CurrentHandAnalysisTab ) ], onClick (SetTab CurrentHandAnalysisTab) ]
+                        [ a [] [ text "Hand" ] ]
                     ]
                 ]
     in
     div []
         [ div [ class "block" ]
             [ UI.label (I18n.numTilesSelectorTitle model.i18n) (numberTilesSelector model)
+            , UI.label (I18n.suitSelectorTitle model.i18n) (suitSelector model)
             ]
         , div [ class "block" ] [ UI.tilesDivWithOnClick model.i18n model.numberedTiles model.tiles |> Html.map uiMap ]
         , button [ class "button", onClick GenerateTiles ] [ text (I18n.newHandButton model.i18n) ]
@@ -201,8 +225,13 @@ view model =
             , tileAcceptance model
             ]
         , div [ classList [ ( "is-hidden", model.currentTab /= LastMoveAnalysisTab ) ] ]
-            [ tenhouLink model tilesString
-            , animationSvg groupGapSvg 1 "is-hidden-mobile" model
+            [ if List.isEmpty model.discardedTiles then
+                div [] []
+
+              else
+                tenhouLink model tilesString
+
+            -- , animationSvg groupGapSvg 1 "is-hidden-mobile" model
             , text "Discard"
             , div []
                 (List.map
@@ -348,8 +377,8 @@ animationSvg groupGapSvg zoom cssClass model =
     in
     div [ class ("tiles block is-flex is-flex-direction-row " ++ cssClass), style "min-width" "20px" ]
         [ svg [ SvgA.width (String.fromInt svgWidth), SvgA.viewBox ("0 0 " ++ String.fromInt widthPx ++ " " ++ totalHeightStr) ]
-            (List.indexedMap
-                (\n animTile ->
+            (List.map
+                (\animTile ->
                     let
                         ( posX, posY ) =
                             animTile.pos
@@ -396,6 +425,28 @@ numberTilesSelector model =
         , buttonUI "8" 8
         , buttonUI "11" 11
         , buttonUI "14" 14
+        ]
+
+
+suitSelector : Model -> Html Msg
+suitSelector model =
+    let
+        buttonUI txt suitSel =
+            button
+                [ classList
+                    [ ( "button", True )
+                    , ( "is-primary", List.member suitSel model.suits )
+                    , ( "is-selected", List.member suitSel model.suits )
+                    ]
+                , onClick (ToggleSuit suitSel)
+                ]
+                [ text txt ]
+    in
+    div [ class "buttons has-addons" ]
+        [ buttonUI (I18n.suitSelectorTitleMan model.i18n) Suit.Man
+        , buttonUI (I18n.suitSelectorTitlePin model.i18n) Suit.Pin
+        , buttonUI (I18n.suitSelectorTitleSou model.i18n) Suit.Sou
+        , buttonUI (I18n.suitSelectorTitleHonor model.i18n) Suit.Honor
         ]
 
 

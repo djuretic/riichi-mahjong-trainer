@@ -18,6 +18,7 @@ module Tile exposing
     , partitionBySuit
     , push
     , randomList
+    , randomListOfSuits
     , randomWind
     , redDragonNumber
     , removeTileAtPosFromArray
@@ -376,6 +377,19 @@ randomList n =
     let
         allPossibleTiles =
             List.concatMap (List.repeat 4) allTiles
+    in
+    Random.List.choices n allPossibleTiles
+        |> Random.andThen
+            (\( tiles, remaining ) ->
+                Random.pair (Random.constant tiles) (Random.List.shuffle remaining)
+            )
+
+
+randomListOfSuits : Int -> List Suit -> Random.Generator ( List Tile, List Tile )
+randomListOfSuits n suits =
+    let
+        allPossibleTiles =
+            List.concatMap (List.repeat 4) (List.concatMap allSuitTiles suits)
     in
     Random.List.choices n allPossibleTiles
         |> Random.andThen
