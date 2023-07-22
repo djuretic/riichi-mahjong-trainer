@@ -113,16 +113,28 @@ update msg model =
             ( model, cmdGenerateTiles model.numberOfTiles model.suits )
 
         TilesGenerated ( tiles, remainingTiles ) ->
-            ( recalculateShanten
-                { model
-                    | tiles = Tile.sort tiles
-                    , availableTiles = remainingTiles
-                    , discardedTiles = []
-                    , lastDiscardTileAcceptance = []
-                    , animatedTiles = []
-                }
-            , Cmd.none
-            )
+            let
+                sortedTiles =
+                    Tile.sort tiles
+
+                shanten =
+                    Shanten.shanten sortedTiles
+            in
+            if shanten.final.shanten < 0 then
+                update GenerateTiles model
+
+            else
+                -- TODO don't recalculate shanten twice
+                ( recalculateShanten
+                    { model
+                        | tiles = sortedTiles
+                        , availableTiles = remainingTiles
+                        , discardedTiles = []
+                        , lastDiscardTileAcceptance = []
+                        , animatedTiles = []
+                    }
+                , Cmd.none
+                )
 
         SetNumberOfTiles numTiles ->
             update GenerateTiles { model | numberOfTiles = numTiles }
