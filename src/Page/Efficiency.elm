@@ -485,8 +485,20 @@ tileAcceptanceDiscardTile model ( tile, detail ) =
                 UI.TileOnClick clickedTile ->
                     -- TODO prev turn tiles
                     ShowHand ( clickedTile, model.tiles )
+
+        lastTileCss =
+            List.Extra.last model.discardedTiles
+                |> Maybe.map
+                    (\t ->
+                        if t == tile then
+                            class "discarded-tile-last-turn"
+
+                        else
+                            class ""
+                    )
+                |> Maybe.withDefault (class "")
     in
-    div UI.tilesDivAttrs
+    div (lastTileCss :: UI.tilesDivAttrs)
         ([ UI.tileSimple model.i18n model.numberedTiles tile
          , text "->"
          ]
