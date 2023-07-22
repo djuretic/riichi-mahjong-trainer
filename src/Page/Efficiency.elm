@@ -29,6 +29,7 @@ type alias Model =
     , discardedTiles : List Tile
     , shanten : Shanten.ShantenDetail
     , tileAcceptance : Shanten.TileAcceptance
+    , lastDiscardTiles : List Tile
     , lastDiscardTileAcceptance : List ( Tile, Shanten.TileAcceptanceDetail )
     , currentTab : Tab
     , animatedTiles : List AnimatedTile
@@ -82,6 +83,7 @@ init i18n =
       , discardedTiles = []
       , shanten = Shanten.init
       , tileAcceptance = Shanten.Draw Shanten.emptyTileAcceptanceDetail
+      , lastDiscardTiles = []
       , lastDiscardTileAcceptance = []
       , currentTab = LastMoveAnalysisTab
       , animatedTiles = []
@@ -130,6 +132,7 @@ update msg model =
                         | tiles = sortedTiles
                         , availableTiles = remainingTiles
                         , discardedTiles = []
+                        , lastDiscardTiles = []
                         , lastDiscardTileAcceptance = []
                         , animatedTiles = []
                     }
@@ -169,6 +172,7 @@ update msg model =
                     { model
                         | tiles = List.Extra.remove tile model.tiles |> Tile.sort
                         , discardedTiles = model.discardedTiles ++ [ tile ]
+                        , lastDiscardTiles = model.tiles
                         , lastDiscardTileAcceptance = lastDiscardAcceptance
                     }
                 , Random.generate DrawTile (Random.List.choose model.availableTiles)
@@ -241,7 +245,7 @@ view model =
                 div [] []
 
               else
-                tenhouLink model tilesString
+                tenhouLink model (Tile.listToString model.lastDiscardTiles)
 
             -- , animationSvg groupGapSvg 1 "is-hidden-mobile" model
             , text "Discard"
