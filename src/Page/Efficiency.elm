@@ -158,7 +158,11 @@ update msg model =
                 update GenerateTiles { model | suits = suits }
 
         DiscardTile tile ->
-            if List.member tile model.tiles then
+            let
+                alreadyWon =
+                    model.shanten.final.shanten < 0
+            in
+            if List.member tile model.tiles && not (List.isEmpty model.availableTiles) && not alreadyWon then
                 let
                     lastDiscardAcceptance =
                         case model.tileAcceptance of
@@ -231,7 +235,10 @@ view model =
             [ UI.label (I18n.numTilesSelectorTitle model.i18n) (numberTilesSelector model)
             , UI.label (I18n.suitSelectorTitle model.i18n) (suitSelector model)
             ]
-        , div [ class "block" ] [ UI.tilesDivWithOnClick model.i18n model.numberedTiles model.tiles |> Html.map uiMap ]
+        , div [ class "block" ]
+            [ UI.tilesDivWithOnClick model.i18n model.numberedTiles model.tiles |> Html.map uiMap
+            , text ("Remaining pieces: " ++ (String.fromInt <| List.length model.availableTiles))
+            ]
         , button [ class "button", onClick GenerateTiles ] [ text (I18n.newHandButton model.i18n) ]
         , tabs
         , div [ classList [ ( "is-hidden", model.currentTab /= CurrentHandAnalysisTab ) ] ]
@@ -248,8 +255,10 @@ view model =
                 tenhouLink model (Tile.listToString model.lastDiscardTiles)
 
             -- , animationSvg groupGapSvg 1 "is-hidden-mobile" model
-            , text "Discard"
-            , div []
+            , text "Discards"
+            , UI.tilesDiv model.i18n model.numberedTiles model.discardedTiles
+            , text "Tile acceptance"
+            , div [ class "block" ]
                 (List.map
                     (tileAcceptanceDiscardTile model)
                     model.lastDiscardTileAcceptance
