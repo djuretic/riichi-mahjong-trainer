@@ -1,4 +1,4 @@
-module Page.Efficiency exposing (Model, Msg, init, subscriptions, update, view)
+port module Page.Efficiency exposing (Model, Msg, init, subscriptions, update, view)
 
 import Anim
 import Browser.Events
@@ -6,6 +6,8 @@ import Html exposing (Html, a, button, div, li, text, ul)
 import Html.Attributes exposing (class, classList, href, style, target)
 import Html.Events exposing (onClick)
 import I18n
+import Json.Decode as D
+import Json.Encode as E
 import List.Extra
 import Point
 import Random
@@ -17,6 +19,9 @@ import Svg.Attributes as SvgA
 import Tile exposing (Tile)
 import Time
 import UI
+
+
+port setStorageEfficiency : E.Value -> Cmd msg
 
 
 type alias Model =
@@ -34,6 +39,12 @@ type alias Model =
     , currentTab : Tab
     , animatedTiles : List AnimatedTile
     , lastTick : Int
+    }
+
+
+type alias PreferencesModel =
+    { numberOfTiles : Int
+    , suits : List Suit
     }
 
 
@@ -68,16 +79,24 @@ type AnimState
     | TileExit
 
 
-init : I18n.I18n -> ( Model, Cmd Msg )
-init i18n =
+init : I18n.I18n -> E.Value -> ( Model, Cmd Msg )
+init i18n flags =
     let
         defaultSuits =
             [ Suit.Man, Suit.Pin, Suit.Sou ]
+
+        prefs =
+            case D.decodeValue decoder flags of
+                Ok pref ->
+                    pref
+
+                Err _ ->
+                    { numberOfTiles = 14, suits = defaultSuits }
     in
     ( { i18n = i18n
       , numberedTiles = False
-      , numberOfTiles = 14
-      , suits = defaultSuits
+      , numberOfTiles = prefs.numberOfTiles
+      , suits = prefs.suits
       , tiles = []
       , availableTiles = []
       , discardedTiles = []
@@ -89,7 +108,7 @@ init i18n =
       , animatedTiles = []
       , lastTick = 0
       }
-    , cmdGenerateTiles 14 defaultSuits
+    , cmdGenerateTiles prefs.numberOfTiles prefs.suits
     )
 
 
@@ -112,7 +131,12 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GenerateTiles ->
-            ( model, cmdGenerateTiles model.numberOfTiles model.suits )
+            ( model
+            , Cmd.batch
+                [ setStorageEfficiency (encode model)
+                , cmdGenerateTiles model.numberOfTiles model.suits
+                ]
+            )
 
         TilesGenerated ( tiles, remainingTiles ) ->
             let
@@ -519,3 +543,27 @@ tileAcceptanceDiscardTile model ( tile, detail ) =
             ++ [ text (String.fromInt detail.numTiles)
                ]
         )
+
+
+
+-- decoder for PreferencesModel
+
+
+decoder : D.Decoder PreferencesModel
+decoder =
+    D.map2
+        (\numTiles suits ->
+            { numberOfTiles = numTiles
+            , suits = List.filterMap Suit.fromString suits
+            }
+        )
+        (D.field "numTiles" D.int)
+        (D.field "suits" (D.list D.string))
+
+
+encode : Model -> E.Value
+encode model =
+    E.object
+        [ ( "numTiles", E.int model.numberOfTiles )
+        , ( "suits", E.list E.string (List.map Suit.toString model.suits) )
+        ]

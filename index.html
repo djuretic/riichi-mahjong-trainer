@@ -37,6 +37,8 @@
 
 var waitsDataRaw = localStorage.getItem('waits');
 var waitsData = waitsDataRaw ? JSON.parse(waitsDataRaw) : null;
+var efficiencyDataRaw = localStorage.getItem('efficiency');
+var efficiencyData = efficiencyDataRaw ? JSON.parse(efficiencyDataRaw) : null;
 var configDataRaw = localStorage.getItem('config');
 var configData = configDataRaw ? JSON.parse(configDataRaw) : null;
 
@@ -52,6 +54,7 @@ var app = Elm.Main.init({
 	flags: {
     config: configData,
     waits: waitsData,
+    efficiency: efficiencyData,
     browserLanguage: browserLanguage || '',
     urlLanguage: urlLanguage || ''
   }
@@ -59,6 +62,10 @@ var app = Elm.Main.init({
 
 app.ports.setStorageWaits.subscribe(function(state) {
   localStorage.setItem('waits', JSON.stringify(state));
+});
+
+app.ports.setStorageEfficiency.subscribe(function(state) {
+  localStorage.setItem('efficiency', JSON.stringify(state));
 });
 
 app.ports.setStorageConfig.subscribe(function(state) {

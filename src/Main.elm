@@ -46,6 +46,7 @@ type alias Model =
 
 type alias FlagsModel =
     { waits : D.Value
+    , efficiency : D.Value
     , config : D.Value
     , browserLanguage : String
     , urlLanguage : String
@@ -119,7 +120,7 @@ init flags =
                             ( res, { defaultConfig | language = language } )
 
                 Err _ ->
-                    ( { waits = E.null, config = E.null, browserLanguage = "", urlLanguage = "" }, defaultConfig )
+                    ( { waits = E.null, efficiency = E.null, config = E.null, browserLanguage = "", urlLanguage = "" }, defaultConfig )
 
         lang =
             I18n.languageFromString configModel.language
@@ -132,7 +133,7 @@ init flags =
             Page.Waits.init i18n flagsModel.waits
 
         ( efficiency, efficiencyCmd ) =
-            Page.Efficiency.init i18n
+            Page.Efficiency.init i18n flagsModel.efficiency
 
         theme =
             if configModel.darkTheme then
@@ -350,8 +351,9 @@ themeClassName theme =
 
 flagsDecoder : D.Decoder FlagsModel
 flagsDecoder =
-    D.map4 FlagsModel
+    D.map5 FlagsModel
         (D.field "waits" D.value)
+        (D.field "efficiency" D.value)
         (D.field "config" D.value)
         (D.field "browserLanguage" D.string)
         (D.field "urlLanguage" D.string)
