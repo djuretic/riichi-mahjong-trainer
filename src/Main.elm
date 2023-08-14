@@ -1,6 +1,7 @@
 port module Main exposing (main)
 
 import Browser
+import Browser.Navigation as Nav
 import FontAwesome.Brands as Brands
 import FontAwesome.Solid as Solid
 import Html exposing (a, button, div, footer, h1, p, span, text)
@@ -12,6 +13,8 @@ import Json.Encode as E
 import Page.Efficiency
 import Page.Waits
 import UI
+import Url
+import Url.Parser
 
 
 port setStorageConfig : E.Value -> Cmd msg
@@ -22,18 +25,21 @@ port setHtmlClass : String -> Cmd msg
 
 main : Program E.Value Model Msg
 main =
-    Browser.element
+    Browser.application
         { init = init
         , update = update
         , view = view
         , subscriptions = subscriptions
+        , onUrlRequest = LinkClicked
+        , onUrlChange = UrlChanged
         }
 
 
 type alias Model =
     { language : I18n.Language
     , i18n : I18n.I18n
-    , page : Page
+    , navKey : Nav.Key
+    , route : Maybe Route
     , theme : Theme
 
     -- , scoring : Page.Scoring.Model
@@ -64,19 +70,22 @@ type Theme
     | DarkMode
 
 
-type Page
+type Route
     = ScoringPage
     | WaitsPage
     | EfficiencyPage
+    | SettingsPage
+    | NotFound
 
 
 type Msg
-    = SetPage Page
-    | SetTheme Theme
+    = SetTheme Theme
     | SetLanguage I18n.Language
     | WaitsMsg Page.Waits.Msg
     | EfficiencyMsg Page.Efficiency.Msg
     | SetLanguageDropdownOpen Bool
+    | LinkClicked Browser.UrlRequest
+    | UrlChanged Url.Url
     | ToggleShowConfig
     | TogglePage
 
@@ -86,8 +95,8 @@ defaultConfig =
     { language = "en", darkTheme = False }
 
 
-init : E.Value -> ( Model, Cmd Msg )
-init flags =
+init : E.Value -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags url navKey =
     let
         ( flagsModel, configModel ) =
             case D.decodeValue flagsDecoder flags of
@@ -145,7 +154,8 @@ init flags =
         model =
             { language = lang
             , i18n = i18n
-            , page = WaitsPage
+            , navKey = navKey
+            , route = Url.Parser.parse routeParser url
             , theme = theme
             , waits = waits
             , efficiency = efficiency
@@ -163,12 +173,19 @@ init flags =
     )
 
 
+routeParser : Url.Parser.Parser (Route -> a) a
+routeParser =
+    Url.Parser.oneOf
+        [ Url.Parser.map WaitsPage Url.Parser.top
+        , Url.Parser.map WaitsPage (Url.Parser.s "waits")
+        , Url.Parser.map EfficiencyPage (Url.Parser.s "efficiency")
+        , Url.Parser.map SettingsPage (Url.Parser.s "settings")
+        ]
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SetPage page ->
-            ( { model | page = page }, Cmd.none )
-
         SetTheme theme ->
             let
                 newModel =
@@ -203,82 +220,97 @@ update msg model =
         SetLanguageDropdownOpen value ->
             ( { model | languageDropdownOpen = value }, Cmd.none )
 
+        LinkClicked urlRequest ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model, Nav.pushUrl model.navKey (Url.toString url) )
+
+                Browser.External url ->
+                    ( model, Nav.load url )
+
+        UrlChanged url ->
+            ( { model | route = Url.Parser.parse routeParser url }, Cmd.none )
+
         ToggleShowConfig ->
             ( { model | showConfig = not model.showConfig }, Cmd.none )
 
         TogglePage ->
             let
                 newPage =
-                    case model.page of
-                        WaitsPage ->
-                            EfficiencyPage
+                    case model.route of
+                        Just WaitsPage ->
+                            Just EfficiencyPage
 
-                        EfficiencyPage ->
-                            WaitsPage
+                        Just EfficiencyPage ->
+                            Just WaitsPage
 
-                        ScoringPage ->
-                            EfficiencyPage
+                        _ ->
+                            model.route
             in
-            ( { model | page = newPage }, Cmd.none )
+            ( { model | route = newPage }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    if model.page == WaitsPage then
+    if model.route == Just WaitsPage then
         Sub.map WaitsMsg (Page.Waits.subscriptions model.waits)
 
-    else if model.page == EfficiencyPage then
+    else if model.route == Just EfficiencyPage then
         Sub.map EfficiencyMsg (Page.Efficiency.subscriptions model.efficiency)
 
     else
         Sub.none
 
 
-view : Model -> Html.Html Msg
+view : Model -> Browser.Document Msg
 view model =
     let
         content =
-            case model.page of
-                ScoringPage ->
-                    div [] []
-
-                WaitsPage ->
+            case model.route of
+                Just WaitsPage ->
                     Html.map WaitsMsg (Page.Waits.view model.waits)
 
-                EfficiencyPage ->
+                Just EfficiencyPage ->
                     Html.map EfficiencyMsg (Page.Efficiency.view model.efficiency)
-    in
-    div
-        [ class "base-container"
-        , onClick (SetLanguageDropdownOpen False)
-        ]
-        [ navbar model
-        , div [ class "container p-2" ]
-            [ if model.showConfig then
-                settingsUI model
 
-              else
-                content
+                _ ->
+                    div [] []
+    in
+    { title = "Mahjong Waits Trainer"
+    , body =
+        [ div
+            [ class "base-container"
+            , onClick (SetLanguageDropdownOpen False)
             ]
-        , footer [ class "footer pb-6" ]
-            [ div [ class "has-text-centered content" ]
-                [ Html.map never <|
-                    div []
-                        (I18n.mahjongImageCredits { author = "Martin Persson", href = "https://www.martinpersson.org/" } [] model.i18n)
-                , Html.map never <|
-                    div []
-                        (I18n.faviconCredits { author = "Freepik - Flaticon", href = "https://www.flaticon.com/free-icons/mahjong" } [] model.i18n)
-                , p [ class "mt-2" ] [ a [ class "icon-link", href "https://github.com/djuretic/riichi-mahjong-trainer", target "_blank" ] [ UI.icon "icon" Brands.github ] ]
+            [ navbar model
+            , div [ class "container p-2" ]
+                [ if model.showConfig then
+                    settingsUI model
+
+                  else
+                    content
+                ]
+            , footer [ class "footer pb-6" ]
+                [ div [ class "has-text-centered content" ]
+                    [ Html.map never <|
+                        div []
+                            (I18n.mahjongImageCredits { author = "Martin Persson", href = "https://www.martinpersson.org/" } [] model.i18n)
+                    , Html.map never <|
+                        div []
+                            (I18n.faviconCredits { author = "Freepik - Flaticon", href = "https://www.flaticon.com/free-icons/mahjong" } [] model.i18n)
+                    , p [ class "mt-2" ] [ a [ class "icon-link", href "https://github.com/djuretic/riichi-mahjong-trainer", target "_blank" ] [ UI.icon "icon" Brands.github ] ]
+                    ]
                 ]
             ]
         ]
+    }
 
 
 navbar : Model -> Html.Html Msg
 navbar model =
     div [ class "navbar container is-flex is-flex-direction-row is-justify-content-space-between p-2" ]
         [ h1 [ class "title is-size-4 mb-0 overflow-ellipsis" ] [ text (I18n.siteTitle model.i18n) ]
-        , a [ onClick TogglePage ] [ text "*" ]
+        , a [ href "/efficiency" ] [ text "*" ]
         , a
             [ class "icon-link is-clickable p-1 rounded", classList [ ( "has-background-primary", model.showConfig ) ], title (I18n.settingsTitle model.i18n), onClick ToggleShowConfig ]
             [ UI.icon "icon" Solid.gear ]
