@@ -4,7 +4,7 @@ import Browser
 import Browser.Navigation as Nav
 import FontAwesome.Brands as Brands
 import FontAwesome.Solid as Solid
-import Html exposing (a, button, div, footer, h1, p, span, text)
+import Html exposing (a, button, div, footer, h1, nav, p, span, text)
 import Html.Attributes as HtmlA exposing (class, classList, href, id, target, title)
 import Html.Events exposing (onClick, stopPropagationOn)
 import I18n
@@ -40,6 +40,8 @@ type alias Model =
     , i18n : I18n.I18n
     , navKey : Nav.Key
     , route : Maybe Route
+    , lastRoute : Maybe Route
+    , navbarBurgerActive : Bool
     , theme : Theme
 
     -- , scoring : Page.Scoring.Model
@@ -86,8 +88,9 @@ type Msg
     | SetLanguageDropdownOpen Bool
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
-    | ToggleShowConfig
+      -- | ToggleShowConfig
     | TogglePage
+    | ToggleNavbarBurger
 
 
 defaultConfig : ConfigModel
@@ -156,6 +159,8 @@ init flags url navKey =
             , i18n = i18n
             , navKey = navKey
             , route = Url.Parser.parse routeParser url
+            , lastRoute = Nothing
+            , navbarBurgerActive = False
             , theme = theme
             , waits = waits
             , efficiency = efficiency
@@ -229,10 +234,15 @@ update msg model =
                     ( model, Nav.load url )
 
         UrlChanged url ->
-            ( { model | route = Url.Parser.parse routeParser url }, Cmd.none )
+            let
+                newRoute =
+                    Url.Parser.parse routeParser url
+            in
+            if newRoute == model.route then
+                ( model, Cmd.none )
 
-        ToggleShowConfig ->
-            ( { model | showConfig = not model.showConfig }, Cmd.none )
+            else
+                ( { model | route = newRoute, lastRoute = model.route }, Cmd.none )
 
         TogglePage ->
             let
@@ -248,6 +258,9 @@ update msg model =
                             model.route
             in
             ( { model | route = newPage }, Cmd.none )
+
+        ToggleNavbarBurger ->
+            ( { model | navbarBurgerActive = not model.navbarBurgerActive }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -273,6 +286,9 @@ view model =
                 Just EfficiencyPage ->
                     Html.map EfficiencyMsg (Page.Efficiency.view model.efficiency)
 
+                Just SettingsPage ->
+                    settingsUI model
+
                 _ ->
                     div [] []
     in
@@ -283,13 +299,7 @@ view model =
             , onClick (SetLanguageDropdownOpen False)
             ]
             [ navbar model
-            , div [ class "container p-2" ]
-                [ if model.showConfig then
-                    settingsUI model
-
-                  else
-                    content
-                ]
+            , div [ class "container p-2" ] [ content ]
             , footer [ class "footer pb-6" ]
                 [ div [ class "has-text-centered content" ]
                     [ Html.map never <|
@@ -308,12 +318,36 @@ view model =
 
 navbar : Model -> Html.Html Msg
 navbar model =
-    div [ class "navbar container is-flex is-flex-direction-row is-justify-content-space-between p-2" ]
-        [ h1 [ class "title is-size-4 mb-0 overflow-ellipsis" ] [ text (I18n.siteTitle model.i18n) ]
-        , a [ href "/efficiency" ] [ text "*" ]
-        , a
-            [ class "icon-link is-clickable p-1 rounded", classList [ ( "has-background-primary", model.showConfig ) ], title (I18n.settingsTitle model.i18n), onClick ToggleShowConfig ]
-            [ UI.icon "icon" Solid.gear ]
+    nav [ class "navbar" ]
+        [ div [ class "navbar-brand" ]
+            [ a [ class "navbar-item", href "/" ] [ text "Mahjong Waits Trainer" ]
+
+            -- we add target="_self" as a way to preventDefault() on the click event
+            , a
+                [ class "navbar-burger"
+                , HtmlA.attribute "role" "button"
+                , HtmlA.attribute "data-target" "navbarAppMenu"
+                , classList [ ( "is-active", model.navbarBurgerActive ) ]
+                , onClick ToggleNavbarBurger
+                , target "_self"
+                ]
+                [ span [ HtmlA.attribute "aria-hidden" "true" ] []
+                , span [ HtmlA.attribute "aria-hidden" "true" ] []
+                , span [ HtmlA.attribute "aria-hidden" "true" ] []
+                ]
+            ]
+        , div [ class "navbar-menu", id "navbarAppMenu", classList [ ( "is-active", model.navbarBurgerActive ) ] ]
+            [ div [ class "navbar-start" ]
+                [ a [ class "navbar-item", href "/waits", classList [ ( "is-active", model.route == Just WaitsPage ) ] ] [ text "Waits" ]
+                , a [ class "navbar-item", href "/efficiency", classList [ ( "is-active", model.route == Just EfficiencyPage ) ] ] [ text "Efficiency" ]
+                , a [ class "navbar-item", href "/settings", classList [ ( "is-active", model.route == Just SettingsPage ) ] ]
+                    [ span [ class "icon-text" ]
+                        [ UI.icon "icon" Solid.gear
+                        , span [] [ text (I18n.settingsTitle model.i18n) ]
+                        ]
+                    ]
+                ]
+            ]
         ]
 
 
