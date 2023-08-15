@@ -1,6 +1,9 @@
 # fallback-language: en
 siteTitle = Práctica de esperas de mahjong
 
+waitsTitle = Esperas
+efficiencyTitle = Eficiencia
+
 settingsTitle = Configuración
 languageSelectorTitle = Idioma
 themeSelectorTitle = Tema
