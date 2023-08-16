@@ -321,7 +321,7 @@ view model =
 
 navbar : Model -> Html.Html Msg
 navbar model =
-    nav [ class "navbar" ]
+    nav [ class "navbar has-shadow is-fixed-top" ]
         [ div [ class "navbar-brand" ]
             [ a [ class "navbar-item", href "/" ] [ text "Mahjong Waits Trainer" ]
 
@@ -412,10 +412,10 @@ themeClassName : Theme -> String
 themeClassName theme =
     case theme of
         LightMode ->
-            "light-mode"
+            "light-mode has-navbar-fixed-top"
 
         DarkMode ->
-            "dark-mode"
+            "dark-mode has-navbar-fixed-top"
 
 
 flagsDecoder : D.Decoder FlagsModel
