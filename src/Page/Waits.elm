@@ -694,13 +694,13 @@ winningTilesSection model =
         [ ul []
             [ li
                 [ isActiveTabCss GroupAnimation, onClick (SetGroupsView GroupAnimation) ]
-                [ a [] [ UI.icon "icon is-small" IconR.circlePlay, span [] [ text (I18n.animationTab model.i18n) ] ] ]
+                [ a [ target "_self" ] [ UI.icon "icon is-small" IconR.circlePlay, span [] [ text (I18n.animationTab model.i18n) ] ] ]
             , li
                 [ isActiveTabCss GroupTable, onClick (SetGroupsView GroupTable) ]
-                [ a [] [ UI.icon "icon is-small" IconS.table, span [] [ text (I18n.tableTab model.i18n) ] ] ]
+                [ a [ target "_self" ] [ UI.icon "icon is-small" IconS.table, span [] [ text (I18n.tableTab model.i18n) ] ] ]
             , li
                 [ isActiveTabCss ExternalLinks, onClick (SetGroupsView ExternalLinks) ]
-                [ a [] [ UI.icon "icon is-small" IconS.link, span [] [ text (I18n.linksTab model.i18n) ] ] ]
+                [ a [ target "_self" ] [ UI.icon "icon is-small" IconS.link, span [] [ text (I18n.linksTab model.i18n) ] ] ]
             ]
         ]
         :: (groupsTable

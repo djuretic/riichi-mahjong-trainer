@@ -1,4 +1,4 @@
-port module Page.Efficiency exposing (Model, Msg, init, subscriptions, update, view)
+port module Page.Efficiency exposing (Model, Msg(..), init, subscriptions, update, view)
 
 import Anim
 import Browser.Events
@@ -62,6 +62,7 @@ type Msg
     | DrawTile ( Maybe Tile, List Tile )
     | SetTab Tab
     | ShowHand ( Tile, List Tile )
+    | UpdateI18n I18n.I18n
     | Tick Time.Posix
 
 
@@ -224,6 +225,9 @@ update msg model =
             -- TODO complete
             ( model, Cmd.none )
 
+        UpdateI18n i18n ->
+            ( { model | i18n = i18n }, Cmd.none )
+
         Tick tickTime ->
             ( Anim.tick tickTime doAnimation model, Cmd.none )
 
@@ -247,10 +251,10 @@ view model =
                 [ ul []
                     [ li
                         [ classList [ ( "is-active", model.currentTab == LastMoveAnalysisTab ) ], onClick (SetTab LastMoveAnalysisTab) ]
-                        [ a [] [ text "Last move" ] ]
+                        [ a [ target "_self" ] [ text "Last move" ] ]
                     , li
                         [ classList [ ( "is-active", model.currentTab == CurrentHandAnalysisTab ) ], onClick (SetTab CurrentHandAnalysisTab) ]
-                        [ a [] [ text "Hand" ] ]
+                        [ a [ target "_self" ] [ text "Hand" ] ]
                     ]
                 ]
     in

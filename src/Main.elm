@@ -171,9 +171,9 @@ init flags url navKey =
     ( model
     , Cmd.batch
         [ Cmd.map WaitsMsg waitsCmd
+        , Cmd.map EfficiencyMsg efficiencyCmd
         , setHtmlClass (themeClassName theme)
         , setStorageConfig (encode model)
-        , Cmd.map EfficiencyMsg efficiencyCmd
         ]
     )
 
@@ -205,8 +205,11 @@ update msg model =
 
                 ( newModel, newCmd ) =
                     update (WaitsMsg (Page.Waits.UpdateI18n newI18n)) { model | language = lang, i18n = newI18n }
+
+                ( newModel2, newCmd2 ) =
+                    update (EfficiencyMsg (Page.Efficiency.UpdateI18n newI18n)) { newModel | language = lang, i18n = newI18n }
             in
-            ( newModel, Cmd.batch [ newCmd, setStorageConfig (encode newModel) ] )
+            ( newModel2, Cmd.batch [ newCmd, newCmd2, setStorageConfig (encode newModel2) ] )
 
         WaitsMsg wmsg ->
             let
