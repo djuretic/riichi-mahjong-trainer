@@ -343,7 +343,9 @@ navbar model =
             [ div [ class "navbar-start" ]
                 [ a [ class "navbar-item", href "/waits", classList [ ( "is-active", model.route == Just WaitsPage ) ] ] [ text (I18n.waitsTitle model.i18n) ]
                 , a [ class "navbar-item", href "/efficiency", classList [ ( "is-active", model.route == Just EfficiencyPage ) ] ] [ text (I18n.efficiencyTitle model.i18n) ]
-                , a [ class "navbar-item", href "/settings", classList [ ( "is-active", model.route == Just SettingsPage ) ] ]
+                ]
+            , div [ class "navbar-end" ]
+                [ a [ class "navbar-item", href "/settings", classList [ ( "is-active", model.route == Just SettingsPage ) ] ]
                     [ span [ class "icon-text" ]
                         [ UI.icon "icon" Solid.gear
                         , span [] [ text (I18n.settingsTitle model.i18n) ]
