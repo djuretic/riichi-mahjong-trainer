@@ -985,8 +985,11 @@ isWinningHand tiles groups =
         enoughTiles =
             List.member numTiles [ 5, 8, 11, 14 ]
 
+        isChiitoitsu =
+            numTiles == 14 && List.length groups == 7 && List.all isPair groups
+
         enoughGroups =
-            List.length groups == (numTiles + 1) // 3
+            isChiitoitsu || List.length groups == (numTiles + 1) // 3
     in
     enoughTiles && enoughGroups && not (Tile.hasMoreThan4Tiles tiles)
 
