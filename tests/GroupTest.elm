@@ -4,7 +4,7 @@ import Expect
 import Group exposing (FindPartialsOption(..), Group, GroupType(..))
 import Suit exposing (Suit(..))
 import Test exposing (..)
-import Tile
+import Tile exposing (Tile)
 
 
 suite : Test
@@ -43,6 +43,15 @@ suite =
             , [ Group Pair 3 Man, Group PartialKanchan 6 Man ]
             ]
             "13368m"
+        , describe "winningTiles"
+            [ test "consider chiitoitsu" <|
+                \_ ->
+                    Expect.equalLists
+                        [ ( Tile 2 Man, [ Group Pair 1 Man, Group Pair 2 Man, Group Pair 3 Man, Group Pair 4 Man, Group Pair 7 Man, Group Pair 8 Man, Group Pair 9 Man ] )
+                        , ( Tile 5 Man, [ Group Pair 1 Man, Group Run 2 Man, Group Run 3 Man, Group Run 7 Man, Group Run 7 Man ] )
+                        ]
+                        (Group.winningTiles (Tile.fromString "1123344778899m"))
+            ]
         ]
 
 
