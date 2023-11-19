@@ -39,6 +39,7 @@ type alias Model =
     , currentTab : Tab
     , animatedTiles : List AnimatedTile
     , lastTick : Int
+    , tenpaiReached : Bool
     }
 
 
@@ -59,6 +60,7 @@ type Msg
     | SetNumberOfTiles Int
     | ToggleSuit Suit
     | DiscardTile Tile
+    | VerifyTenpaiReached
     | DrawTile ( Maybe Tile, List Tile )
     | SetTab Tab
     | ShowHand ( Tile, List Tile )
@@ -108,6 +110,7 @@ init i18n flags =
       , currentTab = LastMoveAnalysisTab
       , animatedTiles = []
       , lastTick = 0
+      , tenpaiReached = False
       }
     , cmdGenerateTiles prefs.numberOfTiles prefs.suits
     )
@@ -160,6 +163,7 @@ update msg model =
                         , lastDiscardTiles = []
                         , lastDiscardTileAcceptance = []
                         , animatedTiles = []
+                        , tenpaiReached = False
                     }
                 , Cmd.none
                 )
@@ -187,7 +191,7 @@ update msg model =
                 alreadyWon =
                     model.shanten.final.shanten < 0
             in
-            if List.member tile model.tiles && not (List.isEmpty model.availableTiles) && not alreadyWon then
+            if List.member tile model.tiles && not (List.isEmpty model.availableTiles) && not alreadyWon && not model.tenpaiReached then
                 let
                     lastDiscardAcceptance =
                         case model.tileAcceptance of
@@ -197,18 +201,32 @@ update msg model =
                             _ ->
                                 []
                 in
-                ( initAnimatedTiles
-                    { model
-                        | tiles = List.Extra.remove tile model.tiles |> Tile.sort
-                        , discardedTiles = model.discardedTiles ++ [ tile ]
-                        , lastDiscardTiles = model.tiles
-                        , lastDiscardTileAcceptance = lastDiscardAcceptance
-                    }
-                , Random.generate DrawTile (Random.List.choose model.availableTiles)
-                )
+                { model
+                    | tiles = List.Extra.remove tile model.tiles |> Tile.sort
+                    , discardedTiles = model.discardedTiles ++ [ tile ]
+                    , lastDiscardTiles = model.tiles
+                    , lastDiscardTileAcceptance = lastDiscardAcceptance
+                }
+                    |> initAnimatedTiles
+                    |> update VerifyTenpaiReached
 
             else
                 ( model, Cmd.none )
+
+        VerifyTenpaiReached ->
+            let
+                modelWithRecalculatedShanten =
+                    if model.shanten.final.shanten == 0 then
+                        recalculateShanten model
+
+                    else
+                        model
+            in
+            if modelWithRecalculatedShanten.shanten.final.shanten == 0 then
+                ( { model | tenpaiReached = True }, Cmd.none )
+
+            else
+                ( model, Random.generate DrawTile (Random.List.choose model.availableTiles) )
 
         DrawTile ( possibleTile, availableTiles ) ->
             case possibleTile of
@@ -241,6 +259,13 @@ view model =
         tilesString =
             Tile.listToString model.tiles
 
+        tenpaiMessage =
+            if model.tenpaiReached then
+                "Tenpai reached!"
+
+            else
+                "-"
+
         uiMap uiMsg =
             case uiMsg of
                 UI.TileOnClick tile ->
@@ -264,7 +289,8 @@ view model =
             , UI.label (I18n.suitSelectorTitle model.i18n) (suitSelector model)
             ]
         , div [ class "block" ]
-            [ UI.tilesDivWithOnClick model.i18n model.numberedTiles model.tiles |> Html.map uiMap
+            [ text tenpaiMessage
+            , UI.tilesDivWithOnClick model.i18n model.numberedTiles model.tiles |> Html.map uiMap
             , text ("Remaining pieces: " ++ (String.fromInt <| List.length model.availableTiles))
             ]
         , button [ class "button", onClick GenerateTiles ] [ text (I18n.newHandButton model.i18n) ]
