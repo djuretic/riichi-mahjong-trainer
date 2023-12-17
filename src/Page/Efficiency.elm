@@ -63,7 +63,6 @@ type Msg
     | VerifyTenpaiReached
     | DrawTile ( Maybe Tile, List Tile )
     | SetTab Tab
-    | ShowHand ( Tile, List Tile )
     | UpdateI18n I18n.I18n
     | Tick Time.Posix
     | NoOp
@@ -239,10 +238,6 @@ update msg model =
 
         SetTab tab ->
             ( { model | currentTab = tab }, Cmd.none )
-
-        ShowHand ( tiles, drawnTile ) ->
-            -- TODO complete
-            ( model, Cmd.none )
 
         UpdateI18n i18n ->
             ( { model | i18n = i18n }, Cmd.none )
@@ -570,9 +565,9 @@ tileAcceptanceDiscardTile model ( tile, detail ) =
         uiMap : UI.UIMsg -> Msg
         uiMap uiMsg =
             case uiMsg of
-                UI.TileOnClick clickedTile ->
+                UI.TileOnClick _ ->
                     -- TODO prev turn tiles
-                    ShowHand ( clickedTile, model.tiles )
+                    NoOp
 
         lastTileCss =
             List.Extra.last model.discardedTiles
