@@ -20,6 +20,7 @@ module UI exposing
     , tilesDiv
     , tilesDivAttrs
     , tilesDivWithOnClick
+    , tilesDivWithOnClickAndAttrs
     , tilesList
     , tilesListWithOnClick
     )
@@ -89,9 +90,23 @@ tilesDivWithOnClick i18n addNumbers baseTiles =
     Html.div tilesDivAttrs allTiles
 
 
+tilesDivWithOnClickAndAttrs : I18n -> Bool -> (Tile.Tile -> List (Html.Attribute UIMsg)) -> List Tile.Tile -> Html.Html UIMsg
+tilesDivWithOnClickAndAttrs i18n addNumbers attrsFn baseTiles =
+    let
+        allTiles =
+            tilesListWithOnClickAndAttrs i18n addNumbers attrsFn baseTiles
+    in
+    Html.div tilesDivAttrs allTiles
+
+
 tilesListWithOnClick : I18n -> Bool -> List Tile.Tile -> List (Html.Html UIMsg)
 tilesListWithOnClick i18n addNumbers baseTiles =
     List.map (tileWithOnClick i18n addNumbers []) baseTiles
+
+
+tilesListWithOnClickAndAttrs : I18n -> Bool -> (Tile.Tile -> List (Html.Attribute UIMsg)) -> List Tile.Tile -> List (Html.Html UIMsg)
+tilesListWithOnClickAndAttrs i18n addNumbers attrsFn baseTiles =
+    List.map (\t -> tileWithOnClick i18n addNumbers (attrsFn t) t) baseTiles
 
 
 tile : I18n -> Bool -> List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg

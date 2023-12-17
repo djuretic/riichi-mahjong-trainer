@@ -3,7 +3,7 @@ port module Page.Efficiency exposing (Model, Msg(..), init, subscriptions, updat
 import Anim
 import Browser.Events
 import Html exposing (Html, a, button, div, li, text, ul)
-import Html.Attributes exposing (class, classList, href, style, target)
+import Html.Attributes as Attributes exposing (class, classList, href, style, target)
 import Html.Events exposing (onClick)
 import I18n
 import Json.Decode as D
@@ -66,6 +66,7 @@ type Msg
     | ShowHand ( Tile, List Tile )
     | UpdateI18n I18n.I18n
     | Tick Time.Posix
+    | NoOp
 
 
 type alias AnimatedTile =
@@ -249,13 +250,13 @@ update msg model =
         Tick tickTime ->
             ( Anim.tick tickTime doAnimation model, Cmd.none )
 
+        NoOp ->
+            ( model, Cmd.none )
+
 
 view : Model -> Html Msg
 view model =
     let
-        groupGapSvg =
-            15
-
         tilesString =
             Tile.listToString model.tiles
 
@@ -270,6 +271,15 @@ view model =
             case uiMsg of
                 UI.TileOnClick tile ->
                     DiscardTile tile
+
+        uiMapLastHand uiMsg =
+            case uiMsg of
+                UI.TileOnClick _ ->
+                    NoOp
+
+        isGoodTileToDiscard : Tile.Tile -> Bool
+        isGoodTileToDiscard tile =
+            List.member tile (List.map Tuple.first model.lastDiscardTileAcceptance) && (List.length model.lastDiscardTileAcceptance /= List.length (List.Extra.unique model.lastDiscardTiles))
 
         tabs =
             div [ class "tabs is-boxed" ]
@@ -308,7 +318,18 @@ view model =
               else
                 tenhouLink model (Tile.listToString model.lastDiscardTiles)
 
-            -- , animationSvg groupGapSvg 1 "is-hidden-mobile" model
+            -- , animationSvg groupGapSvg(15) 1 "is-hidden-mobile" model
+            , UI.tilesDivWithOnClickAndAttrs model.i18n
+                model.numberedTiles
+                (\t ->
+                    if isGoodTileToDiscard t then
+                        [ Attributes.style "filter" "sepia(50%)" ]
+
+                    else
+                        []
+                )
+                model.lastDiscardTiles
+                |> Html.map uiMapLastHand
             , text "Discards"
             , UI.tilesDiv model.i18n model.numberedTiles model.discardedTiles
             , text "Tile acceptance"
