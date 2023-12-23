@@ -494,9 +494,19 @@ animationSvg groupGapSvg zoom cssClass model =
 
 tenhouLink : Model -> String -> Html Msg
 tenhouLink model tilesString =
+    let
+        chiitoitsuShantenText =
+            if model.shanten.chiitoitsu.shanten <= model.shanten.final.shanten then
+                text " (chiitoitsu) "
+
+            else
+                text ""
+    in
     div []
         [ text (String.fromInt model.shanten.final.shanten)
-        , text "-shanten -> "
+        , text "-shanten "
+        , chiitoitsuShantenText
+        , text "-> "
         , a [ href ("https://tenhou.net/2/?q=" ++ tilesString), target "_blank" ] [ text "Tenhou" ]
         ]
 
