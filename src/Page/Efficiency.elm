@@ -276,6 +276,23 @@ view model =
         isGoodTileToDiscard tile =
             List.member tile (List.map Tuple.first model.lastDiscardTileAcceptance) && (List.length model.lastDiscardTileAcceptance /= List.length (List.Extra.unique model.lastDiscardTiles))
 
+        isBestTileToDiscard : Tile.Tile -> Bool
+        isBestTileToDiscard tile =
+            let
+                maxAcceptance =
+                    model.lastDiscardTileAcceptance
+                        |> List.map Tuple.second
+                        |> List.map .numTiles
+                        |> List.maximum
+                        |> Maybe.withDefault 0
+
+                tilesWithMaxAcceptance =
+                    model.lastDiscardTileAcceptance
+                        |> List.filter (\( _, acceptance ) -> acceptance.numTiles == maxAcceptance)
+                        |> List.map Tuple.first
+            in
+            List.member tile tilesWithMaxAcceptance
+
         tabs =
             div [ class "tabs is-boxed" ]
                 [ ul []
@@ -317,7 +334,13 @@ view model =
             , UI.tilesDivWithOnClickAndAttrs model.i18n
                 model.numberedTiles
                 (\t ->
-                    if isGoodTileToDiscard t then
+                    if isGoodTileToDiscard t && isBestTileToDiscard t then
+                        [ Attributes.style "filter" "sepia(50%)"
+                        , Attributes.style "box-shadow" "0 0 5px 5px goldenrod"
+                        , Attributes.style "border-radius" "10px"
+                        ]
+
+                    else if isGoodTileToDiscard t then
                         [ Attributes.style "filter" "sepia(50%)" ]
 
                     else
