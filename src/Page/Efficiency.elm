@@ -34,6 +34,7 @@ type alias Model =
     , discardedTiles : List Tile
     , shanten : Shanten.ShantenDetail
     , tileAcceptance : Shanten.TileAcceptance
+    , tileAcceptanceSelectedTile : Maybe Tile
     , lastDiscardTiles : List Tile
     , lastDiscardTileAcceptance : List ( Tile, Shanten.TileAcceptanceDetail )
     , currentTab : Tab
@@ -62,6 +63,7 @@ type Msg
     | DiscardTile Tile
     | VerifyTenpaiReached
     | DrawTile ( Maybe Tile, List Tile )
+    | ShowTileAcceptance Tile
     | SetTab Tab
     | UpdateI18n I18n.I18n
     | Tick Time.Posix
@@ -105,6 +107,7 @@ init i18n flags =
       , discardedTiles = []
       , shanten = Shanten.init
       , tileAcceptance = Shanten.Draw Shanten.emptyTileAcceptanceDetail
+      , tileAcceptanceSelectedTile = Nothing
       , lastDiscardTiles = []
       , lastDiscardTileAcceptance = []
       , currentTab = LastMoveAnalysisTab
@@ -123,7 +126,11 @@ cmdGenerateTiles numTiles suits =
 
 recalculateShanten : Model -> Model
 recalculateShanten model =
-    { model | shanten = Shanten.shanten model.tiles, tileAcceptance = Shanten.tileAcceptance model.discardedTiles model.tiles }
+    { model
+        | shanten = Shanten.shanten model.tiles
+        , tileAcceptance = Shanten.tileAcceptance model.discardedTiles model.tiles
+        , tileAcceptanceSelectedTile = Nothing
+    }
 
 
 subscriptions : Model -> Sub Msg
@@ -236,6 +243,9 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
+        ShowTileAcceptance tile ->
+            ( { model | tileAcceptanceSelectedTile = Just tile }, Cmd.none )
+
         SetTab tab ->
             ( { model | currentTab = tab }, Cmd.none )
 
@@ -269,8 +279,8 @@ view model =
 
         uiMapLastHand uiMsg =
             case uiMsg of
-                UI.TileOnClick _ ->
-                    NoOp
+                UI.TileOnClick tile ->
+                    ShowTileAcceptance tile
 
         isGoodTileToDiscard : Tile.Tile -> Bool
         isGoodTileToDiscard tile =
@@ -292,6 +302,16 @@ view model =
                         |> List.map Tuple.first
             in
             List.member tile tilesWithMaxAcceptance
+
+        selectedTileAcceptance =
+            case model.tileAcceptanceSelectedTile of
+                Just tile ->
+                    List.Extra.find (\( t, _ ) -> t == tile) model.lastDiscardTileAcceptance
+                        |> Maybe.map (\tAcc -> tileAcceptanceDiscardTile model tAcc)
+                        |> Maybe.withDefault (div [ class "block" ] [ text "No data" ])
+
+                Nothing ->
+                    div [] []
 
         tabs =
             div [ class "tabs is-boxed" ]
@@ -315,7 +335,7 @@ view model =
             , UI.tilesDivWithOnClick model.i18n model.numberedTiles model.tiles |> Html.map uiMap
             , text ("Remaining pieces: " ++ (String.fromInt <| List.length model.availableTiles))
             ]
-        , button [ class "button", onClick GenerateTiles ] [ text (I18n.newHandButton model.i18n) ]
+        , div [ class "buttons" ] [ button [ class "button", onClick GenerateTiles ] [ text (I18n.newHandButton model.i18n) ] ]
         , tabs
         , div [ classList [ ( "is-hidden", model.currentTab /= CurrentHandAnalysisTab ) ] ]
             [ tenhouLink model tilesString
@@ -331,23 +351,26 @@ view model =
                 tenhouLink model (Tile.listToString model.lastDiscardTiles)
 
             -- , animationSvg groupGapSvg(15) 1 "is-hidden-mobile" model
-            , UI.tilesDivWithOnClickAndAttrs model.i18n
-                model.numberedTiles
-                (\t ->
-                    if isGoodTileToDiscard t && isBestTileToDiscard t then
-                        [ Attributes.style "filter" "sepia(50%)"
-                        , Attributes.style "box-shadow" "0 0 5px 5px goldenrod"
-                        , Attributes.style "border-radius" "10px"
-                        ]
+            , div [ class "block" ]
+                [ UI.tilesDivWithOnClickAndAttrs model.i18n
+                    model.numberedTiles
+                    (\t ->
+                        if isGoodTileToDiscard t && isBestTileToDiscard t then
+                            [ Attributes.style "filter" "sepia(50%)"
+                            , Attributes.style "box-shadow" "0 0 5px 5px goldenrod"
+                            , Attributes.style "border-radius" "10px"
+                            ]
 
-                    else if isGoodTileToDiscard t then
-                        [ Attributes.style "filter" "sepia(50%)" ]
+                        else if isGoodTileToDiscard t then
+                            [ Attributes.style "filter" "sepia(50%)" ]
 
-                    else
-                        []
-                )
-                model.lastDiscardTiles
-                |> Html.map uiMapLastHand
+                        else
+                            []
+                    )
+                    model.lastDiscardTiles
+                    |> Html.map uiMapLastHand
+                ]
+            , selectedTileAcceptance
             , text "Discards"
             , UI.tilesDiv model.i18n model.numberedTiles model.discardedTiles
             , text "Tile acceptance"
