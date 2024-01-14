@@ -12,7 +12,7 @@
     "translations": "travelm-agency --elm_path=src/I18n.elm --inline translations",
     "debug": "elm-live src/Main.elm --open -- --output app.js --debug",
     "debugger": "elm-live src/Page/Debugger.elm --open -s debugger.html -- --output debugger.js",
-    "live": "elm-live src/Main.elm --open --host 0.0.0.0 -- --output app.js",
+    "live": "elm-live src/Main.elm --open --host 0.0.0.0 --pushstate -- --output app.js",
     "review": "elm-review",
     "test": "elm-test"
   },
