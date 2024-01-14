@@ -18,10 +18,15 @@ import Svg exposing (image, svg)
 import Svg.Attributes as SvgA
 import Tile exposing (Tile)
 import Time
-import UI
+import UI exposing (TileMode(..))
 
 
 port setStorageEfficiency : E.Value -> Cmd msg
+
+
+tileMode : UI.TileMode
+tileMode =
+    TileFixedWidth 30
 
 
 type alias Model =
@@ -372,7 +377,7 @@ view model =
                 ]
             , selectedTileAcceptance
             , text "Discards"
-            , UI.tilesDiv model.i18n model.numberedTiles model.discardedTiles
+            , UI.tilesDiv model.i18n model.numberedTiles tileMode model.discardedTiles
             , text "Tile acceptance"
             , div [ class "block" ]
                 (List.map
@@ -637,11 +642,11 @@ tileAcceptanceDiscardTile model ( tile, detail ) =
                     )
                 |> Maybe.withDefault (class "")
     in
-    div (lastTileCss :: UI.tilesDivAttrs)
-        ([ UI.tileSimple model.i18n model.numberedTiles tile
+    div [ lastTileCss, class "tiles" ]
+        ([ UI.tileSimple model.i18n model.numberedTiles tileMode tile
          , text "->"
          ]
-            ++ (UI.tilesListWithOnClick model.i18n model.numberedTiles detail.tiles |> List.map (Html.map uiMap))
+            ++ (UI.tilesList model.i18n model.numberedTiles tileMode detail.tiles |> List.map (Html.map uiMap))
             ++ [ text (String.fromInt detail.numTiles)
                ]
         )

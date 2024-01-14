@@ -1,27 +1,31 @@
 module UI exposing
-    ( UIMsg(..)
+    ( TileMode(..)
+    , UIMsg(..)
     , backTile
     , breakpoints
     , groups
     , groupsSimple
     , icon
     , label
-    , tile
     , tileGap
     , tileGapAttr
     , tileHeight
     , tileHeightCss
     , tileHeightDoubleCss
+    , tileMinWidth
     , tilePath
     , tileScale
     , tileSimple
+    , tileSimpleMinWidth
     , tileTitle
     , tileWidth
     , tilesDiv
     , tilesDivAttrs
+    , tilesDivMinWidth
     , tilesDivWithOnClick
     , tilesDivWithOnClickAndAttrs
     , tilesList
+    , tilesListMinWidth
     , tilesListWithOnClick
     )
 
@@ -47,6 +51,11 @@ type UIMsg
     = TileOnClick Tile.Tile
 
 
+type TileMode
+    = TileMinWidth
+    | TileFixedWidth Int
+
+
 breakpoints : Html.Html msg
 breakpoints =
     let
@@ -62,11 +71,16 @@ breakpoints =
         ]
 
 
-tilesDiv : I18n -> Bool -> List Tile.Tile -> Html.Html msg
-tilesDiv i18n addNumbers baseTiles =
+tilesDivMinWidth : I18n -> Bool -> List Tile.Tile -> Html.Html msg
+tilesDivMinWidth i18n addNumbers baseTiles =
+    tilesDiv i18n addNumbers TileMinWidth baseTiles
+
+
+tilesDiv : I18n -> Bool -> TileMode -> List Tile.Tile -> Html.Html msg
+tilesDiv i18n addNumbers tileMode baseTiles =
     let
         allTiles =
-            tilesList i18n addNumbers baseTiles
+            tilesList i18n addNumbers tileMode baseTiles
     in
     Html.div tilesDivAttrs allTiles
 
@@ -76,9 +90,14 @@ tilesDivAttrs =
     [ class "tiles is-flex is-flex-direction-row", tileGapAttr ]
 
 
-tilesList : I18n -> Bool -> List Tile.Tile -> List (Html.Html msg)
-tilesList i18n addNumbers baseTiles =
-    List.map (tileSimple i18n addNumbers) baseTiles
+tilesListMinWidth : I18n -> Bool -> List Tile.Tile -> List (Html.Html msg)
+tilesListMinWidth i18n addNumbers baseTiles =
+    List.map (tileSimpleMinWidth i18n addNumbers) baseTiles
+
+
+tilesList : I18n -> Bool -> TileMode -> List Tile.Tile -> List (Html.Html msg)
+tilesList i18n addNumbers tileMode baseTiles =
+    List.map (tile i18n addNumbers tileMode []) baseTiles
 
 
 tilesDivWithOnClick : I18n -> Bool -> List Tile.Tile -> Html.Html UIMsg
@@ -109,8 +128,13 @@ tilesListWithOnClickAndAttrs i18n addNumbers attrsFn baseTiles =
     List.map (\t -> tileWithOnClick i18n addNumbers (attrsFn t) t) baseTiles
 
 
-tile : I18n -> Bool -> List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg
-tile i18n addNumbers attrs baseTile =
+tileMinWidth : I18n -> Bool -> List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg
+tileMinWidth i18n addNumbers attrs baseTile =
+    tile i18n addNumbers TileMinWidth attrs baseTile
+
+
+tile : I18n -> Bool -> TileMode -> List (Html.Attribute msg) -> Tile.Tile -> Html.Html msg
+tile i18n addNumbers tileMode attrs baseTile =
     let
         path =
             tilePath addNumbers baseTile
@@ -119,7 +143,7 @@ tile i18n addNumbers attrs baseTile =
         Html.text ""
 
     else
-        Html.img (tileAttrs i18n path (Just baseTile) |> List.append attrs) []
+        Html.img (tileAttrs i18n path tileMode (Just baseTile) |> List.append attrs) []
 
 
 tileWithOnClick : I18n -> Bool -> List (Html.Attribute UIMsg) -> Tile.Tile -> Html.Html UIMsg
@@ -132,12 +156,17 @@ tileWithOnClick i18n addNumbers attrs baseTile =
         Html.text ""
 
     else
-        Html.img (tileAttrs i18n path (Just baseTile) ++ attrs ++ [ class "is-clickable", onClick (TileOnClick baseTile) ]) []
+        Html.img (tileAttrs i18n path TileMinWidth (Just baseTile) ++ attrs ++ [ class "is-clickable", onClick (TileOnClick baseTile) ]) []
 
 
-tileSimple : I18n -> Bool -> Tile.Tile -> Html.Html msg
-tileSimple i18n addNumbers baseTile =
-    tile i18n addNumbers [] baseTile
+tileSimpleMinWidth : I18n -> Bool -> Tile.Tile -> Html.Html msg
+tileSimpleMinWidth i18n addNumbers baseTile =
+    tileMinWidth i18n addNumbers [] baseTile
+
+
+tileSimple : I18n -> Bool -> TileMode -> Tile.Tile -> Html.Html msg
+tileSimple i18n addNumbers tileMode baseTile =
+    tile i18n addNumbers tileMode [] baseTile
 
 
 tilePath : Bool -> Tile.Tile -> String
@@ -169,7 +198,7 @@ tilePath addNumbers { number, suit } =
 
 backTile : I18n -> List (Html.Attribute msg) -> Html.Html msg
 backTile i18n attrs =
-    Html.img (List.append attrs (tileAttrs i18n "/img/128px_v2/face-down-128px.png" Nothing)) []
+    Html.img (List.append attrs (tileAttrs i18n "/img/128px_v2/face-down-128px.png" TileMinWidth Nothing)) []
 
 
 tileScale : Float
@@ -219,14 +248,22 @@ groupGapAttr =
     Html.Attributes.style "gap" (String.fromInt groupGap ++ "px")
 
 
-tileAttrs : I18n -> String -> Maybe Tile.Tile -> List (Html.Attribute msg)
-tileAttrs i18n path baseTile =
+tileAttrs : I18n -> String -> TileMode -> Maybe Tile.Tile -> List (Html.Attribute msg)
+tileAttrs i18n path tileMode baseTile =
+    let
+        styleWidth =
+            case tileMode of
+                TileMinWidth ->
+                    -- needed for nested flex to work when shrinking
+                    style "min-width" "20px"
+
+                TileFixedWidth w ->
+                    style "width" (String.fromInt w ++ "px")
+    in
     [ src path
     , class "tile"
     , title (Maybe.map (tileTitle i18n) baseTile |> Maybe.withDefault "")
-
-    -- needed for nested flex to work when shrinking
-    , style "min-width" "20px"
+    , styleWidth
     ]
 
 
@@ -318,7 +355,7 @@ group i18n addNumbers attrs winningTile baseGroup =
                     baseTiles
     in
     Html.div (List.append [ class "group is-flex is-flex-direction-row", tileGapAttr ] attrs)
-        (List.map (\( t, atts ) -> tile i18n addNumbers atts t) tilesWithWinInfo)
+        (List.map (\( t, atts ) -> tileMinWidth i18n addNumbers atts t) tilesWithWinInfo)
 
 
 groupsSimple : I18n -> Bool -> List Group.Group -> Html.Html msg
