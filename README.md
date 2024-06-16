@@ -16,6 +16,20 @@ npm run live
 ```
 The last command will open your browser, reload the page if you don't see anything the first time. 
 
+## Production build
+
+Generate a build in `public/`:
+
+```bash
+npm run build:prod
+```
+
+## Tests
+
+```bash
+npm test
+```
+
 ## License
 
 MIT
