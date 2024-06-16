@@ -1,5 +1,6 @@
 port module Page.Waits exposing (Model, Msg(..), init, subscriptions, update, view)
 
+import Anim
 import Browser.Events
 import FontAwesome.Regular as IconR
 import FontAwesome.Solid as IconS
@@ -299,27 +300,7 @@ update msg model =
             ( { model | animatedTiles = setupAnimation model model.tiles, currentAnimatedTile = Nothing }, Cmd.none )
 
         Tick tickTime ->
-            let
-                fps =
-                    30
-
-                fpsInterval =
-                    1000 / fps
-
-                now =
-                    Time.posixToMillis tickTime
-
-                elapsed =
-                    now - model.lastTick
-            in
-            if model.lastTick == 0 then
-                ( { model | lastTick = now }, Cmd.none )
-
-            else if toFloat elapsed > fpsInterval then
-                ( { model | lastTick = now - remainderBy (round fpsInterval) elapsed, animatedTiles = doAnimation model.animatedTiles }, Cmd.none )
-
-            else
-                ( model, Cmd.none )
+            ( Anim.tick tickTime doAnimation model, Cmd.none )
 
         UpdateI18n i18n ->
             ( { model | i18n = i18n }, Cmd.none )
@@ -415,7 +396,7 @@ view model =
             , UI.label (I18n.minWaitsSelectorTitle model.i18n) (minWaitsSelector model)
             , UI.label (I18n.numberedTilesSelector model.i18n) (numberedTilesSelector model)
             ]
-        , div [ class "block" ] [ UI.tiles model.i18n model.numberedTiles model.tiles ]
+        , div [ class "block" ] [ UI.tilesDivMinWidth model.i18n model.numberedTiles model.tiles ]
         , div [ class "block" ]
             [ text (I18n.selectWaitTilesText model.i18n)
             , waitButtons model
@@ -606,7 +587,7 @@ waitButtons model =
                 (List.map
                     (\t ->
                         ( Tile.toString t
-                        , UI.tile model.i18n
+                        , UI.tileMinWidth model.i18n
                             model.numberedTiles
                             [ onClick (ToggleWaitTile t)
                             , selectedCss t
@@ -671,7 +652,7 @@ winningTilesSection model =
                         :: List.map
                             (\( t, g ) ->
                                 button [ class "button is-large animation-button pl-2 pr-2", classList [ ( "is-primary", model.currentAnimatedTile == Just t ) ], onClick (StartWaitsAnimation ( t, g )) ]
-                                    [ UI.tile model.i18n model.numberedTiles [] t ]
+                                    [ UI.tileMinWidth model.i18n model.numberedTiles [] t ]
                             )
                             model.waits
                     )
@@ -713,13 +694,13 @@ winningTilesSection model =
         [ ul []
             [ li
                 [ isActiveTabCss GroupAnimation, onClick (SetGroupsView GroupAnimation) ]
-                [ a [] [ UI.icon "icon is-small" IconR.circlePlay, span [] [ text (I18n.animationTab model.i18n) ] ] ]
+                [ a [ target "_self" ] [ UI.icon "icon is-small" IconR.circlePlay, span [] [ text (I18n.animationTab model.i18n) ] ] ]
             , li
                 [ isActiveTabCss GroupTable, onClick (SetGroupsView GroupTable) ]
-                [ a [] [ UI.icon "icon is-small" IconS.table, span [] [ text (I18n.tableTab model.i18n) ] ] ]
+                [ a [ target "_self" ] [ UI.icon "icon is-small" IconS.table, span [] [ text (I18n.tableTab model.i18n) ] ] ]
             , li
                 [ isActiveTabCss ExternalLinks, onClick (SetGroupsView ExternalLinks) ]
-                [ a [] [ UI.icon "icon is-small" IconS.link, span [] [ text (I18n.linksTab model.i18n) ] ] ]
+                [ a [ target "_self" ] [ UI.icon "icon is-small" IconS.link, span [] [ text (I18n.linksTab model.i18n) ] ] ]
             ]
         ]
         :: (groupsTable
@@ -732,7 +713,7 @@ winningTilesSection model =
 winningTiles : Model -> List (Html Msg)
 winningTiles model =
     [ text (I18n.showWaitTilesText model.i18n)
-    , UI.tiles model.i18n model.numberedTiles (List.map Tuple.first model.waits)
+    , UI.tilesDivMinWidth model.i18n model.numberedTiles (List.map Tuple.first model.waits)
     ]
 
 

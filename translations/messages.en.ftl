@@ -1,5 +1,8 @@
 siteTitle = Mahjong Waits Trainer
 
+waitsTitle = Waits
+efficiencyTitle = Efficiency
+
 settingsTitle = Settings
 languageSelectorTitle = Language
 themeSelectorTitle = Theme

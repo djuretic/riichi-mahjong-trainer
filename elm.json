@@ -14,13 +14,13 @@
             "elm/random": "1.0.0",
             "elm/svg": "1.0.1",
             "elm/time": "1.0.0",
+            "elm/url": "1.0.0",
             "elm-community/easing-functions": "2.0.0",
             "elm-community/list-extra": "8.6.0",
             "elm-community/random-extra": "3.2.0",
             "lattyware/elm-fontawesome": "6.0.0"
         },
         "indirect": {
-            "elm/url": "1.0.0",
             "elm/virtual-dom": "1.0.3"
         }
     },

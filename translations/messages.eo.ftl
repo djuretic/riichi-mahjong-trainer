@@ -1,6 +1,9 @@
 # fallback-language: en
 siteTitle = Ekzercilo de atendoj de maĝango
 
+waitsTitle = Atendoj
+efficiencyTitle = Efikeco
+
 settingsTitle = Agordoj
 languageSelectorTitle = Lingvo
 themeSelectorTitle = Etoso

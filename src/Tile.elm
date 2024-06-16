@@ -13,10 +13,12 @@ module Tile exposing
     , isTerminal
     , isTriplet
     , isValid
+    , listToString
     , moveWinningTileToEnd
     , partitionBySuit
     , push
     , randomList
+    , randomListOfSuits
     , randomWind
     , redDragonNumber
     , removeTileAtPosFromArray
@@ -31,6 +33,7 @@ module Tile exposing
 
 import Array
 import Counter
+import List.Extra
 import Parser exposing ((|.), (|=))
 import Random
 import Random.List
@@ -288,6 +291,28 @@ toString tile =
     String.fromInt tile.number ++ Suit.toString tile.suit
 
 
+listToString : List Tile -> String
+listToString tiles =
+    case tiles of
+        [] ->
+            ""
+
+        x :: _ ->
+            let
+                suit =
+                    x.suit
+
+                sameSuitTiles =
+                    List.Extra.takeWhile (\t -> t.suit == suit) tiles
+                        |> List.map (\t -> String.fromInt t.number)
+                        |> String.join ""
+
+                remaining =
+                    List.Extra.dropWhile (\t -> t.suit == suit) tiles
+            in
+            sameSuitTiles ++ Suit.toString suit ++ listToString remaining
+
+
 randomWind : Random.Generator Wind
 randomWind =
     Random.uniform East [ South, West, North ]
@@ -352,6 +377,19 @@ randomList n =
     let
         allPossibleTiles =
             List.concatMap (List.repeat 4) allTiles
+    in
+    Random.List.choices n allPossibleTiles
+        |> Random.andThen
+            (\( tiles, remaining ) ->
+                Random.pair (Random.constant tiles) (Random.List.shuffle remaining)
+            )
+
+
+randomListOfSuits : Int -> List Suit -> Random.Generator ( List Tile, List Tile )
+randomListOfSuits n suits =
+    let
+        allPossibleTiles =
+            List.concatMap (List.repeat 4) (List.concatMap allSuitTiles suits)
     in
     Random.List.choices n allPossibleTiles
         |> Random.andThen

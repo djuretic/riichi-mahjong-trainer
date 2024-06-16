@@ -23,26 +23,34 @@ suite =
             , testShantenChiitoitsu "14 tiles, 7 pairs" -1 "225588m11p88s2233z"
             , testShantenChiitoitsu "14 tiles, unsorted last tile" 0 "2268m22334p55s11z4p"
             ]
-        , describe "Standard shanten (5 groups + pair)"
+        , describe "Standard shanten (n groups + pair)"
             [ testShantenStandard "2-shanten" 2 "46789m55779p457s"
             , testShantenStandard "tenpai" 0 "456m567p12388s77z"
             , testShantenStandard "chinitsu" -1 "1112245677889p6p"
+            , testShantenStandard "group with 2 partials (pin)" 3 "149m2334568p335s"
             , testShantenStandard "6 groups" 1 "3367m11123p1267s3m"
+            , testShantenStandard "8 tiles tenpai" 0 "11167p122s"
             ]
         , describe "Standard shanten (less tiles)"
-            [ testShantenStandard "4-tiles tenpai" 0 "1234m"
-            , testShantenStandard "4-tiles tenpai pairs" 0 "7799m"
-            , testShantenStandard "4-tiles 1-shanten" 1 "12m3p5s"
-            , testShantenStandard "4-tiles 2-shanten" 2 "1m3p5s3z"
-            , testShantenStandard "5-tiles tenpai" 0 "6699m1z"
-            , testShantenStandard "5-tiles tenpai no pair" 0 "12345m"
-            , testShantenStandard "5-tiles tenpai no pair 2" 0 "12369m"
-            , testShantenStandard "5-tiles complete" -1 "77799m"
-            , testShantenStandard "7-tiles tenpai" 0 "7788999m"
+            [ testShantenStandard "4 tiles tenpai" 0 "1234m"
+            , testShantenStandard "4 tiles tenpai pairs" 0 "7799m"
+            , testShantenStandard "4 tiles 1-shanten" 1 "12m3p5s"
+            , testShantenStandard "4 tiles 2-shanten" 2 "1m3p5s3z"
+            , testShantenStandard "5 tiles tenpai" 0 "6699m1z"
+            , testShantenStandard "5 tiles tenpai no pair" 0 "12345m"
+            , testShantenStandard "5 tiles tenpai no pair 2" 0 "12369m"
+            , testShantenStandard "5 tiles complete" -1 "77799m"
+            , testShantenStandard "7 tiles tenpai" 0 "7788999m"
             ]
         , describe "Tile acceptance"
-            [ testTileAcceptanceDraw "2-sided wait 4 tiles" "14m" "1234m"
-            , testTileAcceptanceDiscardDraw "5 tiles" [ ( "1s", "48s" ) ] "14488s"
+            [ testTileAcceptanceDraw "4 tiles 2-sided wait" "14m" 6 "1234m"
+            , testTileAcceptanceDraw "7 tiles shanpon" "8p2s6z" 8 "79p229s66z"
+            , testTileAcceptanceDraw "7 tiles two pairs" "158p23s" 16 "1167p122s"
+            , testTileAcceptanceDraw "10 tiles 3 groups no pair" "47m5p159s2z" 24 "5689m5p1469s2z"
+            , testTileAcceptanceDraw "13 tiles 4 groups no pair" "47m58p159s2z" 27 "5689m5678p1469s2z"
+            , testTileAcceptanceDraw "13 tiles 2-shanten 7 pairs and standard" "2345m34567p123s" 38 "334m3356999p112s"
+            , testTileAcceptanceDiscardDraw "5 tiles" [ ( "1s", ( "48s", 4 ) ) ] "14488s"
+            , testTileAcceptanceDiscardDraw "8 tiles" [ ( "1p", ( "5p", 4 ) ), ( "6p", ( "19p", 4 ) ) ] "11234699p"
             ]
         ]
 
@@ -65,17 +73,17 @@ testShantenStandard name shanten hand =
         \_ -> Expect.equal shanten (Shanten.shantenStandard (Tile.fromString hand) |> .shanten)
 
 
-testTileAcceptanceDraw : String -> String -> String -> Test
-testTileAcceptanceDraw name acceptedTiles hand =
+testTileAcceptanceDraw : String -> String -> Int -> String -> Test
+testTileAcceptanceDraw name acceptedTiles numTiles hand =
     test name <|
-        \_ -> Expect.equal (Shanten.Draw (Tile.fromString acceptedTiles)) (Shanten.tileAcceptance (Tile.fromString hand))
+        \_ -> Expect.equal (Shanten.Draw { numTiles = numTiles, tiles = Tile.fromString acceptedTiles }) (Shanten.tileAcceptance [] (Tile.fromString hand))
 
 
-testTileAcceptanceDiscardDraw : String -> List ( String, String ) -> String -> Test
+testTileAcceptanceDiscardDraw : String -> List ( String, ( String, Int ) ) -> String -> Test
 testTileAcceptanceDiscardDraw name acceptedTiles hand =
     let
         tiles =
-            List.map (\( t, tt ) -> ( Tile.fromString t |> List.head |> Maybe.withDefault (Tile 99 Suit.Man), Tile.fromString tt )) acceptedTiles
+            List.map (\( t, ( tt, num ) ) -> ( Tile.fromString t |> List.head |> Maybe.withDefault (Tile 99 Suit.Man), { numTiles = num, tiles = Tile.fromString tt } )) acceptedTiles
     in
     test name <|
-        \_ -> Expect.equal (Shanten.DiscardAndDraw tiles) (Shanten.tileAcceptance (Tile.fromString hand))
+        \_ -> Expect.equal (Shanten.DiscardAndDraw tiles) (Shanten.tileAcceptance [] (Tile.fromString hand))

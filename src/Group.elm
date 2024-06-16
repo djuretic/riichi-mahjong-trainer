@@ -89,6 +89,10 @@ type alias CompletionScore =
     }
 
 
+type alias ComparableCompletionScore =
+    ( Int, Int )
+
+
 pairOf : Tile.Tile -> Group
 pairOf tile =
     { type_ = Pair, tileNumber = tile.number, suit = tile.suit }
@@ -330,21 +334,29 @@ consumePartialKanchan findPartialsOption suit n shouldFindPair counter count =
         Nothing
 
 
+scoreToComparable : CompletionScore -> ComparableCompletionScore
+scoreToComparable cs =
+    ( cs.groups, cs.pairs + cs.partials )
+
+
 keepHighestScore : FindPartialsOption -> List (List Group) -> List (List Group)
 keepHighestScore findPartialsOption groups =
     if findPartialsOption == FindPartials then
         let
+            groupsWithScores : List ( CompletionScore, List Group )
             groupsWithScores =
                 List.map (\g -> ( completionScore g, g )) groups
-                    |> List.sortBy (\( cs, _ ) -> ( cs.groups, cs.pairs, cs.partials ))
+                    |> List.sortBy (\( cs, _ ) -> scoreToComparable cs)
                     |> List.reverse
 
+            maxScore : ComparableCompletionScore
             maxScore =
                 List.head groupsWithScores
                     |> Maybe.withDefault ( { groups = 0, pairs = 0, partials = 0 }, [] )
                     |> Tuple.first
+                    |> scoreToComparable
         in
-        List.filter (\( score, _ ) -> score == maxScore) groupsWithScores
+        List.filter (\( score, _ ) -> scoreToComparable score == maxScore) groupsWithScores
             |> List.map Tuple.second
 
     else
