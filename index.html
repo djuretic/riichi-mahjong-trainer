@@ -1,5 +1,6 @@
 <!DOCTYPE HTML>
-<html class="has-navbar-fixed-top">
+<html>
+<!-- <html class="has-navbar-fixed-top"> for alternative main -->
 
 <head>
   <meta charset="UTF-8">
@@ -64,9 +65,11 @@ app.ports.setStorageWaits.subscribe(function(state) {
   localStorage.setItem('waits', JSON.stringify(state));
 });
 
+/*
 app.ports.setStorageEfficiency.subscribe(function(state) {
   localStorage.setItem('efficiency', JSON.stringify(state));
 });
+*/
 
 app.ports.setStorageConfig.subscribe(function(state) {
   localStorage.setItem('config', JSON.stringify(state));
