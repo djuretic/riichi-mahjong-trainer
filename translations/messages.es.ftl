@@ -26,6 +26,9 @@ minWaitsSelectorTitle = Cantidad mín. de esperas
 numberedTilesSelector = Fichas numeradas
     .yes = Sí
     .no = No
+timerSelector = Minutero
+timerOff = Apagado
+remainingTime = Tiempo restante
 
 selectWaitTilesText = Selecciona las esperas:
 showWaitTilesText = Esperas:

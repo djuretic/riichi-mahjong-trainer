@@ -20,8 +20,9 @@ import Suit
 import Svg exposing (image, svg)
 import Svg.Attributes as SvgA
 import Tile exposing (Tile)
-import Time
+import Time exposing (every)
 import UI
+import Task
 
 
 port setStorageWaits : E.Value -> Cmd msg
@@ -33,6 +34,11 @@ type alias Model =
     , singleSuitSelection : SingleSuitSelection
     , singleSuitSelectionAlt : SingleSuitSelection
     , numberedTiles : Bool
+    , timerDuration : Int
+    , timerActive : Bool
+    , startTime : Maybe Time.Posix
+    , currentTime : Maybe Time.Posix
+    , remainingMillis : Maybe Int
     , tiles : List Tile
     , waits : List ( Tile, List Group )
     , numberOfNonPairs : Int
@@ -61,6 +67,7 @@ type alias PreferencesModel =
     , numberOfNonPairs : Int
     , minNumberOfWaits : Int
     , groupsView : GroupsView
+    , timerDuration : Int
     }
 
 
@@ -72,6 +79,8 @@ type Msg
     | SetNumberNonPairs Int
     | SetNumberMinWaits Int
     | SetAddNumbersToTiles Bool
+    | SetTimer Int
+    | StartTimer
     | TilesGenerated Int (List Tile)
     | ToggleWaitTile Tile
     | ConfirmSelected
@@ -79,6 +88,7 @@ type Msg
     | StartWaitsAnimation ( Tile, List Group )
     | ResetWaitsAnimation
     | Tick Time.Posix
+    | TimerTick Time.Posix
     | UpdateI18n I18n.I18n
     | KeyPressed String
 
@@ -131,6 +141,7 @@ init i18n flags =
                     , minNumberOfWaits = 1
                     , groupsView = GroupAnimation
                     , numberedTiles = False
+                    , timerDuration = 0
                     }
 
         model =
@@ -140,6 +151,11 @@ init i18n flags =
                 , singleSuitSelection = prefs.suitSelection
                 , singleSuitSelectionAlt = prefs.suitSelectionAlt
                 , numberedTiles = prefs.numberedTiles
+                , timerDuration = prefs.timerDuration
+                , timerActive = False
+                , startTime = Nothing
+                , remainingMillis = Nothing
+                , currentTime = Nothing
                 , tiles = []
                 , waits = []
                 , numberOfNonPairs = prefs.numberOfNonPairs
@@ -179,13 +195,23 @@ subscriptions model =
     let
         keyEvent =
             Browser.Events.onKeyUp (D.map KeyPressed (D.field "key" D.string))
+
+        timerTick =
+            if model.timerActive then
+                tickEverySecond
+            else
+                Sub.none
     in
     if model.confirmedSelected then
         Sub.batch
-            [ Browser.Events.onAnimationFrame Tick, keyEvent ]
-
+            [ Browser.Events.onAnimationFrame Tick
+            , keyEvent
+            ]
     else
-        keyEvent
+        Sub.batch
+        [ keyEvent
+        , timerTick
+        ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -229,6 +255,22 @@ update msg model =
             in
             ( newModel, setStorageWaits (encode newModel) )
 
+        SetTimer duration ->
+            let
+                (newModel, generatedCmd) = update (GenerateTiles 0) model
+            in
+                ( { model | timerDuration = duration, timerActive = False, startTime = Nothing },
+                Cmd.batch
+                    [ setStorageWaits (encode model)
+                    , generatedCmd
+                    ]
+                )
+
+        StartTimer ->
+            ( { model | timerActive = True, remainingMillis = Just (model.timerDuration * 1000) }
+            , Cmd.none
+            )
+
         TilesGenerated numTries tiles ->
             let
                 waits =
@@ -236,6 +278,23 @@ update msg model =
 
                 waitSuits =
                     List.map (\w -> Tuple.first w |> .suit |> Suit.toString) waits |> Set.fromList
+
+                newModel =
+                    { model
+                        | tiles = tiles
+                        , waits = waits
+                        , selectedWaits = Set.empty
+                        , confirmedSelected = False
+                        , currentAnimatedTile = Nothing
+                        , keyboardInput = Set.empty
+                    }
+                cmd =
+                    if model.timerDuration > 0 then
+                        Cmd.batch [Task.perform (always StartTimer) (Task.succeed ())]
+                    else if newModel.timerDuration > 0 then
+                        Time.now |> Task.perform TimerTick
+                    else
+                        Cmd.none
             in
             -- if numTries > 1000 then
             --     Debug.todo "Too many tries"
@@ -250,17 +309,7 @@ update msg model =
                 --     _ =
                 --         Debug.log "numTries" numTries
                 -- in
-                ( initAnimatedTiles
-                    { model
-                        | tiles = tiles
-                        , waits = waits
-                        , selectedWaits = Set.empty
-                        , confirmedSelected = False
-                        , currentAnimatedTile = Nothing
-                        , keyboardInput = Set.empty
-                    }
-                , Cmd.none
-                )
+                ( initAnimatedTiles newModel, cmd )
 
         ToggleWaitTile tile ->
             if model.confirmedSelected || not (Tile.isValid tile) || not (List.member tile.suit (waitTileSuits model)) then
@@ -278,7 +327,7 @@ update msg model =
                     ( { model | selectedWaits = Set.insert compTile model.selectedWaits }, Cmd.none )
 
         ConfirmSelected ->
-            ( { model | confirmedSelected = True }, Cmd.none )
+            ( { model | confirmedSelected = True, timerActive = False, startTime = Nothing }, Cmd.none )
 
         SetGroupsView groupsView ->
             let
@@ -302,6 +351,28 @@ update msg model =
         Tick tickTime ->
             ( Anim.tick tickTime doAnimation model, Cmd.none )
 
+        TimerTick currentTime ->
+            case model.remainingMillis of
+                Just millis ->
+                    let
+                        newMillis = millis - 1000
+                    in
+                    if newMillis <= 0 then
+                        let
+                            (newModel, cmd) = update (ConfirmSelected) model
+                        in
+                        ( { newModel | timerActive = False, remainingMillis = Just 0 }
+                        , cmd
+                        )
+                    else
+                        ( { model | remainingMillis = Just newMillis, currentTime = Just currentTime }
+                        , Cmd.none
+                        )
+
+                Nothing ->
+                    (model, Cmd.none)
+
+                
         UpdateI18n i18n ->
             ( { model | i18n = i18n }, Cmd.none )
 
@@ -356,7 +427,6 @@ update msg model =
                                 _ ->
                                     ( model, Cmd.none )
 
-
 view : Model -> Html Msg
 view model =
     let
@@ -395,6 +465,12 @@ view model =
             , UI.label (I18n.numTilesSelectorTitle model.i18n) (numberTilesSelector model)
             , UI.label (I18n.minWaitsSelectorTitle model.i18n) (minWaitsSelector model)
             , UI.label (I18n.numberedTilesSelector model.i18n) (numberedTilesSelector model)
+            , UI.label (I18n.timerSelector model.i18n) (timerSelector model)
+            , if model.timerDuration > 0 then
+                UI.label (I18n.remainingTime model.i18n) (timerDisplay model)
+              else
+                -- maintain the spacing so the UI doesnt bounce around every hand
+                div [ class "is-invisible" ] [UI.label (I18n.remainingTime model.i18n) (timerDisplay model)]
             ]
         , div [ class "block" ] [ UI.tilesDivMinWidth model.i18n model.numberedTiles model.tiles ]
         , div [ class "block" ]
@@ -554,6 +630,49 @@ numberedTilesSelector model =
         [ buttonUI (I18n.numberedTilesSelectorYes model.i18n) True
         , buttonUI (I18n.numberedTilesSelectorNo model.i18n) False
         ]
+
+
+tickEverySecond : Sub Msg
+tickEverySecond =
+    every 1000 TimerTick
+
+
+timerSelector : Model -> Html Msg
+timerSelector model =
+    let
+        buttonUI txt duration =
+            button
+                [ classList
+                    [ ( "button", True )
+                    , ( "is-primary", model.timerDuration  == duration )
+                    , ( "is-selected", model.timerDuration  == duration )
+                    ]
+                , onClick (SetTimer duration)
+                ]
+                [ text txt ]
+    in
+    div [ class "buttons has-addons" ]
+        [ buttonUI (I18n.timerOff model.i18n) 0
+        , buttonUI "10" 10
+        , buttonUI "30" 30
+        , buttonUI "60" 60
+        ]
+
+
+timerDisplay : Model -> Html Msg
+timerDisplay model =
+    let
+        timeStr =
+            case model.remainingMillis of
+                Just millis ->
+                    String.fromInt (millis // 1000)
+
+                Nothing ->
+                    "Timer not set"
+    in
+    div [ class "timer-display label" ] [ text (timeStr ++ "s") ]
+
+
 
 
 waitTileSuits : Model -> List Suit.Suit
@@ -995,8 +1114,8 @@ stringToSuitSelection s =
 
 decoder : D.Decoder PreferencesModel
 decoder =
-    D.map7
-        (\mode suit suitAlt nonPairs minWaits gView addNumbersToTiles ->
+    D.map8
+        (\mode suit suitAlt nonPairs minWaits gView addNumbersToTiles timerDuration ->
             let
                 groupsView =
                     case gView of
@@ -1016,6 +1135,7 @@ decoder =
             , minNumberOfWaits = minWaits
             , groupsView = groupsView
             , numberedTiles = Maybe.withDefault False addNumbersToTiles
+            , timerDuration = Maybe.withDefault 0 timerDuration
             }
         )
         (D.maybe (D.field "mode" D.string))
@@ -1025,6 +1145,7 @@ decoder =
         (D.field "minWaits" D.int)
         (D.field "groupsView" D.string)
         (D.maybe (D.field "tileNumbers" D.bool))
+         (D.maybe (D.field "timerDuration" D.int))
 
 
 encode : Model -> E.Value
@@ -1049,6 +1170,7 @@ encode model =
         , ( "minWaits", E.int model.minNumberOfWaits )
         , ( "groupsView", E.string groupsViewStr )
         , ( "tileNumbers", E.bool model.numberedTiles )
+        , ( "timerDuration", E.int model.timerDuration )
         ]
 
 

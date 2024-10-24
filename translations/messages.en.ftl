@@ -25,6 +25,9 @@ minWaitsSelectorTitle = Min. number of waits
 numberedTilesSelector = Numbered tiles
     .yes = Yes
     .no = No
+timerSelector = Timer
+timerOff = Off
+remainingTime = Remaining Time
 
 selectWaitTilesText = Select wait tiles:
 showWaitTilesText = Wait tiles:
