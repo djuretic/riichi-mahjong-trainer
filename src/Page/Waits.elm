@@ -259,7 +259,7 @@ update msg model =
             let
                 (newModel, generatedCmd) = update (GenerateTiles 0) model
             in
-                ( { model | timerDuration = duration, timerActive = False, startTime = Nothing },
+                ( { newModel | timerDuration = duration, timerActive = False, startTime = Nothing },
                 Cmd.batch
                     [ setStorageWaits (encode newModel)
                     , generatedCmd
