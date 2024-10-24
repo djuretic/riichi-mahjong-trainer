@@ -469,8 +469,7 @@ view model =
             , if model.timerDuration > 0 then
                 UI.label (I18n.remainingTime model.i18n) (timerDisplay model)
               else
-                -- maintain the spacing so the UI doesnt bounce around every hand
-                div [ class "is-invisible" ] [UI.label (I18n.remainingTime model.i18n) (timerDisplay model)]
+                div [] []
             ]
         , div [ class "block" ] [ UI.tilesDivMinWidth model.i18n model.numberedTiles model.tiles ]
         , div [ class "block" ]
