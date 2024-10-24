@@ -261,7 +261,7 @@ update msg model =
             in
                 ( { model | timerDuration = duration, timerActive = False, startTime = Nothing },
                 Cmd.batch
-                    [ setStorageWaits (encode model)
+                    [ setStorageWaits (encode newModel)
                     , generatedCmd
                     ]
                 )
