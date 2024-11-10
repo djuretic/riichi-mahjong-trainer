@@ -26,9 +26,9 @@ minWaitsSelectorTitle = Min. nombro da atendoj
 numberedTilesSelector = Numeritaj pecoj
     .yes = Jes
     .no = Ne
-timerSelector = Tempigilo
+timerSelector = Tempmezurilo
 timerOff = Malŝaltita
-remainingTime = Restanta Tempo
+remainingTime = Restanta tempo
 
 selectWaitTilesText = Elektu la atendojn:
 showWaitTilesText = Atendoj:
