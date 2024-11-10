@@ -19,10 +19,10 @@ import Set exposing (Set)
 import Suit
 import Svg exposing (image, svg)
 import Svg.Attributes as SvgA
+import Task
 import Tile exposing (Tile)
 import Time exposing (every)
 import UI
-import Task
 
 
 port setStorageWaits : E.Value -> Cmd msg
@@ -199,6 +199,7 @@ subscriptions model =
         timerTick =
             if model.timerActive then
                 tickEverySecond
+
             else
                 Sub.none
     in
@@ -207,11 +208,12 @@ subscriptions model =
             [ Browser.Events.onAnimationFrame Tick
             , keyEvent
             ]
+
     else
         Sub.batch
-        [ keyEvent
-        , timerTick
-        ]
+            [ keyEvent
+            , timerTick
+            ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -257,14 +259,15 @@ update msg model =
 
         SetTimer duration ->
             let
-                (newModel, generatedCmd) = update (GenerateTiles 0) model
+                ( newModel, generatedCmd ) =
+                    update (GenerateTiles 0) model
             in
-                ( { newModel | timerDuration = duration, timerActive = False, startTime = Nothing },
-                Cmd.batch
-                    [ setStorageWaits (encode newModel)
-                    , generatedCmd
-                    ]
-                )
+            ( { newModel | timerDuration = duration, timerActive = False, startTime = Nothing }
+            , Cmd.batch
+                [ setStorageWaits (encode newModel)
+                , generatedCmd
+                ]
+            )
 
         StartTimer ->
             ( { model | timerActive = True, remainingMillis = Just (model.timerDuration * 1000) }
@@ -288,11 +291,14 @@ update msg model =
                         , currentAnimatedTile = Nothing
                         , keyboardInput = Set.empty
                     }
+
                 cmd =
                     if model.timerDuration > 0 then
-                        Cmd.batch [Task.perform (always StartTimer) (Task.succeed ())]
+                        Cmd.batch [ Task.perform (always StartTimer) (Task.succeed ()) ]
+
                     else if newModel.timerDuration > 0 then
                         Time.now |> Task.perform TimerTick
+
                     else
                         Cmd.none
             in
@@ -355,24 +361,26 @@ update msg model =
             case model.remainingMillis of
                 Just millis ->
                     let
-                        newMillis = millis - 1000
+                        newMillis =
+                            millis - 1000
                     in
                     if newMillis <= 0 then
                         let
-                            (newModel, cmd) = update (ConfirmSelected) model
+                            ( newModel, cmd ) =
+                                update ConfirmSelected model
                         in
                         ( { newModel | timerActive = False, remainingMillis = Just 0 }
                         , cmd
                         )
+
                     else
                         ( { model | remainingMillis = Just newMillis, currentTime = Just currentTime }
                         , Cmd.none
                         )
 
                 Nothing ->
-                    (model, Cmd.none)
+                    ( model, Cmd.none )
 
-                
         UpdateI18n i18n ->
             ( { model | i18n = i18n }, Cmd.none )
 
@@ -427,6 +435,7 @@ update msg model =
                                 _ ->
                                     ( model, Cmd.none )
 
+
 view : Model -> Html Msg
 view model =
     let
@@ -468,6 +477,7 @@ view model =
             , UI.label (I18n.timerSelector model.i18n) (timerSelector model)
             , if model.timerDuration > 0 then
                 UI.label (I18n.remainingTime model.i18n) (timerDisplay model)
+
               else
                 div [] []
             ]
@@ -643,8 +653,8 @@ timerSelector model =
             button
                 [ classList
                     [ ( "button", True )
-                    , ( "is-primary", model.timerDuration  == duration )
-                    , ( "is-selected", model.timerDuration  == duration )
+                    , ( "is-primary", model.timerDuration == duration )
+                    , ( "is-selected", model.timerDuration == duration )
                     ]
                 , onClick (SetTimer duration)
                 ]
@@ -670,8 +680,6 @@ timerDisplay model =
                     "Timer not set"
     in
     div [ class "timer-display label" ] [ text (timeStr ++ "s") ]
-
-
 
 
 waitTileSuits : Model -> List Suit.Suit
@@ -1144,7 +1152,7 @@ decoder =
         (D.field "minWaits" D.int)
         (D.field "groupsView" D.string)
         (D.maybe (D.field "tileNumbers" D.bool))
-         (D.maybe (D.field "timerDuration" D.int))
+        (D.maybe (D.field "timerDuration" D.int))
 
 
 encode : Model -> E.Value
