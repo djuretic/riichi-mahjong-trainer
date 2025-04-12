@@ -792,6 +792,9 @@ winningTilesSection model =
                 [ div [ class "content" ]
                     [ ul []
                         [ li []
+                            [ a [ href "https://drive.google.com/file/d/18K8C4LJAARjgtbx3ddPpxpAn0X7LAncp/view", target "_blank" ] [ text "Reading Complex Waits (English)" ]
+                            ]
+                        , li []
                             [ text "Common Wait Patterns (English) - "
                             , a [ href "https://drive.google.com/file/d/1K4NuE2UZgeqhSR-WsYWyQlRiEERh5VQo/view?usp=share_link", target "_blank" ] [ text "PNG" ]
                             , text " | "
