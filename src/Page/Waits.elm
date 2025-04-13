@@ -13,6 +13,7 @@ import I18n
 import Json.Decode as D
 import Json.Encode as E
 import List.Extra
+import Pattern exposing (Pattern, match, referenceUrl)
 import Point
 import Random
 import Set exposing (Set)
@@ -40,6 +41,7 @@ type alias Model =
     , currentTime : Maybe Time.Posix
     , remainingMillis : Maybe Int
     , tiles : List Tile
+    , pattern : Maybe Pattern
     , waits : List ( Tile, List Group )
     , numberOfNonPairs : Int
     , minNumberOfWaits : Int
@@ -157,6 +159,7 @@ init i18n flags =
                 , remainingMillis = Nothing
                 , currentTime = Nothing
                 , tiles = []
+                , pattern = Nothing
                 , waits = []
                 , numberOfNonPairs = prefs.numberOfNonPairs
                 , minNumberOfWaits = prefs.minNumberOfWaits
@@ -285,6 +288,7 @@ update msg model =
                 newModel =
                     { model
                         | tiles = tiles
+                        , pattern = match tiles
                         , waits = waits
                         , selectedWaits = Set.empty
                         , confirmedSelected = False
@@ -481,7 +485,16 @@ view model =
               else
                 div [] []
             ]
-        , div [ class "block" ] [ UI.tilesDivMinWidth model.i18n model.numberedTiles model.tiles ]
+        , div [ class "block" ]
+            [ text (I18n.handText model.i18n)
+            , text " "
+            , if model.confirmedSelected then
+                patternLink model
+
+              else
+                text ""
+            , UI.tilesDivMinWidth model.i18n model.numberedTiles model.tiles
+            ]
         , div [ class "block" ]
             [ text (I18n.selectWaitTilesText model.i18n)
             , waitButtons model
@@ -497,6 +510,23 @@ view model =
         , div [ class "block mb-5" ]
             (winningTilesSection model)
         ]
+
+
+patternLink : Model -> Html Msg
+patternLink model =
+    case model.pattern of
+        Just pattern ->
+            case referenceUrl pattern of
+                Just ( patternName, url ) ->
+                    a
+                        [ href url, target "_blank" ]
+                        [ text patternName ]
+
+                Nothing ->
+                    text ""
+
+        Nothing ->
+            text ""
 
 
 trainModeSelector : Model -> Html Msg

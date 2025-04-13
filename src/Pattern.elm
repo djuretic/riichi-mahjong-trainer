@@ -1,4 +1,4 @@
-module Pattern exposing (match)
+module Pattern exposing (Pattern, match, referenceUrl)
 
 import List.Extra
 import Suit
@@ -12,7 +12,7 @@ type Side
 
 type Pattern
     = Nobetan Tile.Tile
-    | Pentan Side Tile.Tile
+    | Pentan Side Suit.Suit
     | Kantan Side Tile.Tile
     | Ryantan Side Tile.Tile
     | Aryanmen Side Tile.Tile
@@ -26,13 +26,13 @@ toTiles pattern =
             List.range tile.number (tile.number + 3)
                 |> List.map (\n -> Tile.Tile n tile.suit)
 
-        Pentan side tile ->
+        Pentan side suit ->
             case side of
                 Left ->
-                    List.map (\n -> Tile.Tile n tile.suit) [ 1, 2, 2, 2 ]
+                    List.map (\n -> Tile.Tile n suit) [ 1, 2, 2, 2 ]
 
                 Right ->
-                    List.map (\n -> Tile.Tile n tile.suit) [ 8, 8, 8, 9 ]
+                    List.map (\n -> Tile.Tile n suit) [ 8, 8, 8, 9 ]
 
         Kantan side tile ->
             case side of
@@ -71,8 +71,8 @@ all lowestTileNumber suit =
             Tile.Tile lowestTileNumber suit
     in
     [ Nobetan tile
-    , Pentan Left tile
-    , Pentan Right tile
+    , Pentan Left tile.suit
+    , Pentan Right tile.suit
     , Kantan Left tile
     , Kantan Right tile
     , Ryantan Left tile
@@ -115,3 +115,29 @@ match tiles =
                         |> List.Extra.find (\pattern -> toTiles pattern == tiles)
                 )
                 firstTile
+
+
+referenceUrl : Pattern -> Maybe ( String, String )
+referenceUrl pattern =
+    let
+        riichiWiki =
+            "https://riichi.wiki/"
+    in
+    case pattern of
+        Nobetan _ ->
+            Just ( "Nobetan", riichiWiki ++ "Nobetan" )
+
+        Pentan _ _ ->
+            Just ( "Pentan", riichiWiki ++ "Pentan" )
+
+        Kantan _ _ ->
+            Just ( "Kantan", riichiWiki ++ "Kantan" )
+
+        Ryantan _ _ ->
+            Just ( "Ryantan", riichiWiki ++ "Ryantan" )
+
+        Aryanmen _ _ ->
+            Just ( "Aryanmen", riichiWiki ++ "Aryanmen" )
+
+        Shanpon _ _ ->
+            Just ( "Shanpon", riichiWiki ++ "Shanpon" )

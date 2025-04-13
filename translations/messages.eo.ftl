@@ -30,6 +30,7 @@ timerSelector = Tempmezurilo
 timerOff = Malŝaltita
 remainingTime = Restanta tempo
 
+handText = Mano:
 selectWaitTilesText = Elektu la atendojn:
 showWaitTilesText = Atendoj:
 

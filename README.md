@@ -24,6 +24,14 @@ Generate a build in `public/`:
 npm run build:prod
 ```
 
+## Translations
+
+If a .ftl file is modified, update the src/I18n.elm file:
+
+```bash
+npm run translations
+```
+
 ## Tests
 
 ```bash

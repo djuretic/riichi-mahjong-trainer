@@ -30,6 +30,7 @@ timerSelector = Temporizador
 timerOff = Apagado
 remainingTime = Tiempo restante
 
+handText = Mano:
 selectWaitTilesText = Selecciona las esperas:
 showWaitTilesText = Esperas:
 

@@ -29,6 +29,7 @@ timerSelector = Timer
 timerOff = Off
 remainingTime = Remaining Time
 
+handText = Hand:
 selectWaitTilesText = Select wait tiles:
 showWaitTilesText = Wait tiles:
 
